@@ -20,10 +20,15 @@ class MarginalWidget extends WidgetType {
     }
 
     toDOM(view: EditorView): HTMLElement {
+        let embedEl = document.createElement("div");
+        embedEl.addClasses(["cm-embed-block", "markdown-rendered"]);
+
         let containerEl = document.createElement("div");
         containerEl.addClass(`typing-${this.marginalType}`);
+        embedEl.appendChild(containerEl);
+
         this.ctx.addChild(new MarginalRenderChild(containerEl, this.sourcePath, this.marginalType));
-        return containerEl;
+        return embedEl;
     }
 }
 
