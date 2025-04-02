@@ -10,6 +10,7 @@ import {
     registerInlineFieldsHider,
     registerLinkPostProcessor,
     registerLinkRenderingLivePreview,
+    registerMarginalRenderingLivePreview,
     registerMarginalMonkeyPatch,
     registerMarginalPostProcessor,
     registerTitleBarLeafHook,
@@ -49,6 +50,7 @@ export default class TypingPlugin extends Plugin {
         registerSettings(this);
         registerMarginalPostProcessor(this);
         registerMarginalMonkeyPatch(this);
+        registerMarginalRenderingLivePreview(this);
         registerTitleBarLeafHook(this);
         registerLinkPostProcessor(this);
         registerLinkRenderingLivePreview(this);
@@ -61,6 +63,7 @@ export default class TypingPlugin extends Plugin {
 
     onunload() {
         log.info("Unloading plugin");
+        this.app.workspace.updateOptions();
     }
 
     async loadSettings() {
