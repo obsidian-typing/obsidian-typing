@@ -2,7 +2,7 @@ import { DataArray, Link, Literal, SMarkdownPage } from "obsidian-dataview";
 import { Suspense } from "react";
 import { gctx } from "src/context";
 import { Visitors } from "src/language";
-import { Type } from "src/typing";
+import { Field, Type } from "src/typing";
 import { IComboboxOption, Pickers } from "src/ui";
 import { field, parseLink, RenderLink } from "src/utilities";
 import { FieldType } from "./base";
@@ -16,6 +16,7 @@ export class Note extends FieldType<Note> {
     public typeNames: Array<string> = [];
 
     private _types?: Array<Type>;
+    private _inverseFields?: Record<string, Field>;
 
     @field({ required: false })
     public dv?: string;
@@ -35,6 +36,15 @@ export class Note extends FieldType<Note> {
     @field({ required: false })
     public relation: boolean = false;
 
+    @field({ required: false })
+    public implicit: boolean = false;
+
+    @field({ required: false })
+    public explicit: boolean = false;
+
+    @field({ required: false })
+    public inverse?: string;
+
     get types() {
         if (!this._types) {
             this._types = this.typeNames.map((name) => gctx.graph.get({ name })).filter((type) => type != null);
@@ -42,9 +52,37 @@ export class Note extends FieldType<Note> {
         return this._types;
     }
 
+    get inverseFields() {
+        if (!this._inverseFields) {
+            this._inverseFields = {};
+
+            const fields = this._inverseFields;
+            const fieldName = this.inverse;
+
+            if (fieldName) {
+                this.types.forEach((type) => {
+                    const field = type.fields[fieldName];
+                    if (field) {
+                        fields[type.name] = field;
+                    }
+                });
+            }
+        }
+        return this._inverseFields;
+    }
+
+    get isImplicit() {
+        return this.implicit;
+    }
+
+    get isExplicit() {
+        // "explicit" defaults to false if "implicit=true" was set by the user
+        return this.explicit || !this.implicit;
+    }
+
     Display: FieldType["Display"] = ({ value }: { value: Link | string }) => {
         if (typeof value !== "string") value = value.markdown();
-        let { path, display }: { path: string, display?: string} = parseLink(value);
+        let { path, display }: { path: string, display?: string } = parseLink(value);
         if (!display) {
             // to not pass empty linkText to RenderLink
             display = undefined;
@@ -108,6 +146,9 @@ export class Note extends FieldType<Note> {
                 short: Visitors.Literal(Visitors.Boolean),
                 subtypes: Visitors.Literal(Visitors.Boolean),
                 relation: Visitors.Literal(Visitors.Boolean),
+                implicit: Visitors.Literal(Visitors.Boolean),
+                explicit: Visitors.Literal(Visitors.Boolean),
+                inverse: Visitors.Literal(Visitors.String),
             },
             init(args, kwargs) {
                 return Note.new({ typeNames: args, ...kwargs });
