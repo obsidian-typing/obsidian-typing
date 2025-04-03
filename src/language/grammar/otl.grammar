@@ -105,8 +105,8 @@ List {
 }
 
 // Imports
-ImportStatement { 
-  kw<"import"> "{" ImportedSymbols "}" kw<"from"> String 
+ImportStatement {
+  kw<"import"> "{" ImportedSymbols "}" kw<"from"> String
 }
 
 // or Specifiers?
@@ -196,7 +196,7 @@ String {
 @precedence {
   TypeDeclaration
   ImportStatement
-  Float 
+  Float
   Integer
   Assignment
   AssignmentName
