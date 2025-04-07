@@ -6,6 +6,7 @@ export { File } from "./file";
 export { List } from "./list";
 export { Note } from "./note";
 export { Number } from "./number";
+export { Required } from "./required";
 export { String } from "./string";
 export { Tag } from "./tag";
 export { Text } from "./text";
