@@ -19,6 +19,13 @@ class MarginalWidget extends WidgetType {
         super();
     }
 
+    updateDOM(dom: HTMLElement, view: EditorView): boolean {
+        // Avoid continuously recreating the embedded content on every editor keystroke.
+        // The MarginalRenderChild already implements the necessary conditional
+        // auto-refresh of its contents when the base data changes.
+        return true;
+    }
+
     toDOM(view: EditorView): HTMLElement {
         let embedEl = document.createElement("div");
         embedEl.addClasses(["cm-embed-block", "markdown-rendered"]);
