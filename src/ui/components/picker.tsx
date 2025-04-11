@@ -121,20 +121,20 @@ Picker.Display = React.memo(
         let { state, dispatch } = useContext(PickerContext);
         let promptCtx = useContext(PromptContext);
 
-        const onFocus = (e) => {
+        const onFocus = (e: FocusEvent) => {
             if (state.isMobile) return;
             if (!state.isActiveControlled && !state.isActive && !state.isSelected)
                 dispatch({ type: "SET_IS_ACTIVE", payload: true });
             if (!state.isSelected) dispatch({ type: "SET_IS_SELECTED", payload: true });
         };
 
-        const onBlur = (e) => {
+        const onBlur = (e: FocusEvent) => {
             if (state.isMobile) return;
             if (!state.isActiveControlled && !state.isActive && state.isSelected)
                 dispatch({ type: "SET_IS_SELECTED", payload: false });
         };
 
-        const onClick = (e) => {
+        const onClick = (e: MouseEvent) => {
             if (!state.isActiveControlled && !state.isActive) {
                 dispatch({ type: "SET_IS_ACTIVE", payload: true });
             }
@@ -143,7 +143,7 @@ Picker.Display = React.memo(
             }
         };
 
-        const onKeyDown = (e) => {
+        const onKeyDown = (e: KeyboardEvent) => {
             if (state.isMobile) return;
             if (e.key == "Enter") {
                 if (!state.isActiveControlled && !state.isActive) dispatch({ type: "SET_IS_ACTIVE", payload: true });
@@ -221,7 +221,7 @@ Picker.Body = React.memo(({ children }: ChildrenProps) => {
     }
 });
 
-Picker.Wrapper = ({ children, ...config }: PickerConfig & ChildrenProps) => {
+Picker.Wrapper = ({ children, ...config }: PickerState & ChildrenProps) => {
     const pickerState: PickerState = {
         isActive: false,
         isSelected: false,
