@@ -8,6 +8,8 @@ export interface FieldBindingContext {
     note?: Note;
 }
 
+export type FieldLocation = "frontmatter" | "inline";
+
 export class Field extends DataClass implements Bindable<FieldBindingContext, Field> {
     context?: FieldBindingContext;
 
@@ -19,6 +21,12 @@ export class Field extends DataClass implements Bindable<FieldBindingContext, Fi
 
     @field()
     public default!: string;
+
+    @field({ required: false })
+    public location?: FieldLocation;
+
+    @field({ required: false })
+    public preferredLocation?: FieldLocation;
 
     public onAfterCreate(): void {
         if (!this.type.context) {
@@ -34,6 +42,8 @@ export class Field extends DataClass implements Bindable<FieldBindingContext, Fi
             name: this.name,
             type: this.type.bind({ field: this, ...context }),
             default: this.default,
+            location: this.location,
+            preferredLocation: this.preferredLocation,
         });
         result.context = context;
         return result;
