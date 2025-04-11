@@ -2,13 +2,14 @@ import styled from "@emotion/styled";
 import { around } from "monkey-around";
 import {
     EventRef,
+    Events,
     MarkdownPostProcessor,
     MarkdownPostProcessorContext,
     MarkdownPreviewView,
     MarkdownRenderChild,
     MarkdownRenderer,
 } from "obsidian";
-import { useState } from "react";
+import React, { useState } from "react";
 import { gctx } from "src/context";
 import TypingPlugin from "src/main";
 import { Script } from "src/scripting";
@@ -81,7 +82,7 @@ export class MarginalRenderChild extends MarkdownRenderChild {
     }
     onload() {
         this.registerEvent(
-            gctx.plugin.app.metadataCache.on("dataview:metadata-change", (op, file) => {
+            gctx.plugin.app.metadataCache.on("dataview:metadata-change", (op, file, _?) => {
                 if (!this.isAutoreloadEnabled) return;
                 if (file.path != this.path) return;
                 this.onMetadataChange();
@@ -120,7 +121,7 @@ export class MarginalRenderChild extends MarkdownRenderChild {
         this.hide();
         this.show();
     };
-    print = (...args) => {
+    print = (...args: any[]) => {
         this.messages.push(`${args}`);
     };
     show = async () => {
@@ -131,11 +132,11 @@ export class MarginalRenderChild extends MarkdownRenderChild {
                 container: this.containerEl,
                 component: this,
                 note: this.note,
-                render: (el) => render(el, this.containerEl),
+                render: (el: React.ReactNode) => render(el, this.containerEl),
                 print: this.print,
                 reload: () => this.requestUpdate(),
-                on: (event, handler) => {
-                    let eventRef = gctx.plugin.app.metadataCache.on(event, handler);
+                on: (event: string, handler: (...data: unknown[]) => unknown) => {
+                    let eventRef = (gctx.plugin.app.metadataCache as Events).on(event, handler);
                     this.deferredEvents.push(eventRef);
                     this.registerEvent(eventRef);
                     return eventRef;
