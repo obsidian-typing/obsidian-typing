@@ -136,29 +136,28 @@ export class Type extends DataClass {
     }
 
     getAllNotes(options?: { withSubtypes?: boolean }) {
+        const getNotePathsOfType = (type: Type) => {
+            if (gctx.dv !== null) {
+                return gctx.dv.pagePaths(`"${this.folder}"`).array();
+            } else if (this.folder) {
+                let folder = gctx.app.vault.getAbstractFileByPath(this.folder);
+                if (folder === null) {
+                    return [];
+                }
+                if (!(folder instanceof TFolder)) {
+                    throw new Error("Specified type folder is a file");
+                }
+                return folder.children.filter((x) => x instanceof TFile && x.extension == "md").map((x) => x.path);
+            } else {
+                return [];
+            }
+        };
+
+        let paths: string[];
         if (options?.withSubtypes) {
-            throw new Error("NotImplemented: withSubtypes");
-        }
-
-        if (!this.isCreateable) {
-            throw new Error("Non-createable types cannot getAllNotes()");
-        }
-
-        let paths;
-        if (gctx.dv != null) {
-            paths = gctx.dv.pagePaths(`"${this.folder}"`);
+            paths = [...new Set([this, ...Object.values(this.descendants)].flatMap(getNotePathsOfType))];
         } else {
-            if (!this.folder) {
-                return [];
-            }
-            let folder = gctx.app.vault.getAbstractFileByPath(this.folder);
-            if (!folder) {
-                return [];
-            }
-            if (!(folder instanceof TFolder)) {
-                throw new Error("Specified type folder is a file");
-            }
-            paths = folder.children.filter((x) => x instanceof TFile && x.extension == "md").map((x) => x.path);
+            paths = getNotePathsOfType(this);
         }
 
         return [...paths].map((path) => Note.new(path, { type: this }));
