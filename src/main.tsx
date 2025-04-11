@@ -16,8 +16,6 @@ import {
     registerTitleBarLeafHook,
 } from "src/middleware";
 import { DEFAULT_SETTINGS, registerSettings, TEST_SETTINGS, TypingSettings } from "src/settings";
-import { Field, FieldTypes, Prefix, Type } from "src/typing";
-import { Picker, Pickers, prompt, Prompt } from "src/ui";
 import { log } from "src/utilities";
 
 export default class TypingPlugin extends Plugin {
