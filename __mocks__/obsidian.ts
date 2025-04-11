@@ -41,7 +41,7 @@ export class Workspace {
 }
 
 export class MetadataCache extends Events {
-    getFileCache(tfile: TFile) {
+    getFileCache(tfile: TFile): null {
         return null;
     }
 }
@@ -57,6 +57,7 @@ export class App {
     vault: Vault;
     workspace: Workspace;
     metadataCache: MetadataCache;
+    fileManager: FileManager;
     constructor(vault: Vault) {
         this.vault = vault;
         this.workspace = new Workspace();
@@ -101,7 +102,7 @@ export class TFile extends TAbstractFile {
         this.basename = Path.basename(this.path, Path.extname(this.path));
         this.extension = Path.extname(this.path);
         this.content = content;
-        this.stat = { size: content.byteLength || content.length };
+        this.stat = { size: (content as ArrayBuffer).byteLength || (content as string).length };
     }
 }
 
