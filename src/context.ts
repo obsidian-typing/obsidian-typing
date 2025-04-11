@@ -1,5 +1,5 @@
 import { App, MarkdownView, Platform } from "obsidian";
-import { DataviewAPI } from "obsidian-dataview";
+import { DataviewApi} from "obsidian-dataview";
 import { Interpreter } from "src/language";
 import TypingPlugin from "src/main";
 import { ImportManager } from "src/scripting";
@@ -30,8 +30,8 @@ export class GlobalContext {
     get api(): TypingAPI {
         return this.plugin.api;
     }
-    get dv(): DataviewAPI {
-        if (this.testing) return {};
+    get dv(): DataviewApi {
+        if (this.testing) return {} as DataviewApi;
         return this.app.plugins.plugins.dataview?.api;
     }
     get currentNote(): Note | null {

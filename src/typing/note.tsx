@@ -1,5 +1,5 @@
 import { TFile } from "obsidian";
-import { LiteralValue } from "obsidian-dataview";
+import { Literal } from "obsidian-dataview";
 import { useRef } from "react";
 import { gctx } from "src/context";
 import { autoFieldAccessor, IFieldAccessor } from "src/middleware/field_accessor";
@@ -57,7 +57,7 @@ export class Note {
         return this._relations;
     }
 
-    get page(): Record<string, LiteralValue> {
+    get page(): Record<string, Literal> {
         let cached = gctx.noteCache.get(this.path, "page");
         if (cached) return cached;
 
