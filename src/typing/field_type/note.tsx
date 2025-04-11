@@ -30,6 +30,9 @@ export class Note extends FieldType<Note> {
     public display: boolean = false;
 
     @field({ required: false })
+    public subtypes: boolean = false;
+
+    @field({ required: false })
     public relation: boolean = false;
 
     get types() {
@@ -103,6 +106,7 @@ export class Note extends FieldType<Note> {
                 subpath: Visitors.Literal(Visitors.Boolean),
                 display: Visitors.Literal(Visitors.Boolean),
                 short: Visitors.Literal(Visitors.Boolean),
+                subtypes: Visitors.Literal(Visitors.Boolean),
                 relation: Visitors.Literal(Visitors.Boolean),
             },
             init(args, kwargs) {
