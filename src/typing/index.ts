@@ -1,5 +1,5 @@
 export { Action } from "./action";
-export { Field } from "./field";
+export { FieldLocation, Field } from "./field";
 export { FieldType, FieldTypes } from "./field_type";
 export { TypeGraph } from "./graph";
 export { Hook, HookContainer, HookContextType, HookNames } from "./hook";

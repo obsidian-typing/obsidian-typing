@@ -28,6 +28,12 @@ export class Field extends DataClass implements Bindable<FieldBindingContext, Fi
     @field({ required: false })
     public preferredLocation?: FieldLocation;
 
+    @field({ required: false })
+    public location?: FieldLocation;
+
+    @field({ required: false })
+    public preferredLocation?: FieldLocation;
+
     public onAfterCreate(): void {
         if (!this.type.context) {
             this.type = this.type.bind({ field: this });
