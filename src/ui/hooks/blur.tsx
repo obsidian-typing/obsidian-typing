@@ -7,7 +7,7 @@ export function useBlurCallbacks() {
     const dropdownCtx = useContext(Contexts.DropdownContext);
 
     const onPickerBlur = useCallback(
-        (e) => {
+        (e: FocusEvent) => {
             if (pickerCtx.state.isMobile) return;
             let containers = [pickerCtx?.state?.bodyRef?.current, promptCtx?.state?.dropdownRef?.current?.base];
             if (e.relatedTarget) {
@@ -17,7 +17,7 @@ export function useBlurCallbacks() {
                         return;
                     }
                 }
-                if (!promptCtx?.state?.scrollerRef?.current?.contains?.(element)) {
+                if (!promptCtx?.state?.scrollerRef?.current?.contains?.(element as Node)) {
                     return;
                 }
                 if (!pickerCtx.state.isActiveControlled) {
@@ -46,7 +46,7 @@ export function useBlurCallbacks() {
     );
 
     const onDropdownBlur = useCallback(
-        (e) => {
+        (e: FocusEvent) => {
             if (pickerCtx?.state?.isMobile) return;
             if (!dropdownCtx) return;
 
@@ -56,13 +56,13 @@ export function useBlurCallbacks() {
             if (dropdownCtx.panelRef?.current?.contains?.(document.activeElement)) {
                 return;
             }
-            if (dropdownCtx.panelRef?.current?.contains(e?.relatedTarget)) {
+            if (dropdownCtx.panelRef?.current?.contains(e?.relatedTarget as Node)) {
                 return;
             }
             if (dropdownCtx.targetRef?.current?.contains?.(document.activeElement)) {
                 return;
             }
-            if (dropdownCtx.targetRef?.current?.contains?.(e.relatedTarget)) {
+            if (dropdownCtx.targetRef?.current?.contains?.(e.relatedTarget as Node)) {
                 return;
             }
             if (!dropdownCtx.isControlled) {
