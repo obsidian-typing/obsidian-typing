@@ -135,10 +135,16 @@ export class Type extends DataClass {
         return this.folder != null;
     }
 
-    getAllNotes(options?: { withSubtypes?: boolean }) {
-        const getNotePathsOfType = (type: Type) => {
+    async getAllNotes(options?: { withSubtypes?: boolean }): Promise<Note[]> {
+        const getNotePathsOfType = async (type: Type) => {
             if (gctx.dv !== null) {
-                return gctx.dv.pagePaths(`"${this.folder}"`).array();
+                let queryString;
+                if (type.folder) {
+                    queryString = `LIST WHERE choice(_type, _type = "${type.name}", file.folder = "${type.folder}")`;
+                } else {
+                    queryString = `LIST WHERE _type = "${type.name}"`;
+                }
+                return (await gctx.dv.tryQuery(queryString)).values as string[];
             } else if (this.folder) {
                 let folder = gctx.app.vault.getAbstractFileByPath(this.folder);
                 if (folder === null) {
@@ -155,9 +161,13 @@ export class Type extends DataClass {
 
         let paths: string[];
         if (options?.withSubtypes) {
-            paths = [...new Set([this, ...Object.values(this.descendants)].flatMap(getNotePathsOfType))];
+            let pathSet = new Set<string>();
+            for (let type of [this, ...Object.values(this.descendants)]) {
+                (await getNotePathsOfType(type)).forEach(item => pathSet.add(item));
+            }
+            paths = [...pathSet];
         } else {
-            paths = getNotePathsOfType(this);
+            paths = await getNotePathsOfType(this);
         }
 
         return [...paths].map((path) => Note.new(path, { type: this }));
