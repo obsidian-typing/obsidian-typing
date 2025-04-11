@@ -1,7 +1,8 @@
 import classNames from "classnames";
 import { Plus } from "lucide-react";
 import { Platform } from "obsidian";
-import { createContext, useContext, useRef, useState } from "react";
+import { ComponentChildren } from "preact";
+import { createContext, useContext, useRef, useState, Ref, RefObject } from "react";
 import styles from "src/styles/prompt.scss";
 import { Contexts, Picker } from "../components";
 import { PickerContext } from "../components/picker";
@@ -14,7 +15,7 @@ const REMOVE_CONST = "<|REMOVE|>";
 
 export function List({ SubPicker }: { SubPicker: any }) {
     let pickerCtx = useContext(PickerContext);
-    const refs = useRef();
+    const refs = useRef<RefObject<HTMLButtonElement>[]>();
 
     let controls = useControls({
         parse: (value) => {
@@ -27,7 +28,7 @@ export function List({ SubPicker }: { SubPicker: any }) {
             values = values.slice(0, lastNotEmpty + 1);
             values.push("");
 
-            return values;
+            return values as any;
         },
         compose: (values) => {
             let valuesList = [];
@@ -51,7 +52,7 @@ export function List({ SubPicker }: { SubPicker: any }) {
         },
     });
 
-    let controlsList: ControlSpec[] = [];
+    let controlsList: ControlSpec<string>[] = [];
     for (let i = 0; controls[i] != null; i++) {
         controlsList.push(controls[i]);
     }
@@ -111,7 +112,7 @@ export function List({ SubPicker }: { SubPicker: any }) {
     );
 }
 
-const ListElementWrapper = ({ children }) => {
+const ListElementWrapper = ({ children }: { children: ComponentChildren }) => {
     const pickerCtx = useContext(Contexts.PickerContext);
     return (
         <div class={classNames(styles.listElement, { [styles.listElementActive]: pickerCtx?.state?.isActive })}>
@@ -120,7 +121,16 @@ const ListElementWrapper = ({ children }) => {
     );
 };
 
-function ListPickerElement({ index, ref, refs, children, control, fieldName }) {
+interface ListPickerElementProps {
+    index: number;
+    ref: Ref<HTMLButtonElement>;
+    refs: RefObject<HTMLButtonElement>[];
+    children: ComponentChildren;
+    control: ControlSpec<string>;
+    fieldName: string;
+}
+
+function ListPickerElement({ index, ref, refs, children, control, fieldName }: ListPickerElementProps) {
     const [isActive, setIsActive] = useState(false);
     const promptCtx = useContext(Contexts.PromptContext);
 
