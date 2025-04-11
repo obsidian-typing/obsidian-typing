@@ -6,7 +6,7 @@ const VIEW_CONTAINER_SELECTORS = [".markdown-preview-view", ".markdown-source-vi
 
 let leafToClasses: Record<string, string[]> = {};
 
-const processLeaf = (leaf: WorkspaceLeaf) => {
+const processLeaf = (leaf: WorkspaceLeaf & { id: string }) => {
     let view = leaf.view;
     if (!(view instanceof MarkdownView)) {
         return;
