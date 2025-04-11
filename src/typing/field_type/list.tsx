@@ -75,4 +75,8 @@ export class List extends FieldType<List> {
     get isRelation() {
         return this.type.isRelation;
     }
+
+    get isList() {
+        return true;
+    }
 }

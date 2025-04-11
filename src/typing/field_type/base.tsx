@@ -47,6 +47,10 @@ export abstract class FieldType<InstanceType extends FieldType = any>
         return false;
     }
 
+    get isList(): boolean {
+        return false;
+    }
+
     get inList(): boolean {
         // HACK to not depend on FieldTypes.List in base class
         return this !== this.context?.field?.type?.type;
