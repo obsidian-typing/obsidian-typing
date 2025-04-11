@@ -1,4 +1,5 @@
 import { snippet, startCompletion } from "@codemirror/autocomplete";
+import { SyntaxNode } from "@lezer/common";
 import * as Visitors from ".";
 import { createVisitor, Rules, TVisitorBase } from "../index_base";
 
@@ -13,7 +14,7 @@ export const List = (valueType: TVisitorBase, opts?: { info?: string }) =>
         },
         run() {
             let result: ReturnType<(typeof valueType)["run"]>[] = [];
-            let unexpectedNodes = [];
+            let unexpectedNodes: SyntaxNode[] = [];
             this.traverse(
                 (node, child) => {
                     result.push(child.run(node));
