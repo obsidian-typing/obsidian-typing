@@ -2,11 +2,19 @@ import { Plugin, TFile, Vault } from "obsidian";
 import { dirname, join, normalize } from "path-browserify";
 import { DependencyGraph } from "src/utilities/dependency_graph";
 
-export interface Module {
+export type FailedModule = {
+    error: string;
+    env?: Record<string, any>;
+    file?: FileSpec;
+};
+
+export type LoadedModule = {
+    error?: undefined;
     env: Record<string, any>;
     file: FileSpec;
-    error?: string;
-}
+};
+
+export type Module = FailedModule | LoadedModule;
 
 export interface FileSpec {
     source: string;
@@ -86,7 +94,9 @@ export abstract class ModuleManagerSync<ContextType = any> {
             return { error: `Unknown file: ${path}` };
         }
 
-        const module: Module = { env: {}, file };
+        // The expression below is used to make the TypeScript compiler
+        // "forget" the const values and fix type inference.
+        const module: Module = ((x: Module) => x)({ env: {}, file })
 
         this.enterFrame({ module });
 
@@ -176,7 +186,7 @@ export abstract class ModuleManagerSync<ContextType = any> {
         }
     }
 
-    protected abstract evaluateModule(file: FileSpec, env: Module): boolean;
+    protected abstract evaluateModule(file: FileSpec, mod: Module): mod is LoadedModule;
 
     protected async loadFile(path: string): Promise<string> {
         let tfile = this.vault.getAbstractFileByPath(path);
@@ -239,10 +249,10 @@ export abstract class ModuleManagerSync<ContextType = any> {
         return this.extensions.some((ext) => path.endsWith("." + ext));
     }
 
-    protected onAfterPreload(): void {}
-    protected onModuleUpdate(path: string): void {}
-    protected onBeforeImport(path: string): void {}
-    protected onAfterImport(path: string): void {}
-    protected onBeforeReload(path: string): void {}
-    protected onAfterReload(path: string): void {}
+    protected onAfterPreload(): void { }
+    protected onModuleUpdate(path: string): void { }
+    protected onBeforeImport(path: string): void { }
+    protected onAfterImport(path: string): void { }
+    protected onBeforeReload(path: string): void { }
+    protected onAfterReload(path: string): void { }
 }
