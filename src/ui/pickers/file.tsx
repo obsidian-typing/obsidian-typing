@@ -36,7 +36,13 @@ export const File = ({
     short?: boolean;
     search?: boolean;
 }) => {
-    const composeWithoutBrackets = ({ folder, name, extension, subpath, display }) => {
+    const composeWithoutBrackets = ({ folder, name, extension, subpath, display }: {
+        folder?: string;
+        name: string;
+        extension?: string;
+        subpath?: string;
+        display?: string;
+    }) => {
         let result = "";
         let path;
 
@@ -56,7 +62,7 @@ export const File = ({
 
         return result;
     };
-    const compose = (options) => {
+    const compose = (options: Parameters<typeof composeWithoutBrackets>[0]) => {
         let result = composeWithoutBrackets(options);
         if (result.length) {
             return `[[${result}]]`;
@@ -85,8 +91,8 @@ export const File = ({
 
     const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
         let oldFile = file;
-        if (!e.target.files) return;
-        for (let newFile of e.target.files) {
+        if (!e.currentTarget.files) return;
+        for (let newFile of Array.from(e.currentTarget.files)) {
             let filenameInVault = await generateFileShortcut(newFile, autoRename);
             let { name, extension } = parseFileExtension(filenameInVault);
 
@@ -116,12 +122,12 @@ export const File = ({
         }
     };
 
-    let options = {};
+    let options: {
+        accept?: string,
+        capture?: any
+    } = {};
     if (accept != null) {
         options.accept = accept;
-    }
-    if (capture != null) {
-        options.capture = capture;
     }
     if (capture != null) {
         options.capture = capture;
