@@ -33,10 +33,10 @@ const Dropdown = ({
     panelRef?: RefObject<HTMLDivElement>;
 }) => {
     let [isActive, setIsActive] = useState(active ?? false);
-    let [panel, setPanel] = useState();
-    let [target, setTarget] = useState();
-    panelRef = panelRef ?? useRef();
-    targetRef = targetRef ?? useRef();
+    let [panel, setPanel] = useState<HTMLDivElement>();
+    let [target, setTarget] = useState<HTMLDivElement>();
+    panelRef = panelRef ?? useRef<HTMLDivElement>();
+    targetRef = targetRef ?? useRef<HTMLDivElement>();
 
     useEffect(() => {
         if (active !== undefined) {
