@@ -23,6 +23,13 @@
             "react/jsx-runtime": ["./node_modules/preact/jsx-runtime"],
             "react-dom": ["./node_modules/preact/compat/"],
             "react-dom/*": ["./node_modules/preact/compat/*"],
+            "api/*": ["./node_modules/obsidian-dataview/lib/api/*"],
+            "data-index/*": ["./node_modules/obsidian-dataview/lib/data-index/*"],
+            "data-model/*": ["./node_modules/obsidian-dataview/lib/data-model/*"],
+            "expression/*": ["./node_modules/obsidian-dataview/lib/expression/*"],
+            "query/*": ["./node_modules/obsidian-dataview/lib/query/*"],
+            "settings": ["./node_modules/obsidian-dataview/lib/settings/"],
+            "typings/*": ["./node_modules/obsidian-dataview/lib/typings/*"]
         }
     },
     "include": ["**/*.ts", "**/*.tsx"],
