@@ -173,7 +173,7 @@ function PromptRoot({
                         {submitText ?? "Create new note"}
                     </button>
                 </div>
-                <Portal.Receiver ref={state.dropdownRef} />
+                <Portal.Receiver receiverRef={state.dropdownRef} />
             </Portal.Scope>
         </PromptContext.Provider>
     );

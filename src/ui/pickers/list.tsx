@@ -146,9 +146,9 @@ function ListPickerElement({ index, ref, refs, children, control, fieldName }) {
             }}
             onBlur={(e) => {
                 if (Platform.isMobile) return;
-                for (let container of [el(), promptCtx.state?.dropdownRef?.current?.base]) {
+                for (let container of [el(), promptCtx.state?.dropdownRef?.current]) {
                     for (let element of [e?.relatedTarget, document.activeElement]) {
-                        if (container?.contains?.(element)) {
+                        if (container?.contains?.(element as Node)) {
                             return;
                         }
                     }

@@ -14,22 +14,22 @@ export const Portal = {
 
         return <PortalContext.Provider value={{ node, setNode }}>{children}</PortalContext.Provider>;
     },
-    Receiver: ({ ref }: { ref: RefObject<HTMLDivElement> }) => {
+    Receiver: ({ receiverRef }: { receiverRef?: RefObject<HTMLDivElement | null> }) => {
         const { node, setNode } = useContext(PortalContext);
-        ref = ref ?? useRef<HTMLElement | null>(null);
+        receiverRef = receiverRef ?? useRef<HTMLDivElement | null>(null);
 
         useEffect(() => {
-            if (ref.current && !node) {
-                setNode(ref.current);
+            if (receiverRef.current && !node) {
+                setNode(receiverRef.current);
             }
             return () => {
-                if (node === ref.current) {
+                if (node === receiverRef.current) {
                     setNode(null);
                 }
             };
         }, []);
 
-        return <div ref={ref}></div>;
+        return <div ref={receiverRef}></div>;
     },
     Sender: React.memo(({ children }: { children: React.ReactNode }) => {
         const portalContext = useContext(PortalContext);
