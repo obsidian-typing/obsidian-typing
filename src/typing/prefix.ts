@@ -1,4 +1,5 @@
-import { Platform, TFile, TFolder } from "obsidian";
+import { TFile, TFolder } from "obsidian";
+import { gctx } from "src/context";
 import { DataClass, field } from "src/utilities";
 import type { NoteState, Type } from ".";
 
@@ -112,7 +113,7 @@ export let INTERPOLATIONS: PrefixInterpolationSpec[] = [
         regex: () => "[1-9]+[0-9]*",
         fn: ({ type, index }) => {
             let max = 0;
-            let folder = app.vault.getAbstractFileByPath(type.folder);
+            let folder = gctx.app.vault.getAbstractFileByPath(type.folder);
             if (folder == null) {
                 // numeration starts with 1
                 return `${max + 1}`;

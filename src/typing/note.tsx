@@ -318,7 +318,7 @@ export class Note {
     }
 
     Link = ({ children, linkText, ...props }: { children?: any; linkText?: string }) => {
-        let ref = useRef();
+        let ref = useRef<HTMLAnchorElement>();
         return (
             <a
                 class="internal-link no-postprocessing"
@@ -423,7 +423,7 @@ export class NoteCache {
 
     startWatch() {
         gctx.plugin.registerEvent(
-            gctx.app.metadataCache.on("dataview:metadata-change", (op, file) => {
+            gctx.app.metadataCache.on("dataview:metadata-change", (op, file, _?) => {
                 if (gctx.graph.isReady) this.invalidate(file.path);
             })
         );
