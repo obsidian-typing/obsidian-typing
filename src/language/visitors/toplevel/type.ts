@@ -36,7 +36,7 @@ export const TypeParentsClause = createVisitor({
         this.traverse((node, child) => {
             let name = child.run(node);
             for (let type of globalTypes) {
-                if (type.name == name && type.node.to <= node.from) {
+                if (type.name === name && type.node.to <= node.from) {
                     return;
                 }
             }
