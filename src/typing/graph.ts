@@ -22,6 +22,7 @@ export class TypeGraph {
         }
         if (!left_type) return false;
         if (!right_type) return false;
+        if (left_type.name === right_type.name) return true
         if (!left_type.parentNames) return false;
         if (left_type.parentNames.includes(right_type.name)) {
             return true;
