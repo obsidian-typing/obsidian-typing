@@ -300,7 +300,7 @@ export class Visitor<
             Merge<Utils, Utils2>,
             Merge<CacheType, CacheType2>,
             NewSuper
-            // @ts-expect-error TODO: fix
+        // @ts-expect-error TODO: fix
         >(newArgs);
         result.super = Visitor.fromArgs<Return, Children, Utils, CacheType, Super>(this.originalArgs) as NewSuper;
         result.super.derived = result;
@@ -329,7 +329,7 @@ export class Visitor<
                 if (this.args.utils[key] != null) {
                     try {
                         this.args.utils[key] = this.args.utils[key].bind(this);
-                    } catch {}
+                    } catch { }
                 }
             }
         }
@@ -919,14 +919,15 @@ export class Visitor<
             if (tags && visitor.tags) {
                 for (let tag of tags) {
                     if (visitor.tags.contains(tag)) {
-                        return visitor;
+                        return visitor as VisitorWithRule<R>;
                     }
                 }
             }
             if (rules && visitor.rules) {
+                let visitorRules = visitor.rules instanceof Array ? visitor.rules : [visitor.rules];
                 for (let rule of rules) {
-                    if (visitor.rules.contains(rule)) {
-                        return visitor;
+                    if (visitorRules.contains(rule as Rules)) {
+                        return visitor as VisitorWithRule<R>;
                     }
                 }
             }
