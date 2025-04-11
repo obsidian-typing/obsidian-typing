@@ -11,7 +11,7 @@ export class DateTime extends FieldType<DateTime> {
     };
 
     Picker = () => {
-        return <Pickers.Date showTime={true} />;
+        return <Pickers.DateTime showTime={true} />;
     };
 
     get default() {

@@ -21,7 +21,7 @@ function toLocalISOString(date: Date, showTime: boolean) {
     }
 }
 
-export function Date({ showTime }: { showTime: boolean }) {
+export function DateTime({ showTime }: { showTime: boolean }) {
     let controls = useControls({
         parse(value) {
             return { str: value };
