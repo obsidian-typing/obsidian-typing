@@ -241,7 +241,7 @@ export const Type = createVisitor({
                 ).extend({
                     run(node) {
                         let methodsList = this.runChildren()["body"];
-                        let methods = {};
+                        let methods: Record<string, Method> = {};
                         for (let { name, value } of methodsList) {
                             methods[name] = Method.new({ function: value });
                         }
