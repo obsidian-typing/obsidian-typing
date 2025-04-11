@@ -5,7 +5,7 @@ import { FieldType } from "./base";
 export class Date extends FieldType<Date> {
     name = "Date";
 
-    Display: FieldType["Display"] = ({ value }) => {
+    Display: FieldType["Display"] = ({ value }: { value?: luxon.DateTime | string }) => {
         if (typeof value != "string") return <>{value?.toLocal?.().toFormat?.("yyyy-MM-dd") ?? "invalid date"}</>;
         return <>{value}</>;
     };
