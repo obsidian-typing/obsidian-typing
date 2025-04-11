@@ -46,6 +46,7 @@ export class Type extends DataClass {
     public hooks: HookContainer = HookContainer.new();
 
     private ancestors: Record<string, Type> = {};
+    private descendants: Record<string, Type> = {};
 
     public onAfterCreate(): void {
         this.rebindFields();
@@ -66,6 +67,7 @@ export class Type extends DataClass {
         type = type ?? this;
         for (let parent of type.parents) {
             this.ancestors[parent.name] = parent;
+            parent.descendants[this.name] = this;
             this.indexAncestors(parent);
         }
     }
