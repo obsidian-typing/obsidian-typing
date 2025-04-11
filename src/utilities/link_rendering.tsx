@@ -1,6 +1,7 @@
 import styled from "@emotion/styled";
 import classNames from "classnames";
 import { AlertTriangle } from "lucide-react";
+import { ComponentChildren } from "preact";
 import { useState } from "react";
 import styles from "src/styles/link.scss";
 import { Note, Type } from "src/typing";
@@ -22,16 +23,16 @@ const ErrContainer = styled.span`
     border-color: 1px solid var(--background-modifier-border);
 `;
 
-const Error = ({ children }) => {
+const Error = ({ children }: { children: ComponentChildren }) => {
     let [open, setOpen] = useState(false);
     return (
         <ErrContainer
-            onMouseEnter={(e) => {
+            onMouseEnter={(e: MouseEvent) => {
                 e.stopPropagation();
                 e.preventDefault();
                 setOpen(true);
             }}
-            onMouseLeave={(e) => {
+            onMouseLeave={(e: MouseEvent) => {
                 e.stopPropagation();
                 e.preventDefault();
                 setOpen(false);
