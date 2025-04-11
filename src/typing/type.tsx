@@ -165,4 +165,12 @@ export class Type extends DataClass {
     getAncestor(name: string): Type | null {
         return this.ancestors[name];
     }
+
+    isAncestorOf(other: Type): boolean {
+        return !!other.ancestors[this.name];
+    }
+
+    isDescendantOf(other: Type): boolean {
+        return !!this.ancestors[other.name];
+    }
 }
