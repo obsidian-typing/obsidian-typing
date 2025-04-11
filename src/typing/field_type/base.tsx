@@ -51,4 +51,8 @@ export abstract class FieldType<InstanceType extends FieldType = any>
     get isList(): boolean {
         return false;
     }
+
+    get underlyingType(): FieldType {
+        return this;
+    }
 }

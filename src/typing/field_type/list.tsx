@@ -79,4 +79,8 @@ export class List extends FieldType<List> {
     get isList() {
         return true;
     }
+
+    get underlyingType() {
+        return this.type.underlyingType;
+    }
 }

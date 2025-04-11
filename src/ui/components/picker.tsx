@@ -152,7 +152,7 @@ Picker.Display = React.memo(
         };
 
         let field = promptCtx.state.type?.fields?.[state.fieldName];
-        let fieldType = field.type?.type ?? field.type;
+        let fieldType = field.type?.underlyingType;
         let DisplayComponent = fieldType?.Display;
 
         return (
