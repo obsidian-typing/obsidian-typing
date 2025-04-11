@@ -6,7 +6,7 @@ import { DataClass, field, mergeDeep } from "src/utilities";
 import { Action, Field, Hook, HookContainer, HookContextType, HookNames, Method, Note, NoteState, Prefix, Style } from ".";
 
 export class Type extends DataClass {
-    @field()
+    @field({ inherit: false })
     public isAbstract: boolean = false;
 
     @field()
