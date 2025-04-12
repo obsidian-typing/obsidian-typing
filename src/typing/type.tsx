@@ -9,19 +9,19 @@ export class Type extends DataClass {
     @field()
     public isAbstract: boolean = false;
     @field()
-    public name: string;
+    public name!: string;
     @field()
     public parentNames: Array<string> = [];
     @field({ inherit: false })
     public parents: Array<Type> = [];
     @field({ inherit: false })
-    public folder: string = null;
+    public folder: string | null = null;
     @field({ inherit: false })
-    public glob: string = null;
+    public glob: string | null = null;
     @field()
-    public icon: string = null;
+    public icon: string | null = null;
     @field()
-    public prefix: Prefix = null;
+    public prefix: Prefix | null = null;
     @field()
     public style: Style = Style.new();
     @field({ inherit: (a, b) => ({ ...b, ...a }) })
@@ -87,7 +87,7 @@ export class Type extends DataClass {
         return state;
     }
 
-    async create(state: NoteState | Promise<NoteState>) {
+    async create(state: Omit<NoteState, "type"> | Promise<Omit<NoteState, "type">>) {
         state = await state;
         if (!state) {
             return;
