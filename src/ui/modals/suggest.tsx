@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 import { App, prepareFuzzySearch, SuggestModal } from "obsidian";
-import { render } from "preact";
+import { render, JSX } from "preact";
 import { gctx } from "src/context";
 import { Action, Note } from "src/typing";
 import { Type } from "src/typing/type";
