@@ -5,7 +5,7 @@ import { ComponentChildren } from "preact";
 import React, { createContext, useContext, useEffect, useReducer, useRef } from "react";
 import styles from "src/styles/prompt.scss";
 import { useBlurCallbacks } from "../hooks";
-import { ControlsResult } from "../hooks/controls";
+import { ControlsRecord, ControlsResult } from "../hooks/controls";
 import { Portal } from "./portal";
 import { PromptContext } from "./prompt";
 
@@ -87,7 +87,7 @@ export const Picker = ({ children }: ChildrenProps) => {
     return <>{children}</>;
 };
 
-Picker.SubmitButton = (props: { controls: ControlsResult<any> }) => {
+Picker.SubmitButton = <T extends ControlsRecord,>(props: { controls: ControlsResult<T> }) => {
     let pickerCtx = useContext(PickerContext);
     if (!Platform.isMobile) return null;
     return (
