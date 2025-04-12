@@ -2,7 +2,7 @@ import classNames from "classnames";
 import { Plus } from "lucide-react";
 import { Platform } from "obsidian";
 import { ComponentChildren } from "preact";
-import { createContext, useContext, useRef, useState, Ref, RefObject } from "react";
+import { createContext, useContext, useRef, useState, Ref, RefObject, forwardRef } from "react";
 import styles from "src/styles/prompt.scss";
 import { Contexts, Picker } from "../components";
 import { PickerContext } from "../components/picker";
@@ -130,11 +130,11 @@ interface ListPickerElementProps {
     fieldName: string;
 }
 
-function ListPickerElement({ index, ref, refs, children, control, fieldName }: ListPickerElementProps) {
+const ListPickerElement = forwardRef<HTMLButtonElement, ListPickerElementProps>(({ index, refs, children, control, fieldName }, ref) => {
     const [isActive, setIsActive] = useState(false);
     const promptCtx = useContext(Contexts.PromptContext);
 
-    const el = () => refs[index].current.base;
+    const el = () => refs[index].current;
 
     return (
         <button
@@ -170,7 +170,7 @@ function ListPickerElement({ index, ref, refs, children, control, fieldName }: L
                     e.preventDefault();
                     e.stopPropagation();
                     setIsActive(false);
-                    refs[index].current.base.focus();
+                    refs[index].current.focus();
                 }
                 if (e.target != el()) return;
                 if (e.key == "Enter") {
@@ -187,20 +187,20 @@ function ListPickerElement({ index, ref, refs, children, control, fieldName }: L
                     e.preventDefault();
                     e.stopPropagation();
                     control.setValue(REMOVE_CONST);
-                    refs[index - 1].current.base.focus();
+                    refs[index - 1].current.focus();
                 }
                 if (e.key === "ArrowLeft") {
                     if (index > 0) {
-                        refs[index - 1].current.base.focus();
+                        refs[index - 1].current.focus();
                     } else {
-                        refs[refs.length - 2].current.base.focus();
+                        refs[refs.length - 2].current.focus();
                     }
                 }
                 if (e.key === "ArrowRight") {
                     if (index < refs.length - 2) {
-                        refs[index + 1].current.base.focus();
+                        refs[index + 1].current.focus();
                     } else {
-                        refs[0].current.base.focus();
+                        refs[0].current.focus();
                     }
                 }
             }}
@@ -218,4 +218,4 @@ function ListPickerElement({ index, ref, refs, children, control, fieldName }: L
             </Picker.Wrapper>
         </button>
     );
-}
+});
