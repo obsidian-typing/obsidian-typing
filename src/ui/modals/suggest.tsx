@@ -1,5 +1,5 @@
 import styled from "@emotion/styled";
-import { App, fuzzySearch, prepareQuery, SuggestModal } from "obsidian";
+import { App, prepareFuzzySearch, SuggestModal } from "obsidian";
 import { render } from "preact";
 import { gctx } from "src/context";
 import { Action, Note } from "src/typing";
@@ -51,10 +51,10 @@ export class TypeSuggestModal extends SuggestModal<Type> {
     }
 
     getSuggestions(query: string): Type[] {
-        let preparedQuery = prepareQuery(query);
+        let fuzzySearch = prepareFuzzySearch(query);
         let result = [];
         for (let type of this.types) {
-            if (fuzzySearch(preparedQuery, type.name)) {
+            if (fuzzySearch(type.name)) {
                 result.push(type);
             }
         }
@@ -81,10 +81,10 @@ export class ActionSuggestModal extends SuggestModal<Action> {
     }
 
     getSuggestions(query: string): Action[] {
-        let preparedQuery = prepareQuery(query);
+        let fuzzySearch = prepareFuzzySearch(query);
         let result = [];
         for (let action of this.actions) {
-            if (fuzzySearch(preparedQuery, action.name)) {
+            if (fuzzySearch(action.name)) {
                 result.push(action);
             }
         }
