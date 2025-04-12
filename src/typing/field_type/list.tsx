@@ -56,7 +56,7 @@ export class List extends FieldType<List> {
         let result = super.bind(context);
         // TODO: there may be some troubles with field name, as it will be the same as of outer type
         // result.type = result.type.bind({ type: context.type });
-        result.type = result.type.bind(context);
+        result.type = result.type.bind({ ...context, inList: true });
         return result;
     }
 
