@@ -1,7 +1,7 @@
 import { MarkdownPostProcessorContext, Plugin } from "obsidian";
 import { gctx } from "src/context";
 import TypingPlugin from "src/main";
-import { regexField } from "./field_accessor";
+import { FieldSearchResult, regexField } from "./field_accessor";
 
 export function hideInlineFields(plugin: Plugin) {
     return async function (el: HTMLElement, ctx: MarkdownPostProcessorContext) {
@@ -26,8 +26,8 @@ export function hideInlineFields(plugin: Plugin) {
             for (let j = 0; j < parChildren.length; j++) {
                 let child = parChildren[j];
                 // NOTE: text node
-                if (child.nodeType == 3) {
-                    let match = regexField.exec(child.textContent);
+                if (child.nodeType == 3 && child.textContent) {
+                    let match = regexField.exec(child.textContent) as FieldSearchResult["match"];
                     if (
                         match &&
                         (hideSetting == "all" ||

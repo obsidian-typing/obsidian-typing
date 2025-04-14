@@ -16,7 +16,7 @@ import { RenderLink } from "src/utilities";
 
 export class LinkWidget extends WidgetType {
     linkText: string;
-    linkDisplay: string;
+    linkDisplay?: string;
     constructor(public linkContent: string, public sourcePath: string) {
         super();
         this.linkText = this.linkContent;
@@ -31,7 +31,7 @@ export class LinkWidget extends WidgetType {
 
         container.onmouseenter = (e) => {
             // ref: https://github.com/nothingislost/obsidian-hover-editor/blob/5df5230895d476f9777281e355d0dea1c577c974/src/main.ts#L266
-            let instance = gctx.app.workspace.getActiveViewOfType(View) as { getFile?(): TFile; info?: { getFile(): TFile} };
+            let instance = gctx.app.workspace.getActiveViewOfType(View) as { getFile?(): TFile; info?: { getFile(): TFile } };
             gctx.app.workspace.trigger("hover-link", {
                 event: e,
                 source: "editor",
@@ -43,7 +43,7 @@ export class LinkWidget extends WidgetType {
         };
 
         container.onclick = (e) => {
-            let instance = gctx.app.workspace.getActiveViewOfType(View) as { getFile?(): TFile; info?: { getFile(): TFile} };
+            let instance = gctx.app.workspace.getActiveViewOfType(View) as { getFile?(): TFile; info?: { getFile(): TFile } };
             let sourcePath = (instance.info ?? instance).getFile?.()?.path || "";
             let newLeaf = e.metaKey || e.ctrlKey;
             gctx.app.workspace.openLinkText(this.linkText, sourcePath, newLeaf);
@@ -57,9 +57,10 @@ export class LinkWidget extends WidgetType {
         // if (!path.endsWith("md")) return;
 
         let note = gctx.api.note(path ?? linkPath);
-        let el = RenderLink({ note, type: note.type, container, linkText: this.linkDisplay });
-
-        ReactDOM.render(el, container);
+        if (note.type) {
+            let el = RenderLink({ note, type: note.type, container, linkText: this.linkDisplay });
+            ReactDOM.render(el, container);
+        }
         return container;
     }
 }
@@ -97,10 +98,10 @@ const linkPlugin = ViewPlugin.fromClass(
             let sourcePath = state.field(editorInfoField)?.file?.path;
 
             for (let { from, to } of view.visibleRanges) {
-                let start: number = null;
-                let end: number = null;
-                let contentStart: number = null;
-                let contentEnd: number = null;
+                let start: number | null = null;
+                let end: number | null = null;
+                let contentStart: number | null = null;
+                let contentEnd: number | null = null;
 
                 syntaxTree(state).iterate({
                     from,
@@ -128,7 +129,7 @@ const linkPlugin = ViewPlugin.fromClass(
                                 Decoration.replace({
                                     inclusiveStart: false,
                                     inclusiveEnd: false,
-                                    widget: new LinkWidget(state.sliceDoc(contentStart, contentEnd), sourcePath),
+                                    widget: new LinkWidget(state.sliceDoc(contentStart!, contentEnd!), sourcePath!),
                                 })
                             );
                             start = null;
@@ -141,7 +142,7 @@ const linkPlugin = ViewPlugin.fromClass(
             return builder.finish();
         }
 
-        destroy() {}
+        destroy() { }
     },
     {
         decorations: (value) => value.decorations,

@@ -67,7 +67,7 @@ const ErrorDisclosure = ({
 export class MarginalRenderChild extends MarkdownRenderChild {
     private debouncedUpdate: ReturnType<typeof eagerDebounce>;
     public note: Note;
-    public messages: string[];
+    public messages: string[] = [];
     public isAutoreloadEnabled: boolean = true;
     public deferredCallbacks: (() => void)[] = [];
     public deferredEvents: EventRef[] = [];
@@ -128,7 +128,7 @@ export class MarginalRenderChild extends MarkdownRenderChild {
         this.isAutoreloadEnabled = true;
         if (!this.marginal) return;
         if (this.marginal instanceof Script) {
-            const context = {
+            const context: Contexts.MarginalContextType = {
                 container: this.containerEl,
                 component: this,
                 note: this.note,
@@ -188,7 +188,7 @@ export class MarginalRenderChild extends MarkdownRenderChild {
         for (let callback of this.deferredCallbacks) {
             try {
                 callback();
-            } catch {}
+            } catch { }
         }
         for (let eventRef of this.deferredEvents) {
             gctx.app.metadataCache.offref(eventRef);
@@ -201,7 +201,7 @@ export class MarginalRenderChild extends MarkdownRenderChild {
 }
 
 export const MarginalComponent = ({ script }: { script: Script }) => {
-    const context = useMarginalContext();
+    const context = useMarginalContext()!;
     const el = script.call(context);
     return el;
 };
@@ -210,7 +210,7 @@ export function registerMarginalMonkeyPatch(plugin: TypingPlugin) {
     plugin.register(
         around(MarkdownPreviewView.prototype, {
             get(oldMethod) {
-                return function (...args) {
+                return function (this: MarkdownPreviewView, ...args) {
                     let result = oldMethod && oldMethod.apply(this, args);
                     if (gctx.settings.marginalsInPreview) {
                         result = result.replaceAll(HEADER_CODEBLOCK, "");
@@ -220,7 +220,7 @@ export function registerMarginalMonkeyPatch(plugin: TypingPlugin) {
                 };
             },
             set(oldMethod) {
-                return function (...args) {
+                return function (this: MarkdownPreviewView, ...args) {
                     if (gctx.settings.marginalsInPreview) {
                         args[0] = injectHeader(args[0], HEADER_CODEBLOCK);
                         args[0] = args[0] + FOOTER_CODEBLOCK;
@@ -243,7 +243,7 @@ function marginalPostProcessor(plugin: TypingPlugin): MarkdownPostProcessor {
             return;
         }
 
-        let container: HTMLElement = ctx.containerEl;
+        let container: HTMLElement | null | undefined = ctx.containerEl;
         for (let depth = 0; depth < 4; depth++) {
             if (!container) break;
             if (container.classList.contains("inline-embed") && container.getAttr("src")?.contains("#")) return;
