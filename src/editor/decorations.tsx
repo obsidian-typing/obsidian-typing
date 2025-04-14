@@ -6,7 +6,7 @@ import { Visitors } from "src/language/visitors";
 
 export const decorationsPlugin = ViewPlugin.fromClass(
     class {
-        decorations: DecorationSet;
+        decorations!: DecorationSet;
 
         constructor(view: EditorView) {
             this.create(view);
