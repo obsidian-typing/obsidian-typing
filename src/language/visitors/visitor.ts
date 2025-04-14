@@ -628,7 +628,7 @@ export class Visitor<
         // options = mergeDeep({ keys: [], eager: false, traversalOptions: {} }, options);
 
         let result = {} as Partial<{ [K in Key]: VisitorReturn<K> }>;
-        let traversalOptions = options.traversalOptions ?? {};
+        let traversalOptions = { ...options.traversalOptions };
         traversalOptions.selectChildren = options?.keys;
 
         let fulfilledKeys: Set<Key>;
