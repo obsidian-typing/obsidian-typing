@@ -107,7 +107,7 @@ export abstract class ModuleManagerSync<ContextType = any> {
             success = this.evaluateModule(file, module);
         } catch (e) {
             this.exitFrame();
-            return null;
+            return { error: `Unexpected error: ${e}`};
         }
 
         if (!success) {
