@@ -16,7 +16,7 @@ const Slug = styled.span`
 
 const Name = styled.span``;
 
-export function SuggestionWithIcon(props: { text: string; icon: string; callback: { (): void } }) {
+export function SuggestionWithIcon(props: { text: string; icon?: string | null; callback: { (): void } }) {
     let slug: JSX.Element;
     if (props.icon) {
         slug = <i className={props.icon}></i>;
@@ -41,7 +41,7 @@ export class TypeSuggestModal extends SuggestModal<Type> {
         for (let name of typeNames) {
             if (name.startsWith("_")) continue;
             let type = gctx.graph.get({ name });
-            if (!type.isAbstract && type.isCreateable) {
+            if (type && !type.isAbstract && type.isCreateable) {
                 this.types.push(type);
             }
         }
@@ -72,6 +72,10 @@ export class ActionSuggestModal extends SuggestModal<Action> {
     constructor(app: App, public note: Note) {
         super(app);
 
+        if (!note.type) {
+            return;
+        }
+
         for (let id in note.type.actions) {
             this.actions.push(note.type.actions[id]);
         }
@@ -92,6 +96,6 @@ export class ActionSuggestModal extends SuggestModal<Action> {
     }
 
     onChooseSuggestion(action: Action) {
-        this.note.actions[action.id]();
+        this.note.actions?.[action.id]();
     }
 }
