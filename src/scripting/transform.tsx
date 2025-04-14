@@ -70,7 +70,7 @@ function buildImportArgs(
                 ) {
                     return { type: "StringLiteral", value: "__star__" };
                 } else {
-                    throw new Error();
+                    throw new Error("Internal Error: Unexpected node type");
                 }
             }),
         },
