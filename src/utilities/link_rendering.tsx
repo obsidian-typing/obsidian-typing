@@ -51,9 +51,9 @@ export const RenderLink = ({
     linkText,
     ...props
 }: {
-    type: Type;
+    type?: Type | null;
     note: Note;
-    container?: HTMLElement;
+    container?: HTMLElement | null;
     linkText?: string;
 }) => {
     if (!type) {
@@ -63,7 +63,7 @@ export const RenderLink = ({
     let linkScript = type.style?.link;
     if (linkScript) {
         try {
-            let el = linkScript.call({ note, container, linkText, props });
+            let el = linkScript.call({ note, container: container ?? undefined, linkText, props });
             if (el) {
                 return el;
             }
