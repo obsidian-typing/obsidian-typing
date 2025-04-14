@@ -370,15 +370,15 @@ class FieldsProxy extends DataClass {
 
     refreshAccessor(): void {
         this.accessor = autoFieldAccessor(this.note.path, gctx.plugin);
-        let proxy = this;
+        let target = this;
 
         for (let fieldName in this.note.type.fields) {
             Reflect.defineProperty(this.proxy, fieldName, {
                 get: async function () {
-                    return proxy.getValue(fieldName);
+                    return target.getValue(fieldName);
                 },
                 set: async function (value: string | Promise<string>) {
-                    return proxy.setValue(fieldName, value);
+                    return target.setValue(fieldName, value);
                 },
             });
         }
