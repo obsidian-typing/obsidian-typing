@@ -263,7 +263,7 @@ type A {
 }
 `);
             expect(A.style[marginal]).toBeInstanceOf(FnScript);
-            assume(A.style[marginal], FnScript);
+            assume(A.style[marginal], FnScript<IScriptContextBase>);
             expect(A.style[marginal].call({})).toBeDefined();
         });
 
@@ -278,7 +278,7 @@ type A {
 }
 `);
             expect(A.style[marginal]).toBeInstanceOf(ExprScript);
-            assume(A.style[marginal], ExprScript);
+            assume(A.style[marginal], ExprScript<IScriptContextBase>);
             expect(A.style[marginal].call({})).toBeDefined();
         });
 
@@ -310,6 +310,7 @@ type A {
 }
 `);
         expect(A.style.link).toBeInstanceOf(FnScript);
+        assume(A.style.link, FnScript<ILinkScriptContext>)
         expect(A.style.link.call({})).toBeDefined();
     });
 
@@ -324,7 +325,7 @@ type A {
 }
 `);
         expect(A.style.link).toBeInstanceOf(ExprScript);
-        assume(A.style.link, ExprScript);
+        assume(A.style.link, ExprScript<ILinkScriptContext>);
         expect(A.style.link.call({})).toBeDefined();
     });
 });
