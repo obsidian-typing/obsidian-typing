@@ -4,7 +4,7 @@ import { gctx } from "src/context";
 import { render } from "src/utilities";
 
 type PromiseCallbacks<T = any> = {
-    resolve: (value?: T) => void;
+    resolve: (value: T | null) => void;
     reject: (error?: any) => void;
     setOnClose: (handler: () => void) => void;
     onBeforeClose: () => void;
@@ -14,8 +14,8 @@ type PromiseCallbacks<T = any> = {
 export const ModalContext = createContext<PromiseCallbacks | null>(null);
 
 export class ReactModal<T = any> extends Modal {
-    public promise: Promise<T>;
-    private promiseCallbacks: PromiseCallbacks<T>;
+    public promise: Promise<T | null>;
+    private promiseCallbacks: PromiseCallbacks<T> | null = null;
     private onCloseHandler: (() => void) | null = null;
 
     constructor(
@@ -30,7 +30,7 @@ export class ReactModal<T = any> extends Modal {
                 this.close();
             }
         });
-        this.promise = new Promise<T>((resolve, reject) => {
+        this.promise = new Promise<T | null>((resolve, reject) => {
             this.promiseCallbacks = {
                 close: () => {
                     super.close();
@@ -72,7 +72,7 @@ export class ReactModal<T = any> extends Modal {
         (async () => {
             if (!this.onBeforeClose || (await this.onBeforeClose())) {
                 this.onCloseHandler?.();
-                this.promiseCallbacks.resolve(null);
+                this.promiseCallbacks?.resolve(null);
             }
         })();
     }
@@ -82,7 +82,7 @@ export function modal<T = any>(
     component: ReactNode,
     className?: string,
     onBeforeClose?: () => boolean | Promise<boolean>
-): Promise<T> {
+): Promise<T | null> {
     const reactModal = new ReactModal<T>(component, onBeforeClose, className);
     reactModal.open();
     return reactModal.promise;

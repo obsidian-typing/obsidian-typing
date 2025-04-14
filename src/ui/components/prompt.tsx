@@ -29,14 +29,15 @@ export type ErrorSpec =
       };
 
 export interface PromptState extends NoteState {
-    uploads?: UploadSpec[];
+    fields: Record<string, string>;
+    uploads?: Required<UploadSpec>[];
     errors?: ErrorSpec[];
     dropdownRef?: RefObject<HTMLDivElement>;
     scrollerRef?: RefObject<HTMLDivElement>;
 }
 
 const initialState: PromptState = {
-    type: undefined,
+    type: undefined as any,
     fields: {},
     uploads: [],
     errors: [],
@@ -47,7 +48,7 @@ type PromptActionType =
     | { type: "SET_TEXT"; payload: string }
     | { type: "SET_PREFIX"; payload: string }
     | { type: "SET_FIELD"; payload: { name: string; value: string } }
-    | { type: "DEFER_UPLOAD"; payload: UploadSpec }
+    | { type: "DEFER_UPLOAD"; payload: Required<UploadSpec> }
     | { type: "CANCEL_UPLOAD"; payload: UploadSpec }
     | { type: "SET_STATE"; payload: PromptState };
 
@@ -107,18 +108,18 @@ function PromptRoot({
 }) {
     const [state, dispatch] = useReducer(promptReducer, {
         ...noteState,
-        dropdownRef: useRef(),
-        scrollerRef: useRef(),
+        dropdownRef: useRef(null),
+        scrollerRef: useRef(null),
     });
     const contextValue: PromptContextType = { state, dispatch };
-    const { resolve, setOnClose, onBeforeClose } = useContext(Contexts.ModalContext);
+    const { resolve, setOnClose, onBeforeClose } = useContext(Contexts.ModalContext)!;
 
     if (!state.prefix && state.type?.prefix) {
         let prefix = state.type.prefix;
         const setPrefix = () => {
             dispatch({
                 type: "SET_PREFIX",
-                payload: prefix.apply({ type: state.type, state: state, cdate: new Date() }),
+                payload: prefix.apply({ type: state.type!, state: state, cdate: new Date() }),
             });
         };
         useEffect(() => {
@@ -180,7 +181,7 @@ function PromptRoot({
 }
 
 const Confirmation = ({ text = "The note hasn't been created yet and your progress will be discarded." }) => {
-    const { resolve, close } = useContext(Contexts.ModalContext);
+    const { resolve, close } = useContext(Contexts.ModalContext)!;
     return (
         <>
             <div className="modal-title">Are you sure?</div>
@@ -263,18 +264,18 @@ function PromptText() {
     );
 }
 
-function FieldLabel({ name, label = null }: { name: string; label?: string }) {
+function FieldLabel({ name, label }: { name: string; label?: string }) {
     // TODO: use context to check if value is unsaved
 
     return (
         <div className={styles.promptFieldLabel}>
-            {name} {label}
+            {name} {label ?? null}
         </div>
     );
 }
 
 const PromptField = (props: { name: string; children?: ComponentChildren }) => {
-    const { state, dispatch } = useContext(PromptContext);
+    const { state, dispatch } = useContext(PromptContext)!;
 
     const pickerConfig = {
         value: state.fields[props.name],
@@ -284,7 +285,7 @@ const PromptField = (props: { name: string; children?: ComponentChildren }) => {
         fieldName: props.name,
     };
 
-    const DefaultPicker = state.type.fields[props.name]?.type.Picker;
+    const DefaultPicker = state.type!.fields[props.name]?.type.Picker;
 
     return (
         <Picker.Wrapper {...pickerConfig}>
@@ -311,7 +312,7 @@ const PromptChild = ({ children, isActive }: { children: ComponentChildren; isAc
 
 const PromptFields = ({ names }: { names?: string[] }) => {
     if (!names) {
-        let { state } = useContext(PromptContext);
+        let { state } = useContext(PromptContext)!;
         let fields = state.type?.fields;
         names = [];
         for (let name in fields) {
@@ -334,7 +335,7 @@ export const Prompt = Object.assign(PromptRoot, {
     Fields: PromptFields,
 });
 
-function validateState(state: PromptState, validator?: () => ErrorSpec[]): ErrorSpec[] {
+function validateState(state: PromptState, validator?: () => ErrorSpec[]): ErrorSpec[] | null {
     // TODO: check the title is not empty if prefix is empty
     // TODO: check the filename is not taken
     // TODO: check the field values are correct (checks from FieldType)
@@ -369,11 +370,11 @@ export async function prompt(ui: JSX.Element, options?: { confirmation?: boolean
         classNames("modal", styles.prompt),
         options.confirmation
             ? async () =>
-                  await modal(
-                      <Confirmation text={options.confirmationText} />,
-                      classNames("modal", styles.prompt, styles.confirmation)
-                  )
-            : null
+                await modal(
+                    <Confirmation text={options.confirmationText} />,
+                    classNames("modal", styles.prompt, styles.confirmation)
+                ) ?? false
+            : undefined
     );
 }
 
@@ -400,7 +401,8 @@ function statesAreEqual(state1: PromptState, state2: PromptState): boolean {
         if (
             state1.uploads.length !== state2.uploads.length ||
             !state1.uploads.every((upload, idx) =>
-                Object.keys(upload).every((key: keyof UploadSpec) => upload[key] === state2.uploads![idx][key])
+                (Object.keys(upload) as (keyof UploadSpec)[])
+                    .every((key) => upload[key] === state2.uploads![idx][key])
             )
         ) {
             return false;
@@ -414,7 +416,8 @@ function statesAreEqual(state1: PromptState, state2: PromptState): boolean {
         if (
             state1.errors.length !== state2.errors.length ||
             !state1.errors.every((error, idx) =>
-                Object.keys(error).every((key: keyof ErrorSpec) => error[key] === state2.errors![idx][key])
+                (Object.keys(error) as (keyof ErrorSpec)[])
+                    .every((key) => error[key] === state2.errors![idx][key])
             )
         ) {
             return false;
