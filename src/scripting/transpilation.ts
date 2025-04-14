@@ -1,7 +1,8 @@
 import { PluginItem, PluginObj, TransformOptions } from "@babel/core";
-import { availablePlugins, transform } from "@babel/standalone";
+import { availablePlugins, availablePresets, transform } from "@babel/standalone";
 import { customImportExportTransform } from "./transform";
 
+const presetTypeScript = availablePresets["typescript"];
 const transformReactJSX = availablePlugins["transform-react-jsx"];
 const transformModulesCommonJS = availablePlugins["transform-modules-commonjs"];
 
@@ -41,6 +42,7 @@ const DEFAULT_PARSER_OPTS: TransformOptions["parserOpts"] = {
 };
 
 const DEFAULT_TRANSPILE_OPTIONS: TransformOptions = {
+    presets: [presetTypeScript],
     plugins: [
         customImportExportTransform({ ctxObject: "api", importFunction: "_import_explicit" }),
         ...DEFAULT_PLUGINS,
@@ -52,6 +54,7 @@ const DEFAULT_TRANSPILE_OPTIONS: TransformOptions = {
 const MODULE_TRANSPILE_OPTIONS: TransformOptions = DEFAULT_TRANSPILE_OPTIONS;
 
 const FUNCTION_TRANSPILE_OPTIONS: TransformOptions = {
+    presets: [presetTypeScript],
     plugins: [
         customImportExportTransform({ ctxObject: "__ctx", importFunction: "_import_explicit" }),
         ...DEFAULT_PLUGINS,
