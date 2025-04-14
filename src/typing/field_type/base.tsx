@@ -42,7 +42,6 @@ export abstract class FieldType<InstanceType extends FieldType = any>
     }
 
     static ParametersVisitor: () => TVisitorBase<any>;
-    static ValueVisitor: TVisitorBase<any> = null;
 
     get isRelation(): boolean {
         return false;
