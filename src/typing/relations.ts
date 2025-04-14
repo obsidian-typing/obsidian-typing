@@ -1,6 +1,3 @@
-import { TFile } from "obsidian";
-import { gctx } from "src/context";
-import TypingPlugin from "src/main";
 import { DataClass, field } from "src/utilities";
 import { Note } from "./note";
 
@@ -21,7 +18,7 @@ export class RelationsManager {
 
 export class RelationsProxy extends DataClass {
     @field()
-    note: Note;
+    note!: Note;
 
     public get(filter?: { type?: string }): Relation[] { return [] }
 }

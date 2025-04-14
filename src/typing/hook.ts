@@ -58,33 +58,37 @@ export interface OnMetadataChangeHookContext extends HookContext {
 
 export class Hook<T extends HookContext> extends DataClass {
     @field()
-    func: FnScript;
+    func!: FnScript<T>;
 
     run(ctx: T): Function {
         return this.func.call(ctx);
     }
 }
 
-export type HookContextType<T extends HookNames> = HookContainer[T] extends Hook<infer Ctx> ? Ctx : never;
+export type HookContextType<T extends HookNames> = HookContainer[T] extends Hook<infer Ctx> | null | undefined ? Ctx : never;
 
 export class HookContainer extends DataClass {
     @field()
-    [HookNames.CREATE]: Hook<CreateHookContext> = null;
+    [HookNames.CREATE]?: Hook<CreateHookContext>;
+
     @field()
-    [HookNames.ON_CREATE]: Hook<OnCreateHookContext> = null;
+    [HookNames.ON_CREATE]?: Hook<OnCreateHookContext>;
+
     @field()
-    [HookNames.ON_RENAME]: Hook<OnRenameHookContext> = null;
+    [HookNames.ON_RENAME]?: Hook<OnRenameHookContext>;
+
     @field()
-    [HookNames.ON_METADATA_CHANGE]: Hook<OnMetadataChangeHookContext> = null;
+    [HookNames.ON_METADATA_CHANGE]?: Hook<OnMetadataChangeHookContext>;
+
     // @field()
     // [HookNames.ON_MOVE]: Hook<OnMoveHookContext> = null;
 
-    run<T extends HookNames, Ctx = HookContextType<T>>(name: T, context: Ctx) {
-        const hook = this[name] as Hook<Ctx>;
+    run<T extends HookNames>(name: T, context: HookContextType<T>) {
+        const hook = this[name]!;
         if (!hook) {
             return;
         }
-        hook.run(context);
+        (hook as Hook<HookContext>).run(context);
     }
 
     has<T extends HookNames>(name: T) {

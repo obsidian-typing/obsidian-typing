@@ -9,9 +9,9 @@ export class List extends FieldType<List> {
     name = "List";
 
     @field()
-    public type: FieldType = null;
+    public type!: FieldType;
 
-    @field()
+    @field({ required: false })
     public unique: boolean = false;
 
     Display: FieldType["Display"] = ({ value }) => {

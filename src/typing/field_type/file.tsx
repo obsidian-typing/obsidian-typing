@@ -12,34 +12,39 @@ export class File extends FieldType<File> {
 
     @field()
     upload: boolean = true;
+
     @field()
     search: boolean = true;
+
     @field()
     subpath: boolean = false;
+
     @field()
     display: boolean = false;
+
     @field()
     rename: boolean = false;
+
     @field()
     short: boolean = false;
 
     @field()
     folder: string = "files";
 
-    @field()
-    accept: string = null;
+    @field({ required: false })
+    accept?: string;
+
+    @field({ required: false })
+    ext?: string[];
+
+    @field({ required: false })
+    kind?: "video" | "audio" | "image" | "document";
+
+    @field({ required: false })
+    capture?: string | boolean;
 
     @field()
-    ext: string[] = null;
-
-    @field()
-    kind: "video" | "audio" | "image" | "document" = null;
-
-    @field()
-    capture: string | boolean = null;
-
-    @field()
-    autorename: Script = null;
+    autorename?: Script;
 
     Display: FieldType["Display"] = ({ value }: { value: Link | string }) => {
         if (typeof value != "string") value = value.markdown();
@@ -61,7 +66,7 @@ export class File extends FieldType<File> {
             if (folder && folder instanceof TFolder) {
                 Vault.recurseChildren(folder, (file) => {
                     if (!file || !(file instanceof TFile)) return;
-                    if (!this.ext.includes(file.extension)) return;
+                    if (this.ext && !this.ext.includes(file.extension)) return;
                     let relativePath = file.path.slice(folder.path.length + 1); // plus one slash
                     paths.push({ value: relativePath, display: preview });
                 });

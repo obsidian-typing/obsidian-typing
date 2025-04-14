@@ -15,18 +15,18 @@ export class Note extends FieldType<Note> {
     @field()
     public typeNames: Array<string> = [];
 
-    private _types: Array<Type> = null;
+    private _types?: Array<Type> = null;
 
     @field({ required: false })
-    public dv: string = null;
+    public dv?: string;
 
     @field({ required: false })
     public short: boolean = true;
 
-    @field()
+    @field({ required: false })
     public subpath: boolean = false;
 
-    @field()
+    @field({ required: false })
     public display: boolean = false;
 
     @field({ required: false })
@@ -41,10 +41,10 @@ export class Note extends FieldType<Note> {
 
     Display: FieldType["Display"] = ({ value }: { value: Link | string }) => {
         if (typeof value !== "string") value = value.markdown();
-        let { path, subpath, display } = parseLink(value);
+        let { path, display }: { path: string, display?: string} = parseLink(value);
         if (!display) {
             // to not pass empty linkText to RenderLink
-            display = null;
+            display = undefined;
         }
 
         // TODO: supply current path: which one should it be?
@@ -54,7 +54,7 @@ export class Note extends FieldType<Note> {
         return (
             <a class="internal-link" href={note.path} tabIndex={-1}>
                 <Suspense fallback={note.title}>
-                    <RenderLink type={note.type} note={note} container={null} linkText={display} />
+                    <RenderLink type={note.type} note={note} container={undefined} linkText={display} />
                 </Suspense>
             </a>
         );
