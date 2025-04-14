@@ -77,12 +77,12 @@ export function transpile(source: string, options: TransformOptions = DEFAULT_TR
     }
 }
 
-export function transpileModule(source: string) {
-    return transpile(source, MODULE_TRANSPILE_OPTIONS);
+export function transpileModule(source: string, options: { filename?: string } = {}) {
+    return transpile(source, { ...MODULE_TRANSPILE_OPTIONS, ...options });
 }
 
-export function transpileFunction(source: string) {
-    return transpile(source, FUNCTION_TRANSPILE_OPTIONS);
+export function transpileFunction(source: string, options: { filename?: string } = {}) {
+    return transpile(source, { ...FUNCTION_TRANSPILE_OPTIONS, ...options });
 }
 
 export function compileModuleWithContext(
@@ -91,7 +91,7 @@ export function compileModuleWithContext(
     options: { transpile: boolean; filename?: string } = { transpile: true }
 ): Record<string, any> {
     if (options.transpile) {
-        let transpiled = transpileModule(code);
+        let transpiled = transpileModule(code, { filename: options.filename ?? "file.tsx" });
         if (transpiled.errors != null) {
             throw transpiled.errors[0];
         }
@@ -123,10 +123,10 @@ export function compileFunctionWithContext(
     code: string,
     context: Record<string, any> = {},
     args: string[] = ["ctx", "note"],
-    options: { transpile: boolean } = { transpile: true }
+    options: { transpile: boolean, filename?: string } = { transpile: true }
 ): (Function & { message?: undefined }) | TranspilationError {
     if (options.transpile) {
-        let transpiled = transpileFunction(code);
+        let transpiled = transpileFunction(code, { filename: options.filename ?? "file.tsx" });
         if (transpiled.errors) {
             return transpiled.errors[0];
         }
