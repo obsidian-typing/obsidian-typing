@@ -23,7 +23,7 @@ export interface FileSpec {
 }
 
 interface StackFrame {
-    module: Module;
+    module: Module & Required<Pick<Module, "file">>;
 }
 
 export abstract class ModuleManagerSync<ContextType = any> {
@@ -78,12 +78,12 @@ export abstract class ModuleManagerSync<ContextType = any> {
         }
 
         // TODO: was commented out
-        if (!forceReload && path in this.modules && source == null) {
+        if (!forceReload && path in this.modules && (source === null || source === undefined)) {
             return this.modules[path];
         }
 
         let file;
-        if (source != null) {
+        if (source !== null && source !== undefined) {
             file = { source, path };
         } else {
             file = this.getFile(path);
@@ -95,7 +95,7 @@ export abstract class ModuleManagerSync<ContextType = any> {
 
         // The expression below is used to make the TypeScript compiler
         // "forget" the const values and fix type inference.
-        const module: Module = ((x: Module) => x)({ env: {}, file })
+        const module = ((x: StackFrame["module"]) => x)({ env: {}, file })
 
         this.enterFrame({ module });
 
@@ -163,12 +163,12 @@ export abstract class ModuleManagerSync<ContextType = any> {
 
     protected async reloadModule(path: string) {
         let file = await this.loadFile(path);
-        this.setFile({ source: file, path });
+        this.setFile({ source: file ?? "", path });
 
         // TODO: was removed to not fail when new files are created
         if (path in this.modules) {
             this.onBeforeReload(path);
-            this.importModule(path, null, true);
+            this.importModule(path, undefined, true);
             this.onModuleUpdate(path);
         }
 
@@ -187,16 +187,11 @@ export abstract class ModuleManagerSync<ContextType = any> {
 
     protected abstract evaluateModule(file: FileSpec, mod: Module): mod is LoadedModule;
 
-    protected async loadFile(path: string): Promise<string> {
+    protected async loadFile(path: string): Promise<string | null> {
         let tfile = this.vault.getAbstractFileByPath(path);
-        if (tfile == null) {
-            return;
-        }
-
         if (!(tfile instanceof TFile)) {
-            return;
+            return null;
         }
-
         return await this.vault.read(tfile);
     }
 
