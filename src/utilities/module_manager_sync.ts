@@ -54,11 +54,11 @@ export abstract class ModuleManagerSync<ContextType = any> {
         if (!this.extensions.some((ext) => path.endsWith("." + ext))) {
             for (let ext of this.extensions) {
                 let result = this.importModule(path + "." + ext);
-                if (result != null && !result.error) return result;
+                if (result !== null) return result;
             }
             for (let ext of this.extensions) {
                 let result = this.importModule(path + "/index" + "." + ext);
-                if (result != null && !result.error) return result;
+                if (result !== null) return result;
             }
         }
         return this.importModule(path);
@@ -90,7 +90,7 @@ export abstract class ModuleManagerSync<ContextType = any> {
         }
 
         if (!file) {
-            return { error: `Unknown file: ${path}` };
+            return null;
         }
 
         // The expression below is used to make the TypeScript compiler
