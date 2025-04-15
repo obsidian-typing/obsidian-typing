@@ -18,7 +18,7 @@ interface CompletionEntry extends Completion {
 }
 
 interface CacheEntry {
-    callCache: {
+    callCache: Partial<{
         accept: boolean;
         run: any;
         lint: { diagnostics: Diagnostic[]; hasErrors: boolean };
@@ -26,7 +26,7 @@ interface CacheEntry {
         snippets: CompletionEntry[];
         symbols: Symbol[];
         decorations: Range<Decoration>[];
-    };
+    }>;
     diagnostics: Diagnostic[];
 }
 
