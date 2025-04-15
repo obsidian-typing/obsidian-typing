@@ -40,17 +40,19 @@ export interface Symbol {
     metadata?: any;
 }
 
-let cache: NodeWeakMap<WeakMap<Visitor<any, any, any, any, any>, CacheEntry>>;
+type AnyVisitor = Visitor<any, any, any, any, any>;
+
+let cache: NodeWeakMap<WeakMap<AnyVisitor, CacheEntry>>;
 
 function resetCache() {
-    cache = new NodeWeakMap<WeakMap<Visitor<any, any, any, any, any>, CacheEntry>>();
+    cache = new NodeWeakMap<WeakMap<AnyVisitor, CacheEntry>>();
 }
 
 type CallType = "lint" | "run" | "complete" | "accept" | "symbols" | "snippets" | "decorations" | "hover";
 
 interface StackFrame {
     node: SyntaxNode;
-    visitor: Visitor<any, any, any, any, any>;
+    visitor: AnyVisitor;
     context: LocalContext;
     call: CallType;
 }
