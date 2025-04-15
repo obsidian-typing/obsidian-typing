@@ -20,10 +20,9 @@ import { log } from "src/utilities";
 
 export default class TypingPlugin extends Plugin {
     exports: any;
-    ctx: GlobalContext;
-    api: TypingAPI;
-
-    settings: TypingSettings;
+    ctx!: GlobalContext;
+    api!: TypingAPI;
+    settings!: TypingSettings;
 
     async onload() {
         log.info("Loading plugin");
