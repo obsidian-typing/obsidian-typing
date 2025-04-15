@@ -16,6 +16,9 @@ jobs:
         run: |
           npm install
           npm run build
+      - name: "check ts types"
+        run: |
+          npm run check
       - name: "test"
         run: |
           npm run test
