@@ -8,6 +8,7 @@ module.exports = {
             {
                 ignoreCodes: ["TS7053"],
                 diagnostics: { exclude: ["**"] },
+                tsconfig: "tsconfig.test.ci.json",
             },
         ],
     },
