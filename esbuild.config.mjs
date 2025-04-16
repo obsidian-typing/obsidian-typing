@@ -30,7 +30,7 @@ export const scssTypesPlugin = (stylesPattern, watch) => {
             console.log("setup", stylesPattern);
             build.onStart(async () => {
                 console.log("onstart");
-                await generateScssTypeDeclarations(stylesPattern);
+                await generateScssTypeDeclarations(stylesPattern, {  });
                 setupDone = true;
             });
 
