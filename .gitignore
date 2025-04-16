@@ -11,6 +11,13 @@ package-lock.json
 dist
 build
 coverage
+/main.js
+/main.js.map
+/manifest.json
+/main.css
+/main.css.map
+/styles.css
+/styles.css.map
 
 # obsidian
 data.json
