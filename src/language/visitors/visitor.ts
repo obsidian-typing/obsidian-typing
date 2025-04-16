@@ -288,22 +288,22 @@ export class Visitor<
     }
 
     static fromArgs<
-        Return2 extends TReturnBase,
-        Children2 extends TChildrenBase,
-        Utils2 extends TUtilsBase,
-        CacheType2 extends TCacheBase,
+        Return extends TReturnBase,
+        Children extends TChildrenBase,
+        Utils extends TUtilsBase,
+        Cache extends TCacheBase,
         Super extends TVisitorBase,
-        This extends Visitor<Return2, Children2, Utils2, CacheType2, Super> = Visitor<
-            Return2,
-            Children2,
-            Utils2,
-            CacheType2,
+        This extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<
+            Return,
+            Children,
+            Utils,
+            Cache,
             Super
         >
     >(
-        args: VisitorArgs<Return2, Children2, Utils2, CacheType2, Super, This>
-    ): Visitor<OneOf<null, Return2>, Children2, Utils2, CacheType2, Super> {
-        return Visitor.new<Visitor<OneOf<null, Return2>, Children2, Utils2, CacheType2, Super>>({
+        args: VisitorArgs<Return, Children, Utils, Cache, Super, This>
+    ): Visitor<OneOf<null, Return>, Children, Utils, Cache, Super> {
+        return Visitor.new<Visitor<OneOf<null, Return>, Children, Utils, Cache, Super>>({
             // Ignore the fact that `This` might be different type
             // than the one specified in the type parameter default
             args: args as any,
@@ -311,10 +311,10 @@ export class Visitor<
     }
 
     override<
-        Return2 extends TReturnBase,
-        Children2 extends TChildrenBase,
-        Utils2 extends TUtilsBase,
-        CacheType2 extends TCacheBase,
+        NewReturn extends TReturnBase,
+        NewChildren extends TChildrenBase,
+        NewUtils extends TUtilsBase,
+        NewCache extends TCacheBase,
         NewSuper extends Visitor<Return, Children, Utils, CacheType, Super> = Visitor<
             Return,
             Children,
@@ -323,35 +323,34 @@ export class Visitor<
             Super
         >,
         NewThis extends Visitor<
-            OneOf<Return, Return2>,
-            // Children2 extends unknown ? Children : Children | Children2,
-            OneOf<Children, Children2>,
-            OneOf<Utils, Utils2>,
-            OneOf<CacheType, CacheType2>,
+            OneOf<Return, NewReturn>,
+            OneOf<Children, NewChildren>,
+            OneOf<Utils, NewUtils>,
+            OneOf<CacheType, NewCache>,
             NewSuper
         > = Visitor<
-            OneOf<Return, Return2>,
-            OneOf<Children, Children2>,
-            OneOf<Utils, Utils2>,
-            OneOf<CacheType, CacheType2>,
+            OneOf<Return, NewReturn>,
+            OneOf<Children, NewChildren>,
+            OneOf<Utils, NewUtils>,
+            OneOf<CacheType, NewCache>,
             NewSuper
         >,
         Args extends VisitorArgs<
-            Return2,
-            Children2,
-            Utils2,
-            CacheType2,
+            NewReturn,
+            NewChildren,
+            NewUtils,
+            NewCache,
             NewThis
         > = VisitorArgs<
-            Return2,
-            Children2,
-            Utils2,
-            CacheType2,
+            NewReturn,
+            NewChildren,
+            NewUtils,
+            NewCache,
             NewThis
         >
-    >(args: Args): Visitor<ReturnType<Args["run"]>, Children2, Utils2, CacheType2, NewSuper> {
+    >(args: Args): Visitor<ReturnType<Args["run"]>, NewChildren, NewUtils, NewCache, NewSuper> {
         let newArgs = Object.assign({}, this.originalArgs, args);
-        let result = Visitor.fromArgs<ReturnType<Args["run"]>, Children2, Utils2, CacheType2, NewSuper>(newArgs as any);
+        let result = Visitor.fromArgs<ReturnType<Args["run"]>, NewChildren, NewUtils, NewCache, NewSuper>(newArgs as any);
         result.super = Visitor.fromArgs<Return, Children, Utils, CacheType, Super>(this.originalArgs as any) as NewSuper;
         result.super.derived = result;
         result.super.bind(result);
@@ -359,10 +358,10 @@ export class Visitor<
     }
 
     extend<
-        Return2 extends TReturnBase,
-        Children2 extends TChildrenBase,
-        Utils2 extends TUtilsBase,
-        CacheType2 extends TCacheBase,
+        NewReturn extends TReturnBase,
+        NewChildren extends TChildrenBase,
+        NewUtils extends TUtilsBase,
+        NewCache extends TCacheBase,
         NewSuper extends Visitor<Return, Children, Utils, CacheType, Super> = Visitor<
             Return,
             Children,
@@ -371,25 +370,25 @@ export class Visitor<
             Super
         >,
         NewThis extends Visitor<
-            OneOf<Return, Return2>,
-            Merge<Children, Children2>,
-            Merge<Utils, Utils2>,
-            Merge<CacheType, CacheType2>,
+            OneOf<Return, NewReturn>,
+            Merge<Children, NewChildren>,
+            Merge<Utils, NewUtils>,
+            Merge<CacheType, NewCache>,
             NewSuper
         > = Visitor<
-            OneOf<Return, Return2>,
-            Merge<Children, Children2>,
-            Merge<Utils, Utils2>,
-            Merge<CacheType, CacheType2>,
+            OneOf<Return, NewReturn>,
+            Merge<Children, NewChildren>,
+            Merge<Utils, NewUtils>,
+            Merge<CacheType, NewCache>,
             NewSuper
         >
     >(
-        args: VisitorArgs<Return2, Children2, Utils2, CacheType2, NewSuper, NewThis>
+        args: VisitorArgs<NewReturn, NewChildren, NewUtils, NewCache, NewSuper, NewThis>
     ): Visitor<
-        OneOf<Return, Return2>,
-        Merge<Children, Children2>,
-        Merge<Utils, Utils2>,
-        Merge<CacheType, CacheType2>,
+        OneOf<Return, NewReturn>,
+        Merge<Children, NewChildren>,
+        Merge<Utils, NewUtils>,
+        Merge<CacheType, NewCache>,
         NewSuper
     > {
         // let newArgs = mergeDeep(this.originalArgs, args); // BUG: could probably merge internal visitors too
@@ -397,10 +396,10 @@ export class Visitor<
         newArgs.children = Object.assign({}, this.originalArgs.children, args.children);
         newArgs.utils = Object.assign({}, this.originalArgs.utils, args.utils);
         let result = Visitor.fromArgs<
-            OneOf<Return, Return2>,
-            Merge<Children, Children2>,
-            Merge<Utils, Utils2>,
-            Merge<CacheType, CacheType2>,
+            OneOf<Return, NewReturn>,
+            Merge<Children, NewChildren>,
+            Merge<Utils, NewUtils>,
+            Merge<CacheType, NewCache>,
             NewSuper
         // @ts-expect-error TODO: fix
         >(newArgs);
