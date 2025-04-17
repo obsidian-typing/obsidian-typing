@@ -12,11 +12,24 @@ export class Type extends DataClass {
     @field()
     public name!: string;
 
+    get displayName(): string {
+        return this.title || this.name;
+    }
+
     @field()
     public parentNames: Array<string> = [];
 
     @field({ inherit: false })
     public parents: Array<Type> = [];
+
+    @field({ required: false, inherit: false })
+    public title?: string;
+
+    @field({ required: false, inherit: false })
+    public description?: string;
+
+    @field({ required: false, inherit: false })
+    public category?: string;
 
     @field({ required: false, inherit: false })
     public folder?: string;
