@@ -11,6 +11,9 @@ const generateParser = async (grammarFile, parserFile) => {
     fs.writeFileSync(parserFile, parser);
 };
 
+const codeNameForNodeType = (str) =>
+    !str ? str : /^[A-Z]/.test(str) ? str : "Keyword" + str[0].toUpperCase() + str.slice(1);
+
 const generateRulesEnum = async (parserFile, rulesFile) => {
     console.log("LEZER: generate rules enum");
     const enumName = "Rules";
@@ -18,10 +21,10 @@ const generateRulesEnum = async (parserFile, rulesFile) => {
 
     let { parser } = await import(parserFile);
 
-    let rules = parser.nodeSet.types.map((x) => x.name).filter((x) => /^[A-Z]/.test(x));
+    let rules = parser.nodeSet.types.map((x) => x.name).filter((x) => /^[A-Za-z]/.test(x));
 
     for (const name of rules) {
-        enumContent += `    ${name} = "${name}",\n`;
+        enumContent += `    ${codeNameForNodeType(name)} = "${name}",\n`;
     }
 
     enumContent += "}\n";
