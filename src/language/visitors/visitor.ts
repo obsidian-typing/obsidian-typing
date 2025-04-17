@@ -189,9 +189,9 @@ export interface VisitorArgs<
     Return extends TReturnBase,
     Children extends TChildrenBase,
     Utils extends TUtilsBase,
-    CacheType extends TCacheBase,
+    Cache extends TCacheBase,
     Super extends TOptionalVisitorBase,
-    This = Visitor<Return, Children, Utils, CacheType, Super>
+    This = Visitor<Return, Children, Utils, Cache, Super>
 > {
     // TODO: probably should rename to `node`(s) or `nodetype`(s) or `nodeType`(s), `Rules` -> `NodeType`
     rules?: Rules | Rules[];
@@ -232,15 +232,15 @@ export type TVisitorArgsBase<
     Return extends TReturnBase = any,
     Children extends TChildrenBase = any,
     Utils extends TUtilsBase = any,
-    CacheType extends TCacheBase = any
-> = VisitorArgs<Return, Children, Utils, CacheType, TNoVisitor, TVisitorBase>;
+    Cache extends TCacheBase = any
+> = VisitorArgs<Return, Children, Utils, Cache, TNoVisitor, TVisitorBase>;
 
 export type TVisitorBase<
     Return extends TReturnBase = any,
     Children extends TChildrenBase = any,
     Utils extends TUtilsBase = any,
-    CacheType extends TCacheBase = any
-> = Visitor<Return, Children, Utils, CacheType, TOptionalVisitorBase>;
+    Cache extends TCacheBase = any
+> = Visitor<Return, Children, Utils, Cache, TOptionalVisitorBase>;
 
 type TOptionalVisitorBase = TVisitorBase;
 type TNoVisitor = any;
@@ -252,17 +252,17 @@ export class Visitor<
     Return extends TReturnBase,
     Children extends TChildrenBase,
     Utils extends TUtilsBase,
-    CacheType extends TCacheBase,
+    Cache extends TCacheBase,
     Super extends TOptionalVisitorBase
 > extends DataClass {
     @field()
-    args!: VisitorArgs<Return, Children, Utils, CacheType, Super, any>;
+    args!: VisitorArgs<Return, Children, Utils, Cache, Super, any>;
 
     super: Super = null as any;
     derived?: TVisitorBase;
     isInitialized: boolean = false;
 
-    originalArgs!: VisitorArgs<Return, Children, Utils, CacheType, Super, any>;
+    originalArgs!: VisitorArgs<Return, Children, Utils, Cache, Super, any>;
     hasDecorations: boolean = false;
     childrenWithDecorations: (keyof Children)[] = [];
     hasHover: boolean = false;
@@ -315,24 +315,24 @@ export class Visitor<
         NewChildren extends TChildrenBase,
         NewUtils extends TUtilsBase,
         NewCache extends TCacheBase,
-        NewSuper extends Visitor<Return, Children, Utils, CacheType, Super> = Visitor<
+        NewSuper extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<
             Return,
             Children,
             Utils,
-            CacheType,
+            Cache,
             Super
         >,
         NewThis extends Visitor<
             OneOf<Return, NewReturn>,
             OneOf<Children, NewChildren>,
             OneOf<Utils, NewUtils>,
-            OneOf<CacheType, NewCache>,
+            OneOf<Cache, NewCache>,
             NewSuper
         > = Visitor<
             OneOf<Return, NewReturn>,
             OneOf<Children, NewChildren>,
             OneOf<Utils, NewUtils>,
-            OneOf<CacheType, NewCache>,
+            OneOf<Cache, NewCache>,
             NewSuper
         >,
         Args extends VisitorArgs<
@@ -351,7 +351,7 @@ export class Visitor<
     >(args: Args): Visitor<ReturnType<Args["run"]>, NewChildren, NewUtils, NewCache, NewSuper> {
         let newArgs = Object.assign({}, this.originalArgs, args);
         let result = Visitor.fromArgs<ReturnType<Args["run"]>, NewChildren, NewUtils, NewCache, NewSuper>(newArgs as any);
-        result.super = Visitor.fromArgs<Return, Children, Utils, CacheType, Super>(this.originalArgs as any) as NewSuper;
+        result.super = Visitor.fromArgs<Return, Children, Utils, Cache, Super>(this.originalArgs as any) as NewSuper;
         result.super.derived = result;
         result.super.bind(result);
         return result;
@@ -362,24 +362,24 @@ export class Visitor<
         NewChildren extends TChildrenBase,
         NewUtils extends TUtilsBase,
         NewCache extends TCacheBase,
-        NewSuper extends Visitor<Return, Children, Utils, CacheType, Super> = Visitor<
+        NewSuper extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<
             Return,
             Children,
             Utils,
-            CacheType,
+            Cache,
             Super
         >,
         NewThis extends Visitor<
             OneOf<Return, NewReturn>,
             Merge<Children, NewChildren>,
             Merge<Utils, NewUtils>,
-            Merge<CacheType, NewCache>,
+            Merge<Cache, NewCache>,
             NewSuper
         > = Visitor<
             OneOf<Return, NewReturn>,
             Merge<Children, NewChildren>,
             Merge<Utils, NewUtils>,
-            Merge<CacheType, NewCache>,
+            Merge<Cache, NewCache>,
             NewSuper
         >
     >(
@@ -388,7 +388,7 @@ export class Visitor<
         OneOf<Return, NewReturn>,
         Merge<Children, NewChildren>,
         Merge<Utils, NewUtils>,
-        Merge<CacheType, NewCache>,
+        Merge<Cache, NewCache>,
         NewSuper
     > {
         // let newArgs = mergeDeep(this.originalArgs, args); // BUG: could probably merge internal visitors too
@@ -399,11 +399,10 @@ export class Visitor<
             OneOf<Return, NewReturn>,
             Merge<Children, NewChildren>,
             Merge<Utils, NewUtils>,
-            Merge<CacheType, NewCache>,
+            Merge<Cache, NewCache>,
             NewSuper
-        // @ts-expect-error TODO: fix
-        >(newArgs);
-        result.super = Visitor.fromArgs<Return, Children, Utils, CacheType, Super>(this.originalArgs) as NewSuper;
+        >(newArgs as any);
+        result.super = Visitor.fromArgs<Return, Children, Utils, Cache, Super>(this.originalArgs as any) as NewSuper;
         result.super.derived = result;
         result.super.bind(result);
         return result;
@@ -1045,31 +1044,31 @@ export class Visitor<
         return null;
     }
 
-    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, CacheType, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, Cache, Super>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn: ReturnType<NonNullable<Args[K]>>
     ): ReturnType<NonNullable<Args[K]>>;
 
-    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, CacheType, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, Cache, Super>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn: null
     ): ReturnType<NonNullable<Args[K]>> | null;
 
-    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, CacheType, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, Cache, Super>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn: undefined
     ): ReturnType<NonNullable<Args[K]>> | undefined;
 
-    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, CacheType, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, Cache, Super>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn?: ReturnType<NonNullable<Args[K]>>
     ): ReturnType<NonNullable<Args[K]>> | undefined;
 
-    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, CacheType, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, Cache, Super>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn?: ReturnType<NonNullable<Args[K]>>
