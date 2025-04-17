@@ -252,7 +252,7 @@ export class StringFieldAccessor extends BaseFieldAccessor {
     }
 }
 
-export function autoFieldAccessor(path: string, plugin: TypingPlugin): EditorFieldAccessor | FileFieldAccessor | null {
+export function autoInlineFieldAccessor(path: string, plugin: TypingPlugin): EditorFieldAccessor | FileFieldAccessor | null {
     let note = gctx.api.note(path);
     let activeView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
     if (activeView && activeView.getMode() == "source" && activeView.file && activeView.file.path === path && note.type) {
@@ -264,6 +264,24 @@ export function autoFieldAccessor(path: string, plugin: TypingPlugin): EditorFie
         }
         return new FileFieldAccessor(tfile, plugin, note.type);
     }
+}
+
+export function autoFieldAccessor(path: string, plugin: TypingPlugin): IFieldAccessor | null {
+    let note = gctx.api.note(path);
+    if (!note.type) {
+        return null;
+    }
+    let inlineAccessor = autoInlineFieldAccessor(path, plugin);
+    if (!inlineAccessor) {
+        return null;
+    }
+    if (!note.file) {
+        return inlineAccessor;
+    }
+    return new FieldDependentFieldAccessor(note.type, {
+        frontmatter: new FrontmatterFieldAccessor(note.file, plugin, note.type),
+        inline: inlineAccessor
+    });
 }
 
 function getFieldOrder(type: Type): { [name: string]: number } {
