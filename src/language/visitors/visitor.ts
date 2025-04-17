@@ -698,11 +698,11 @@ export class Visitor<
         return result;
     }
 
-    run(node: NodeType, callContext?: GlobalCallContext): Return | null {
-        if (!this.enter(node, "run", callContext)) return null;
+    run(node: NodeType, callContext?: GlobalCallContext): Return {
+        if (!this.enter(node, "run", callContext)) return null as Return;
         if (this.lint(node).hasErrors) {
             this.exit();
-            return null;
+            return null as Return;
         }
         let cached = this.getCachedResult("run");
         if (cached !== undefined) return cached;
@@ -713,7 +713,7 @@ export class Visitor<
 
         this.cacheResult("run", result);
         this.exit();
-        return result;
+        return result as Return;
     }
 
     runChildren<Key extends keyof Children>(options?: {
