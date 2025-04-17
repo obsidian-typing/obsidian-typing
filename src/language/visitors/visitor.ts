@@ -10,8 +10,31 @@ import { Interpreter } from "../interpreter";
 
 export type NodeType = SyntaxNode;
 
-type Merge<A, B> = B extends void ? A : A extends void ? B : A & B;
-type OneOf<A, B> = B extends void ? A : B;
+type Merge<A, B> = unknown extends B ? A : unknown extends A ? B : A & B;
+type OneOf<A, B> = unknown extends B ? A : B;
+
+// Static tests of OneOf and Merge
+namespace StaticTests {
+    type SameType<A, B> = A | B extends A & B ? true : false;
+
+    true satisfies SameType<string, string>;
+    true satisfies SameType<unknown, unknown>;
+    false satisfies SameType<string, number>;
+    false satisfies SameType<unknown, string>;
+    false satisfies SameType<string, unknown>;
+
+    true satisfies SameType<Merge<string, number>, string & number>;
+    true satisfies SameType<Merge<number, string>, string & number>;
+    true satisfies SameType<Merge<unknown, string>, string>;
+    true satisfies SameType<Merge<string, unknown>, string>;
+    true satisfies SameType<Merge<unknown, unknown>, unknown>;
+
+    true satisfies SameType<OneOf<string, number>, number>;
+    true satisfies SameType<OneOf<number, string>, string>;
+    true satisfies SameType<OneOf<unknown, string>, string>;
+    true satisfies SameType<OneOf<string, unknown>, string>;
+    true satisfies SameType<OneOf<unknown, unknown>, unknown>;
+}
 
 interface CompletionEntry extends Completion {
     symbol?: string;
