@@ -18,6 +18,7 @@ coverage
 /main.css.map
 /styles.css
 /styles.css.map
+/*.tsbuildinfo
 
 # obsidian
 data.json
