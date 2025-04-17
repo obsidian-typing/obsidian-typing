@@ -45,6 +45,8 @@ export class TypeSuggestModal extends SuggestModal<Type> {
                 this.types.push(type);
             }
         }
+
+        this.types.sort((a, b) => this.getTypeTitle(a).localeCompare(this.getTypeTitle(b)));
     }
 
     getTypeTitle(type: Type): string {
