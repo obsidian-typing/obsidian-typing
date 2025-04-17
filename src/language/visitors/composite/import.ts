@@ -3,7 +3,7 @@ import { Type } from "src/typing";
 import { createVisitor, Rules } from "../index_base";
 import * as Visitors from "../pure";
 
-interface ImportSymbol {
+export interface ImportSymbol {
     symbol?: string;
     alias?: string;
     node: SyntaxNode;
