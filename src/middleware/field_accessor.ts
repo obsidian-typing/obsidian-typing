@@ -226,7 +226,7 @@ class FileFieldAccessor extends BaseFieldAccessor {
     }
 }
 
-export class StringFieldAccessor extends BaseFieldAccessor {
+export class StringInlineFieldAccessor extends BaseFieldAccessor {
     constructor(public content: string, type: Type) {
         super(type);
     }
