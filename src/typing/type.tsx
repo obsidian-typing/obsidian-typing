@@ -150,6 +150,12 @@ export class Type extends DataClass {
         await this.runHook(HookNames.ON_VALIDATE, hookContext);
 
         let validationResult = validationContext.toResult();
+        if (validationResult.ok) {
+            console.log(`[OK] Validation succeeded. ${validationResult.messages.length} messages.`, validationResult.messages);
+        } else {
+            console.log(`[ERROR] Validation failed. ${validationResult.messages.length} messages.`, validationResult.messages);
+        }
+
         return validationResult;
     }
 
