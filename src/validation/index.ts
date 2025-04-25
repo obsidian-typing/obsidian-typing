@@ -1,7 +1,7 @@
 import * as Validation from "./validation_namespace";
 export * as Validation from "./validation_namespace";
 
-export { ValidationContext } from "./validation_context";
+export { LinkResolutionContext, ValidationContext } from "./validation_context";
 export { ValidationResult } from "./validation_result";
 
 export type ValidationMessage = Validation.Message;

@@ -1,7 +1,40 @@
-export function parseLink(value: string) {
+export type ParsedLink = {
+    /** The file path this link points to. */
+    path: string;
+    /** The display name associated with the link. */
+    display?: string;
+    /** The block ID or header this link points to within a file, if relevant. */
+    subpath?: string;
+    /** Is this link an embedded link (!)? */
+    embed: boolean;
+    /** The type of this link, which determines what 'subpath' refers to, if anything. */
+    type: "file" | "header" | "block";
+    /** The original text of the link */
+    linkpath: string;
+}
+
+const LINK_REGEXP = /(?<embed>!?)\[\[(?<inner>[^\[\]]*?)\]\]/u;
+
+export function parseLink(value: string, forceLink?: true): ParsedLink;
+export function parseLink(value: string, forceLink: false): ParsedLink | undefined;
+
+export function parseLink(value: string, forceLink: boolean = true): ParsedLink | undefined {
+    if (!forceLink && !LINK_REGEXP.exec(value)) {
+        return undefined;
+    }
+
+    let embed = false;
     value = value ?? "";
-    if (value.startsWith("[[")) value = value.slice(2);
-    if (value.endsWith("]]")) value = value.slice(0, value.length - 2);
+    if (value.startsWith("![[")) {
+        embed = true;
+        value = value.slice(1);
+    }
+    if (value.startsWith("[[")) {
+        value = value.slice(2);
+    }
+    if (value.endsWith("]]")) {
+        value = value.slice(0, value.length - 2);
+    }
 
     let path = "",
         subpath = "",
@@ -21,7 +54,24 @@ export function parseLink(value: string) {
         display = display ?? "";
     }
 
-    return { path, subpath, display, linkpath };
+    let type: "file" | "header" | "block";
+    if (!subpath) {
+        type = "file";
+    } else if (subpath.startsWith("^")) {
+        type = "block";
+        subpath = subpath.slice(1);
+    } else {
+        type = "header";
+    }
+
+    return {
+        path,
+        subpath: subpath || undefined,
+        display: display || undefined,
+        embed,
+        type,
+        linkpath
+    };
 }
 
 export function parseLinkExtended(value: string) {

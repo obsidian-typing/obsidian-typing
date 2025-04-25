@@ -1,6 +1,10 @@
 import { Message } from "./reporting/message";
 import { ValidationResult } from "./validation_result";
 
+export interface LinkResolutionContext {
+    sourcePath?: string;
+}
+
 export class ValidationContext {
     messages: Message[] = [];
 

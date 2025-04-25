@@ -4,7 +4,7 @@ import styles from "src/styles/prompt.scss";
 import { parseFileExtension, parseLinkExtended } from "src/utilities";
 import { Contexts, Picker } from ".";
 import { Combobox, IComboboxOption, Input } from "../components";
-import { useControls } from "../hooks";
+import { ControlSpec, useControls } from "../hooks";
 
 function generateFileShortcut(file: File, rename?: (file: File) => string): string {
     if (rename) return rename(file);
@@ -235,13 +235,13 @@ export const File = ({
                 {subpath && (
                     <>
                         #
-                        <Input control={controls.subpath} onChange={controls.subpath.setValue} placeholder="Subpath" />
+                        <Input control={controls.subpath as ControlSpec<string>} onChange={controls.subpath.setValue} placeholder="Subpath" />
                     </>
                 )}
                 {display && (
                     <>
                         |
-                        <Input control={controls.display} onChange={controls.display.setValue} placeholder="Display" />
+                        <Input control={controls.display as ControlSpec<string>} onChange={controls.display.setValue} placeholder="Display" />
                     </>
                 )}
                 <Picker.SubmitButton controls={controls} />

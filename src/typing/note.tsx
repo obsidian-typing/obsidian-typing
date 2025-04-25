@@ -126,6 +126,14 @@ export class Note {
         return note;
     }
 
+    static fromLink(linkPath: string, sourcePath: string): Note | null {
+        const target = gctx.app.metadataCache.getFirstLinkpathDest(linkPath, sourcePath);
+        if (target === null || target === undefined) {
+            return null;
+        }
+        return Note.new(target.path);
+    }
+
     // more explicit alias for note.page
     get dvpage() {
         return this.page;

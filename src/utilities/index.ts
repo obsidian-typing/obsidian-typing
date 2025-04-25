@@ -10,6 +10,6 @@ export { debounce, throttle, eagerDebounce } from "./rate_control";
 export { stripQuotes } from "./strings";
 export { render } from "./react";
 export { RenderLink } from "./link_rendering";
-export { parseLink, parseLinkExtended, parseFileExtension } from "./parsing";
+export { ParsedLink, parseLink, parseLinkExtended, parseFileExtension } from "./parsing";
 export { getFont } from "./font_manager";
 export { CSSManager } from "./css_manager";
