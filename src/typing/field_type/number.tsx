@@ -1,6 +1,7 @@
 import { Visitors } from "src/language";
 import { IComboboxOption, Pickers } from "src/ui";
 import { field } from "src/utilities";
+import { report, Validation } from "src/validation";
 import { FieldType } from "./base";
 
 export class Number extends FieldType<Number> {
@@ -14,6 +15,24 @@ export class Number extends FieldType<Number> {
 
     @field()
     public picker: "dropdown" | "slider" | "rating" = "dropdown";
+
+    validate(target: Validation.Target<unknown>): void | Promise<void> {
+        if (typeof target.value === "number") {
+            return this.validateTyped(target.asTyped(target.value));
+        } else {
+            report(target, {
+                message: `Field ${target.path} must be a number`
+            });
+        }
+    }
+
+    validateTyped(target: Validation.Target<number>): void | Promise<void> {
+        if (target.value < this.min || target.value > this.max) {
+            report(target, {
+                message: `Field ${target.path} must be between ${this.min} and ${this.max}`
+            });
+        }
+    }
 
     Display: FieldType["Display"] = ({ value }) => {
         return <>{value}</>;

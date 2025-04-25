@@ -2,12 +2,26 @@ import { Visitors } from "src/language";
 import { Pickers } from "src/ui";
 import { field } from "src/utilities";
 import { FieldType } from "./base";
+import { report, TypedValidator, Validation } from "src/validation";
 
-export class Boolean extends FieldType<Boolean> {
+export class Boolean extends FieldType<Boolean> implements TypedValidator<boolean> {
     name = "Boolean";
 
     @field()
     public picker: "checkbox" | "toggle" = "checkbox";
+
+    validate(target: Validation.Target<unknown>): void | Promise<void> {
+        if (typeof target.value === "boolean") {
+            return this.validateTyped(target.asTyped(target.value));
+        } else {
+            report(target, {
+                message: `Field ${target.path} must be a boolean`
+            });
+        }
+    }
+
+    validateTyped(target: Validation.Target<boolean>): void | Promise<void> {
+    }
 
     Display: FieldType["Display"] = ({ value }) => {
         return <>{value}</>;
