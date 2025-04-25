@@ -36,4 +36,8 @@ class ObjectSource<T> extends ValueSourceWithContext<T> {
         }
         return new ObjectSource(result, FieldPath.new(this.path, key), this.context) as FieldsAsTargets<T>[K];
     }
+
+    keys(): FieldKey[] {
+        return Object.keys(this.value as any);
+    }
 }

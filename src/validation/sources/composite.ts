@@ -40,6 +40,10 @@ class CompositeSource<T> extends ValueSourceBase<T> implements Target<T> {
         return undefined as unknown as FieldsAsTargets<T>[K];
     }
 
+    keys(): FieldKey[] {
+        return Array.from(new Set(this.sources.flatMap(source => source.keys())));
+    }
+
     asTyped<U>(value: U): Target<U> {
         return super.asTyped(value) as Target<U>;
     }

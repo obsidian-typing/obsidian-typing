@@ -99,6 +99,10 @@ class YamlScalarData<T = unknown> extends YamlSource<T> {
     field<K extends keyof T>(key: K): FieldsAsTargets<T>[K] {
         return undefined as unknown as FieldsAsTargets<T>[K];
     }
+
+    keys(): (keyof T)[] {
+        return [];
+    }
 }
 
 class YamlMapData<T = unknown> extends YamlSource<T> {
@@ -129,6 +133,10 @@ class YamlMapData<T = unknown> extends YamlSource<T> {
 
     field<K extends keyof T>(key: K): FieldsAsTargets<T>[K] {
         return this.fieldBase(this.map.get(key, true), key) as FieldsAsTargets<T>[K];
+    }
+
+    keys(): FieldKey[] {
+        return this.map.items.map(item => item.key);
     }
 }
 
@@ -161,6 +169,14 @@ class YamlSeqData<T = unknown> extends YamlSource<T> {
     field<K extends keyof T>(key: K): FieldsAsTargets<T>[K] {
         return this.fieldBase(this.seq.get(key, true), key) as FieldsAsTargets<T>[K];
     }
+
+    keys(): FieldKey[] {
+        let result: FieldKey[] = []
+        for (let i in this.seq.items) {
+            result.push(i);
+        }
+        return result;
+    }
 }
 
 class YamlAliasData<T = unknown> extends YamlSource<T> {
@@ -190,5 +206,9 @@ class YamlAliasData<T = unknown> extends YamlSource<T> {
     field<K extends keyof T>(key: K): FieldsAsTargets<T>[K] {
         // TODO: Review handling of undefined
         return this.resolvedSource?.field(key) ?? undefined as any;
+    }
+
+    keys(): FieldKey[] {
+        return this.resolvedSource?.keys() ?? [];
     }
 }

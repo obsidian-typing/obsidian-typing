@@ -35,6 +35,8 @@ export interface ValueSource<out T> {
      */
     field<K extends keyof T>(key: K): FieldsAsValueSources<T>[K];
 
+    keys(): FieldKey[];
+
     asTyped<U>(value: U): ValueSource<U>;
 }
 
@@ -74,6 +76,10 @@ export abstract class ValueSourceBase<T, Key extends FieldKey = FieldKey> implem
     }
 
     abstract field<K extends keyof T>(key: K): FieldsAsValueSources<T>[K];
+
+    keys(): FieldKey[] {
+        return Object.keys(this.value as any);
+    }
 
     asTyped<U>(value: U): ValueSource<U> {
         if (value === this.value as any) {
