@@ -1,5 +1,6 @@
 import { Visitors } from "src/language";
 import { field } from "src/utilities";
+import { Validation } from "src/validation";
 import { FieldType, FieldTypeBindingContext } from "./base";
 
 export class Required extends FieldType<Required> {
@@ -7,6 +8,13 @@ export class Required extends FieldType<Required> {
 
     @field({ required: true })
     public type!: FieldType;
+
+    validate(target: Validation.Target<unknown>): void | Promise<void> {
+        // The validation that all required fields are present is
+        // handled somewhere else. Here, we only need to validate
+        // that non-undefined values match the underlying type.
+        return this.type.validate(target);
+    }
 
     Display: FieldType["Display"] = ({ value }) => {
         const SubDisplay = this.type.Display;
