@@ -242,6 +242,7 @@ export const Type = createVisitor({
                         on_open: Visitors.Attribute("on_open", Visitors.FnScriptString()),
                         on_close: Visitors.Attribute("on_close", Visitors.FnScriptString()),
                         on_metadata_change: Visitors.Attribute("on_metadata_change", Visitors.FnScriptString()),
+                        on_validate: Visitors.Attribute("on_validate", Visitors.FnScriptString()),
                     },
                     "Hooks"
                 ).extend({

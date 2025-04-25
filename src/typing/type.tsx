@@ -143,6 +143,12 @@ export class Type extends DataClass {
             })
         }
 
+        let hookContext: OnValidateHookContext = {
+            note,
+            fields: rootData,
+        }
+        await this.runHook(HookNames.ON_VALIDATE, hookContext);
+
         let validationResult = validationContext.toResult();
         return validationResult;
     }

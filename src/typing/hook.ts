@@ -1,6 +1,7 @@
 import { FnScript } from "src/scripting";
 import { DataClass, field } from "src/utilities";
 import { Note, NoteState, Type } from ".";
+import { ValidationTarget } from "src/validation";
 
 export enum HookNames {
     CREATE = "create",
@@ -11,6 +12,7 @@ export enum HookNames {
     // ON_MOVE = "on_move",
     ON_METADATA_CHANGE = "on_metadata_change",
     // ON_TYPE_CHANGE = "on_type_change",
+    ON_VALIDATE = "on_validate",
 }
 
 export interface HookContext {}
@@ -56,6 +58,11 @@ export interface OnMetadataChangeHookContext extends HookContext {
     prevState: NoteState;
 }
 
+export interface OnValidateHookContext extends HookContext {
+    note: Note;
+    fields: ValidationTarget<Partial<Record<string, any>>>;
+}
+
 export class Hook<T extends HookContext> extends DataClass {
     @field()
     func!: FnScript<T>;
@@ -79,6 +86,9 @@ export class HookContainer extends DataClass {
 
     @field()
     [HookNames.ON_METADATA_CHANGE]?: Hook<OnMetadataChangeHookContext>;
+
+    @field()
+    [HookNames.ON_VALIDATE]?: Hook<OnValidateHookContext>;
 
     // @field()
     // [HookNames.ON_MOVE]: Hook<OnMoveHookContext> = null;
