@@ -49,12 +49,13 @@ function resetCache() {
 }
 
 type CallType = "lint" | "run" | "complete" | "accept" | "symbols" | "snippets" | "decorations" | "hover";
+type InternalCallType = CallType | "traverse";
 
 interface StackFrame {
     node: SyntaxNode;
     visitor: AnyVisitor;
     context: LocalContext;
-    call: CallType;
+    call: InternalCallType;
 }
 
 interface GlobalCallContext {
@@ -686,7 +687,6 @@ export class Visitor<
     ): boolean {
         for (let key of keys) {
             let child = this.children[key];
-            // @ts-ignore
             if (child.enter(node.node, "traverse")) {
                 try {
                     callback(node.node, child, key);
@@ -703,7 +703,7 @@ export class Visitor<
     traverse<Key extends keyof Children = keyof Children>(
         callback: (node: SyntaxNode, child: Children[Key], key: Key) => void,
         options?: TraversalOptions<Key>
-    ) {
+    ): void {
         options = options ? mergeDeep(this.options.traversal, options) : this.options.traversal;
 
         let activeChildren: Key[] = [];
@@ -742,7 +742,7 @@ export class Visitor<
         }
     }
 
-    enter(node: NodeType, call: CallType, callContext?: GlobalCallContext): boolean {
+    enter(node: NodeType, call: InternalCallType, callContext?: GlobalCallContext): boolean {
         if (callContext) {
             this.setCallContext(callContext);
         }
@@ -757,7 +757,7 @@ export class Visitor<
         }
     }
 
-    _enter(node: NodeType, call: CallType) {
+    _enter(node: NodeType, call: InternalCallType): void {
         if (!this.globalContext) {
             throw "Global context not set!";
         }
@@ -772,7 +772,7 @@ export class Visitor<
         });
     }
 
-    exit(cached?: boolean) {
+    exit(cached?: boolean): void {
         let lastContext = this.globalContext.callStack.pop();
         if (cached) {
             let call = lastContext.call + "_cached";
