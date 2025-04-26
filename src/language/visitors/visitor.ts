@@ -953,17 +953,16 @@ export class Visitor<
         args: Parameters<Args[K]>,
         defaultReturn?: ReturnType<Args[K]>
     ): ReturnType<Args[K]> {
-        let result = defaultReturn;
         const func = this.args[call] as (...args: Parameters<Args[K]>) => ReturnType<Args[K]>;
-        if (func != null) {
+        if (func !== null && func !== undefined) {
             try {
-                result = func(...args); // as ReturnType<this["args"][K]>;
+                return func(...args);
             } catch (e) {
                 log.error(`runFunc ${call} error`, { e, call, args, defaultReturn, func, this: this });
                 this.error(`Visitor.${call}() failed.`);
             }
         }
-        return result;
+        return defaultReturn;
     }
 }
 
