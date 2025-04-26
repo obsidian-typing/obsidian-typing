@@ -188,14 +188,29 @@ const defaultVisitorOptions: VisitorOptions = {
     },
 };
 
-// TODO: add Symbol as template arg to support custom symbols (ext Symbol)
-export interface VisitorArgs<
+export type VisitorArgs_Infer<
     Return extends TReturnBase,
     Children extends TChildrenBase,
     Utils extends TUtilsBase,
     Cache extends TCacheBase,
-    Super extends TOptionalVisitorBase,
-    This = Visitor<Return, Children, Utils, Cache, Super>
+    Super extends TVisitorBase,
+    This extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<
+        Return,
+        Children,
+        Utils,
+        Cache,
+        Super
+    >
+> = VisitorArgs<Return, Children, Utils, Cache, Super, This>;
+
+// TODO: add Symbol as template arg to support custom symbols (ext Symbol)
+export interface VisitorArgs<
+    Return,
+    Children,
+    Utils,
+    Cache,
+    Super,
+    This
 > {
     // TODO: probably should rename to `node`(s) or `nodetype`(s) or `nodeType`(s), `Rules` -> `NodeType`
     rules?: Rules | Rules[];
@@ -344,12 +359,14 @@ export class Visitor<
             NewChildren,
             NewUtils,
             NewCache,
+            NewSuper,
             NewThis
         > = VisitorArgs<
             NewReturn,
             NewChildren,
             NewUtils,
             NewCache,
+            NewSuper,
             NewThis
         >
     >(args: Args): Visitor<ReturnType<Exclude<Args["run"], undefined>>, NewChildren, NewUtils, NewCache, NewSuper> {
@@ -362,10 +379,10 @@ export class Visitor<
     }
 
     extend<
-        NewReturn extends TReturnBase,
-        NewChildren extends TChildrenBase,
-        NewUtils extends TUtilsBase,
-        NewCache extends TCacheBase,
+        NewReturn,
+        NewChildren,
+        NewUtils,
+        NewCache,
         NewSuper extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<
             Return,
             Children,
@@ -375,14 +392,14 @@ export class Visitor<
         >,
         NewThis extends Visitor<
             OneOf<Return, NewReturn>,
-            Merge<Children, NewChildren>,
-            Merge<Utils, NewUtils>,
+            NewChildren extends TChildrenBase ? Merge<Children, NewChildren> : Children,
+            NewUtils extends TUtilsBase ? Merge<Utils, NewUtils> : Utils,
             Merge<Cache, NewCache>,
             NewSuper
         > = Visitor<
             OneOf<Return, NewReturn>,
-            Merge<Children, NewChildren>,
-            Merge<Utils, NewUtils>,
+            NewChildren extends TChildrenBase ? Merge<Children, NewChildren> : Children,
+            NewUtils extends TUtilsBase ? Merge<Utils, NewUtils> : Utils,
             Merge<Cache, NewCache>,
             NewSuper
         >
@@ -390,8 +407,8 @@ export class Visitor<
         args: VisitorArgs<NewReturn, NewChildren, NewUtils, NewCache, NewSuper, NewThis>
     ): Visitor<
         OneOf<Return, NewReturn>,
-        Merge<Children, NewChildren>,
-        Merge<Utils, NewUtils>,
+        NewChildren extends TChildrenBase ? Merge<Children, NewChildren> : Children,
+        NewUtils extends TUtilsBase ? Merge<Utils, NewUtils> : Utils,
         Merge<Cache, NewCache>,
         NewSuper
     > {
@@ -401,8 +418,8 @@ export class Visitor<
         newArgs.utils = Object.assign({}, this.originalArgs.utils, args.utils);
         let result = Visitor.fromArgs<
             OneOf<Return, NewReturn>,
-            Merge<Children, NewChildren>,
-            Merge<Utils, NewUtils>,
+            NewChildren extends TChildrenBase ? Merge<Children, NewChildren> : Children,
+            NewUtils extends TUtilsBase ? Merge<Utils, NewUtils> : Utils,
             Merge<Cache, NewCache>,
             NewSuper
         >(newArgs as any);
@@ -1048,31 +1065,31 @@ export class Visitor<
         return null;
     }
 
-    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, Cache, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache, Super>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn: ReturnType<NonNullable<Args[K]>>
     ): ReturnType<NonNullable<Args[K]>>;
 
-    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, Cache, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache, Super>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn: null
     ): ReturnType<NonNullable<Args[K]>> | null;
 
-    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, Cache, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache, Super>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn: undefined
     ): ReturnType<NonNullable<Args[K]>> | undefined;
 
-    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, Cache, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache, Super>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn?: ReturnType<NonNullable<Args[K]>>
     ): ReturnType<NonNullable<Args[K]>> | undefined;
 
-    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, Cache, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache, Super>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn?: ReturnType<NonNullable<Args[K]>>

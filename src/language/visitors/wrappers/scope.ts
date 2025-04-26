@@ -1,12 +1,19 @@
-import { NodeType, Rules, Symbol, TVisitorArgsBase } from "..";
+import { NodeType, Rules, Symbol, TVisitorBase, VisitorArgs } from "..";
 
-export const ScopeWrapper = ({ shouldComplete = true }: { shouldComplete: boolean }) => {
+export const ScopeWrapper = <Super, This extends TVisitorBase>({ shouldComplete = true }: { shouldComplete: boolean }): VisitorArgs<
+    unknown,
+    unknown,
+    unknown,
+    unknown,
+    Super,
+    This
+> => {
     return {
         tags: ["scope"],
         symbols() {
             let symbols = [] as Symbol[];
             this.traverse((node, child) => {
-                for (let symbol of child.symbols(node)) {
+                for (let symbol of child.symbols(node)!) {
                     symbols.push(symbol);
                 }
             });
@@ -14,7 +21,7 @@ export const ScopeWrapper = ({ shouldComplete = true }: { shouldComplete: boolea
         },
         lint(node) {
             let unexpectedNodes: NodeType[] = [];
-            this.traverse(() => {}, {
+            this.traverse(() => { }, {
                 callbackNotAccepted(node) {
                     if (node.name == Rules.LineComment) return;
                     unexpectedNodes.push(node);
@@ -31,8 +38,11 @@ export const ScopeWrapper = ({ shouldComplete = true }: { shouldComplete: boolea
                 }
                 set.add(symbol.name);
             }
-            // TODO
-            // this.super?.lint(node);
+
+            let diagnostics = this.super?.lint(node);
+            if (diagnostics) {
+                this.joinDiagnostics(diagnostics.diagnostics);
+            }
         },
         complete(node) {
             if (!shouldComplete) return [];
@@ -47,5 +57,5 @@ export const ScopeWrapper = ({ shouldComplete = true }: { shouldComplete: boolea
             }
             return result;
         },
-    } as TVisitorArgsBase;
+    };
 };
