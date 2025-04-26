@@ -6,6 +6,7 @@ import { Type } from "../type";
 
 export interface FieldTypeBindingContext {
     field: Field;
+    inList?: boolean;
     type?: Type;
 }
 
@@ -47,8 +48,11 @@ export abstract class FieldType<InstanceType extends FieldType = any>
         return false;
     }
 
-    get inList(): boolean {
-        // HACK to not depend on FieldTypes.List in base class
-        return this !== this.context?.field?.type?.type;
+    get isList(): boolean {
+        return false;
+    }
+
+    get underlyingType(): FieldType {
+        return this;
     }
 }

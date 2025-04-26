@@ -13,7 +13,7 @@ export class Choice extends FieldType<Choice> {
     public fuzzy: boolean = true;
 
     Display: FieldType["Display"] = ({ value }) => {
-        if (value && this.inList) {
+        if (value && this.context?.inList) {
             value = stripQuotes(value);
         }
         return <>{value}</>;
