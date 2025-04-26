@@ -22,16 +22,8 @@ export class TypeGraph {
         }
         if (!left_type) return false;
         if (!right_type) return false;
-        if (!left_type.parentNames) return false;
-        if (left_type.parentNames.includes(right_type.name)) {
-            return true;
-        }
-        for (let parent of left_type.parentNames) {
-            if (this.isinstance(parent, right_type)) {
-                return true;
-            }
-        }
-        return false;
+        if (left_type.name === right_type.name) return true
+        return left_type.isDescendantOf(right_type);
     }
 
     public get({ name, folder, path }: { name?: string; folder?: string; path?: string }) {

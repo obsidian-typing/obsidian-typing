@@ -6,7 +6,7 @@ import { DataClass, field, mergeDeep } from "src/utilities";
 import { Action, Field, Hook, HookContainer, HookContextType, HookNames, Method, Note, NoteState, Prefix, Style } from ".";
 
 export class Type extends DataClass {
-    @field()
+    @field({ inherit: false })
     public isAbstract: boolean = false;
 
     @field()
@@ -46,6 +46,7 @@ export class Type extends DataClass {
     public hooks: HookContainer = HookContainer.new();
 
     private ancestors: Record<string, Type> = {};
+    private descendants: Record<string, Type> = {};
 
     public onAfterCreate(): void {
         this.rebindFields();
@@ -66,6 +67,7 @@ export class Type extends DataClass {
         type = type ?? this;
         for (let parent of type.parents) {
             this.ancestors[parent.name] = parent;
+            parent.descendants[this.name] = this;
             this.indexAncestors(parent);
         }
     }
@@ -133,30 +135,39 @@ export class Type extends DataClass {
         return this.folder != null;
     }
 
-    getAllNotes(options?: { withSubtypes?: boolean }) {
+    async getAllNotes(options?: { withSubtypes?: boolean }): Promise<Note[]> {
+        const getNotePathsOfType = async (type: Type) => {
+            if (gctx.dv !== null) {
+                let queryString;
+                if (type.folder) {
+                    queryString = `LIST WHERE choice(_type, _type = "${type.name}", file.folder = "${type.folder}")`;
+                } else {
+                    queryString = `LIST WHERE _type = "${type.name}"`;
+                }
+                return (await gctx.dv.tryQuery(queryString)).values as string[];
+            } else if (this.folder) {
+                let folder = gctx.app.vault.getAbstractFileByPath(this.folder);
+                if (folder === null) {
+                    return [];
+                }
+                if (!(folder instanceof TFolder)) {
+                    throw new Error("Specified type folder is a file");
+                }
+                return folder.children.filter((x) => x instanceof TFile && x.extension == "md").map((x) => x.path);
+            } else {
+                return [];
+            }
+        };
+
+        let paths: string[];
         if (options?.withSubtypes) {
-            throw new Error("NotImplemented: withSubtypes");
-        }
-
-        if (!this.isCreateable) {
-            throw new Error("Non-createable types cannot getAllNotes()");
-        }
-
-        let paths;
-        if (gctx.dv != null) {
-            paths = gctx.dv.pagePaths(`"${this.folder}"`);
+            let pathSet = new Set<string>();
+            for (let type of [this, ...Object.values(this.descendants)]) {
+                (await getNotePathsOfType(type)).forEach(item => pathSet.add(item));
+            }
+            paths = [...pathSet];
         } else {
-            if (!this.folder) {
-                return [];
-            }
-            let folder = gctx.app.vault.getAbstractFileByPath(this.folder);
-            if (!folder) {
-                return [];
-            }
-            if (!(folder instanceof TFolder)) {
-                throw new Error("Specified type folder is a file");
-            }
-            paths = folder.children.filter((x) => x instanceof TFile && x.extension == "md").map((x) => x.path);
+            paths = await getNotePathsOfType(this);
         }
 
         return [...paths].map((path) => Note.new(path, { type: this }));
@@ -164,5 +175,13 @@ export class Type extends DataClass {
 
     getAncestor(name: string): Type | null {
         return this.ancestors[name];
+    }
+
+    isAncestorOf(other: Type): boolean {
+        return !!other.ancestors[this.name];
+    }
+
+    isDescendantOf(other: Type): boolean {
+        return !!this.ancestors[other.name];
     }
 }
