@@ -12,11 +12,13 @@ export class Field extends DataClass implements Bindable<FieldBindingContext, Fi
     context?: FieldBindingContext;
 
     @field()
-    public name: string;
+    public name!: string;
+
     @field()
-    public type: FieldType;
+    public type!: FieldType;
+
     @field()
-    public default: string = null;
+    public default!: string;
 
     public onAfterCreate(): void {
         if (!this.type.context) {

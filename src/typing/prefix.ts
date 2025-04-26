@@ -8,9 +8,9 @@ import type { NoteState, Type } from ".";
 // prefix = "str-${api.import('file').}"
 export class Prefix extends DataClass {
     @field()
-    template: string;
+    template!: string;
 
-    regex: RegExp;
+    regex!: RegExp;
     interpolations: (PrefixInterpolationSpec & { params: string })[] = [];
 
     onAfterCreate(): void {
@@ -113,13 +113,14 @@ export let INTERPOLATIONS: PrefixInterpolationSpec[] = [
         regex: () => "[1-9]+[0-9]*",
         fn: ({ type, index }) => {
             let max = 0;
-            let folder = gctx.app.vault.getAbstractFileByPath(type.folder);
-            if (folder == null) {
+            if (!type.folder || !type.prefix) {
                 // numeration starts with 1
                 return `${max + 1}`;
             }
-            if (!(folder instanceof TFolder)) {
-                return;
+            let folder = gctx.app.vault.getAbstractFileByPath(type.folder);
+            if (!(folder instanceof TFolder)){
+                // numeration starts with 1
+                return `${max + 1}`;
             }
             for (let child of folder.children) {
                 if (!(child instanceof TFile)) {

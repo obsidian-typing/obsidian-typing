@@ -11,8 +11,11 @@ export interface TranspilationError {
 }
 
 export type TranspilationResult = {
-    code?: string;
-    errors?: Array<TranspilationError>;
+    code?: undefined;
+    errors: Array<TranspilationError>;
+} | {
+    code: string;
+    errors?: undefined;
 };
 
 const removeUseStrict: PluginObj = {
@@ -60,6 +63,9 @@ const FUNCTION_TRANSPILE_OPTIONS: TransformOptions = {
 export function transpile(source: string, options: TransformOptions = DEFAULT_TRANSPILE_OPTIONS): TranspilationResult {
     try {
         let result = transform(source, options);
+        if (result.code === null || result.code === undefined) {
+            throw new Error("Transpilation failed to produce a result");
+        }
         return { code: result.code };
     } catch (e) {
         return {

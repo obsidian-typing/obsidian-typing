@@ -53,7 +53,7 @@ function buildImportArgs(
     }
 
     return [
-        { type: "StringLiteral", value: path.node.source.value },
+        { type: "StringLiteral", value: path.node.source?.value ?? "" },
         {
             type: "ArrayExpression",
             elements: path.node.specifiers.map((specifier) => {
@@ -69,6 +69,8 @@ function buildImportArgs(
                     specifier.type === "ExportNamespaceSpecifier"
                 ) {
                     return { type: "StringLiteral", value: "__star__" };
+                } else {
+                    throw new Error();
                 }
             }),
         },
@@ -99,7 +101,7 @@ function buildDeclarations(
                 {
                     type: "ObjectProperty",
                     key: { type: "Identifier", name: "__star__" },
-                    value: { type: "Identifier", name: exportAllAs },
+                    value: { type: "Identifier", name: exportAllAs ?? "" },
                     computed: false,
                     shorthand: false,
                 },
@@ -115,19 +117,19 @@ function buildDeclarations(
                     specifier.type === "ExportDefaultSpecifier"
                 ) {
                     importedName = "default";
-                    localName = specifier.local.name;
+                    localName = specifier.local?.name;
                 } else if (
                     specifier.type === "ImportNamespaceSpecifier" ||
                     specifier.type === "ExportNamespaceSpecifier"
                 ) {
                     importedName = "__star__";
-                    localName = specifier.local.name;
+                    localName = specifier.local?.name;
                 }
 
                 return {
                     type: "ObjectProperty",
-                    key: { type: "Identifier", name: importedName },
-                    value: { type: "Identifier", name: localName },
+                    key: { type: "Identifier", name: importedName ?? "" },
+                    value: { type: "Identifier", name: localName ?? "" },
                     computed: false,
                     shorthand: importedName === localName,
                 };
@@ -171,7 +173,9 @@ export const customImportExportTransform = (options: TranspilationOptions): Plug
                 // If it's not, no need to transform it, it's a simple export
             },
             ExportAllDeclaration(path) {
-                transformImportDeclaration(path, true, getText(path.node.exported), options);
+                if (path.node.exported) {
+                    transformImportDeclaration(path, true, getText(path.node.exported), options);
+                }
             },
         },
     };

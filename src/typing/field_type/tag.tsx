@@ -28,11 +28,12 @@ export class Tag extends FieldType<Tag> {
 
     Picker = () => {
         let options = this.options;
-        if (this.dynamic) {
+        if (this.dynamic && this.context?.type?.folder && this.context?.field?.name) {
             let dynamicOptions = Array.from(
-                gctx.dv.pages(`"${this.context.type.folder}"`).map((p) => p[this.context.field.name])
+                gctx.dv.pages(`"${this.context.type.folder}"`).map((p) => p[this.context!.field.name])
             );
-            options = [].concat(...options, ...dynamicOptions); // flatten
+            // TODO: Correctly convert Literal to string
+            options = [].concat(...options as any[], ...dynamicOptions); // flatten
             options = options.filter((x) => typeof x == "string");
             options = Array.from(new Set(options));
         }
