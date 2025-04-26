@@ -44,15 +44,15 @@ export class TypingAPI {
     note(path: string): Note {
         return Note.new(path);
     }
-    type(opt: string | { path?: string; folder?: string; name?: string }): Type {
-        if (typeof opt == "string") {
+    type(opt: string | { path?: string; folder?: string; name?: string }): Type | null {
+        if (typeof opt === "string") {
             return gctx.graph.get({ name: opt });
         }
         let { name, folder, path } = opt;
         return gctx.graph.get({ name, folder, path });
     }
 
-    lib: PromiseType<ReturnType<typeof importModules>>;
+    lib!: PromiseType<ReturnType<typeof importModules>>;
 
     import(path: string): Record<string, any> {
         let mod = gctx.importManager.importSmart(path);
@@ -67,7 +67,7 @@ export class TypingAPI {
 
     _import_explicit(path: string, symbols: any[], base?: string): Record<string, any> {
         if (path in this.lib) {
-            return this.lib[path as keyof typeof this.lib];
+            return this.lib[path as keyof typeof this.lib]!;
         }
         let mod = gctx.importManager.importSmart(path, base);
         if (mod == null) {
