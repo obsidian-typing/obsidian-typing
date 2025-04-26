@@ -1,7 +1,8 @@
 import { PluginItem, PluginObj, TransformOptions } from "@babel/core";
-import { availablePlugins, transform } from "@babel/standalone";
+import { availablePlugins, availablePresets, transform } from "@babel/standalone";
 import { customImportExportTransform } from "./transform";
 
+const presetTypeScript = availablePresets["typescript"];
 const transformReactJSX = availablePlugins["transform-react-jsx"];
 const transformModulesCommonJS = availablePlugins["transform-modules-commonjs"];
 
@@ -41,6 +42,7 @@ const DEFAULT_PARSER_OPTS: TransformOptions["parserOpts"] = {
 };
 
 const DEFAULT_TRANSPILE_OPTIONS: TransformOptions = {
+    presets: [presetTypeScript],
     plugins: [
         customImportExportTransform({ ctxObject: "api", importFunction: "_import_explicit" }),
         ...DEFAULT_PLUGINS,
@@ -52,6 +54,7 @@ const DEFAULT_TRANSPILE_OPTIONS: TransformOptions = {
 const MODULE_TRANSPILE_OPTIONS: TransformOptions = DEFAULT_TRANSPILE_OPTIONS;
 
 const FUNCTION_TRANSPILE_OPTIONS: TransformOptions = {
+    presets: [presetTypeScript],
     plugins: [
         customImportExportTransform({ ctxObject: "__ctx", importFunction: "_import_explicit" }),
         ...DEFAULT_PLUGINS,
@@ -74,12 +77,12 @@ export function transpile(source: string, options: TransformOptions = DEFAULT_TR
     }
 }
 
-export function transpileModule(source: string) {
-    return transpile(source, MODULE_TRANSPILE_OPTIONS);
+export function transpileModule(source: string, options: { filename?: string } = {}) {
+    return transpile(source, { ...MODULE_TRANSPILE_OPTIONS, ...options });
 }
 
-export function transpileFunction(source: string) {
-    return transpile(source, FUNCTION_TRANSPILE_OPTIONS);
+export function transpileFunction(source: string, options: { filename?: string } = {}) {
+    return transpile(source, { ...FUNCTION_TRANSPILE_OPTIONS, ...options });
 }
 
 export function compileModuleWithContext(
@@ -88,7 +91,7 @@ export function compileModuleWithContext(
     options: { transpile: boolean; filename?: string } = { transpile: true }
 ): Record<string, any> {
     if (options.transpile) {
-        let transpiled = transpileModule(code);
+        let transpiled = transpileModule(code, { filename: options.filename ?? "file.tsx" });
         if (transpiled.errors != null) {
             throw transpiled.errors[0];
         }
@@ -120,10 +123,10 @@ export function compileFunctionWithContext(
     code: string,
     context: Record<string, any> = {},
     args: string[] = ["ctx", "note"],
-    options: { transpile: boolean } = { transpile: true }
+    options: { transpile: boolean, filename?: string } = { transpile: true }
 ): (Function & { message?: undefined }) | TranspilationError {
     if (options.transpile) {
-        let transpiled = transpileFunction(code);
+        let transpiled = transpileFunction(code, { filename: options.filename ?? "file.tsx" });
         if (transpiled.errors) {
             return transpiled.errors[0];
         }
