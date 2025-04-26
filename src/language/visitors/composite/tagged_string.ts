@@ -5,11 +5,13 @@ import { Values } from "src/typing";
 import { dedent } from "src/utilities/dedent";
 import * as Visitors from ".";
 import { createVisitor, Rules } from "../index_base";
+import { SyntaxNode } from "@lezer/common";
 
 // TODO: reimplement with `tag` as an Identifier() child
 export const TaggedString = ({ tags, strict = false }: { tags: string[]; strict?: boolean }) =>
     createVisitor({
         rules: Rules.TaggedString,
+        run: undefined as ((node: SyntaxNode) => null) | undefined,
         accept(node) {
             if (!strict) return true;
             let nodeTag = node.getChild(Rules.Tag);

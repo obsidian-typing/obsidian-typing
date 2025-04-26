@@ -17,7 +17,10 @@ export const List = <V extends TVisitorBase>(valueType: V, opts?: { info?: strin
             let unexpectedNodes: SyntaxNode[] = [];
             this.traverse(
                 (node, child) => {
-                    result.push(child.run(node));
+                    let item = child.run(node);
+                    if (item !== undefined) {
+                        result.push(item);
+                    }
                 },
                 {
                     callbackNotAccepted(node) {

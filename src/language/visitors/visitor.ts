@@ -10,6 +10,10 @@ import { Interpreter } from "../interpreter";
 
 export type NodeType = SyntaxNode;
 
+type If<T, Y, N> = T extends true ? Y : T extends false ? N : Y | N;
+type Not<T> = If<T, false, true>;
+type IsCompiledInStrictMode = unknown extends {} ? false : true;
+
 type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
 type IsAny<T> = IfAny<T, true, never>;
 
@@ -48,7 +52,7 @@ namespace StaticTests {
     false satisfies IsAny<unknown> extends never ? false : true;
 
     true satisfies unknown extends unknown ? true : false;
-    true satisfies unknown extends Partial<{ item: string }> ? true : false;
+    true satisfies SameType<unknown extends Partial<{ item: string }> ? true : false, Not<IsCompiledInStrictMode>>
 
     true satisfies keyof unknown extends never ? true : false;
     false satisfies keyof Partial<{ item: string }> extends never ? true : false;
@@ -56,7 +60,7 @@ namespace StaticTests {
     true satisfies SameType<IsUnknown<unknown>, true>;
     true satisfies SameType<IsUnknown<any>, never>;
     true satisfies SameType<IsUnknown<Partial<{ item: string }>>, never>;
-    true satisfies SameType<IsUnknown<{}>, true>; // Edge case
+    true satisfies SameType<IsUnknown<{}>, If<IsCompiledInStrictMode, never, true>>; // Edge case
 
     true satisfies SameType<Merge<string, number>, string & number>;
     true satisfies SameType<Merge<number, string>, string & number>;
@@ -302,8 +306,8 @@ export class Visitor<
         >
     >(
         args: VisitorArgs<Return, Children, Utils, Cache, Super, This>
-    ): Visitor<OneOf<null, Return>, Children, Utils, Cache, Super> {
-        return Visitor.new<Visitor<OneOf<null, Return>, Children, Utils, Cache, Super>>({
+    ): Visitor<Return, Children, Utils, Cache, Super> {
+        return Visitor.new<Visitor<Return, Children, Utils, Cache, Super>>({
             // Ignore the fact that `This` might be different type
             // than the one specified in the type parameter default
             args: args as any,
@@ -348,9 +352,9 @@ export class Visitor<
             NewCache,
             NewThis
         >
-    >(args: Args): Visitor<ReturnType<Args["run"]>, NewChildren, NewUtils, NewCache, NewSuper> {
+    >(args: Args): Visitor<ReturnType<Exclude<Args["run"], undefined>>, NewChildren, NewUtils, NewCache, NewSuper> {
         let newArgs = Object.assign({}, this.originalArgs, args);
-        let result = Visitor.fromArgs<ReturnType<Args["run"]>, NewChildren, NewUtils, NewCache, NewSuper>(newArgs as any);
+        let result = Visitor.fromArgs<ReturnType<Exclude<Args["run"], undefined>>, NewChildren, NewUtils, NewCache, NewSuper>(newArgs as any);
         result.super = Visitor.fromArgs<Return, Children, Utils, Cache, Super>(this.originalArgs as any) as NewSuper;
         result.super.derived = result;
         result.super.bind(result);
@@ -698,11 +702,11 @@ export class Visitor<
         return result;
     }
 
-    run(node: NodeType, callContext?: GlobalCallContext): Return | null {
-        if (!this.enter(node, "run", callContext)) return null;
+    run(node: NodeType, callContext?: GlobalCallContext): Return {
+        if (!this.enter(node, "run", callContext)) return null as Return;
         if (this.lint(node).hasErrors) {
             this.exit();
-            return null;
+            return null as Return;
         }
         let cached = this.getCachedResult("run");
         if (cached !== undefined) return cached;
@@ -713,7 +717,7 @@ export class Visitor<
 
         this.cacheResult("run", result);
         this.exit();
-        return result;
+        return result as Return;
     }
 
     runChildren<Key extends keyof Children>(options?: {

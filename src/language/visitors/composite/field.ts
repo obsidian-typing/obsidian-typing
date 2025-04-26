@@ -38,7 +38,7 @@ export const ParametersVisitorFactory = <Arg extends TVisitorBase, Kwargs extend
 }: {
     args?: Arg;
     kwargs?: Kwargs;
-    init: (this: TVisitorBase, args: RetType<Arg>[], kwargs: RetTypeMap<Kwargs>) => Ret;
+    init: (this: TVisitorBase, args: Exclude<RetType<Arg>, undefined>[], kwargs: RetTypeMap<Kwargs>) => Ret;
 }) => {
     const argChildren: Partial<{ literal: TVisitorBase<any> }> = args
         ? { literal: Visitors.Proxy(Rules.ParameterValue, args) }
@@ -62,11 +62,14 @@ export const ParametersVisitorFactory = <Arg extends TVisitorBase, Kwargs extend
         },
         run(node) {
             const argVisitor = this.children.__arg;
-            const args: RetType<Arg>[] = [];
+            const args: Exclude<RetType<Arg>, undefined>[] = [];
 
             this.traverse((node, child) => {
-                if (child == argVisitor) {
-                    args.push(child.run(node));
+                if (child === argVisitor) {
+                    let arg = child.run(node);
+                    if (arg !== undefined) {
+                        args.push(arg);
+                    }
                 }
             });
 

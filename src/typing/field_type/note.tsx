@@ -15,7 +15,7 @@ export class Note extends FieldType<Note> {
     @field()
     public typeNames: Array<string> = [];
 
-    private _types?: Array<Type> = null;
+    private _types?: Array<Type>;
 
     @field({ required: false })
     public dv?: string;
