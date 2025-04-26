@@ -1,0 +1,159 @@
+# Automatically add labels to pull requests matching the criteria below.
+# This file is automatically pulled in by .github/workflows/add-pr-labels.yaml
+
+#################
+# Documentation #
+#################
+
+# Add 'documentation' label to user-facing documentation changes
+documentation:
+- changed-files:
+  - any-glob-to-any-file:
+    - docs/*
+    - README.md
+
+# Add 'license' label to license changes
+meta/license:
+- changed-files:
+  - any-glob-to-any-file:
+    - LICENSE
+    - LICENSE*
+
+# Add 'manifest' label to plugin manifest changes
+meta/manifest:
+- changed-files:
+  - any-glob-to-any-file:
+    - manifest.json
+    - versions.json
+
+########################
+# Build & Dependencies #
+########################
+
+# Add 'build' label to build-related changes
+meta/build:
+- changed-files:
+  - any-glob-to-any-file:
+    - .github/workflows/*
+    - .gitignore
+    - .prettierrc.json
+    - esbuild*
+    - jest*
+    - tsconfig*
+
+# Add 'dependencies' to dependency-related changes
+meta/dependencies:
+- changed-files:
+  - any-glob-to-any-file:
+    - .github/dependabot.yml
+    - package.json
+
+###########################
+# Technical Areas: Editor #
+###########################
+
+# Relates to a non-specific area of the Note editor
+editor:
+- changed-files:
+  - any-glob-to-any-file:
+    - src/middlware/css.tsx
+    - src/middlware/file_creation_menu.tsx
+    - src/middlware/hide_inline_fields.tsx
+    - src/middlware/title_bar.tsx
+
+# Relates to link augmentation in the Note editor
+editor/links:
+- changed-files:
+  - any-glob-to-any-file:
+    - src/middleware/link_rendering*
+
+# Relates to Headers and/or Footers in the Note editor
+editor/marginals:
+- changed-files:
+  - any-glob-to-any-file:
+    - src/middleware/marginal_rendering*
+
+# Relates to the live preview in the Note editor
+editor/live-preview:
+- changed-files:
+  - any-glob-to-any-file:
+    - src/middleware/*_live_preview*
+
+################################
+# Technical Area: OTL Language #
+################################
+
+# Relates to the OTL file editor
+otl/editor:
+- changed-files:
+  - any-glob-to-any-file: src/editor/**
+
+# Relates to the OTL language
+otl/language:
+- changed-files:
+  - any-glob-to-any-file: src/language/**
+  - all-globs-to-all-files: '!src/language/grammar/*'
+
+# Relates to the OTL grammar
+otl/grammar:
+- changed-files:
+  - any-glob-to-any-file: src/language/grammar/**
+
+#############################
+# Technical Area: Scripting #
+#############################
+
+# Relates to scripting
+scripting:
+- changed-files:
+  - any-glob-to-any-file:
+    - src/scripting/**
+    - src/typing/action.ts
+    - src/typing/hook.ts
+
+###########################
+# Technical Area: Typings #
+###########################
+
+# Relates to actions
+typing/actions:
+- changed-files:
+  - any-glob-to-any-file:
+    - src/typing/action.ts
+
+# Relates to field types
+typing/field-types:
+- changed-files:
+  - any-glob-to-any-file:
+    - src/typing/field_type/**
+    - src/ui/components/{autofocus,combobox,dropdown,picker}*
+    - src/ui/pickers/**
+
+# Relates to relations between notes
+typing/relations:
+- changes-files:
+  - any-glob-to-any-file:
+    - src/typing/field_type/note.tsx
+    - src/typing/relations.ts
+
+# Relates to validation
+typing/validation:
+- changed-files:
+  - any-glob-to-any-file:
+    - src/validation/**
+
+# Relates to hooks
+typing/hooks:
+- changed-files:
+  - any-glob-to-any-file:
+    - src/typing/hook.ts
+
+######################
+# Technical Area: UI #
+######################
+
+ux/ui:
+- changed-files:
+  - any-glob-to-any-file:
+    - src/styles/**
+    - src/ui/**
