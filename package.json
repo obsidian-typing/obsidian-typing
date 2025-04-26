@@ -4,7 +4,7 @@
   "description": "Strict note typing for Obsidian",
   "main": "main.js",
   "scripts": {
-    "check": "tsc -noEmit -project tsconfig.json",
+    "check": "tsc -noEmit -project tsconfig.main.json && tsc -noEmit -project tsconfig.test.ci.json",
     "dev": "node esbuild.config.mjs",
     "build": "node esbuild.config.mjs production",
     "test": "npx jest"

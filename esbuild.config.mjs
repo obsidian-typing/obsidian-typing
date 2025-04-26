@@ -92,6 +92,7 @@ const context = await esbuild.context({
     banner: {
         js: banner,
     },
+    tsconfig: "tsconfig.main.json",
     entryPoints: ["src/main.tsx"],
     bundle: true,
     external: [
