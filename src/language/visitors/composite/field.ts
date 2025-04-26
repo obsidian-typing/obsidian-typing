@@ -110,6 +110,11 @@ export const ParametersVisitorFactory = <Arg extends TVisitorBase, Kwargs extend
     });
 };
 
+const fieldTypesByName = FieldTypes as Partial<Record<string, {
+    new: (args: {}) => FieldTypeObject,
+    ParametersVisitor: (typeof FieldTypeObject)["ParametersVisitor"]
+}>>;
+
 export const FieldType = () =>
     createVisitor({
         rules: Rules.AssignmentType,
@@ -143,10 +148,12 @@ export const FieldType = () =>
             let name = this.runChildren({ keys: ["name"] })["name"];
             // TODO: Graceful recovery by returning an InvalidType sentinel value?
             if (!name) throw new Error("Failed to parse field type");
-            let paramsVisitor = FieldTypes[name as keyof typeof FieldTypes].ParametersVisitor();
+            let type = fieldTypesByName[name];
+            if (!type) throw new Error(`No field type named '${name}' was found`);
+            let paramsVisitor = type.ParametersVisitor();
             let params = node.getChild(Rules.ParameterList);
             if (!params) {
-                return FieldTypes[name as keyof typeof FieldTypes].new({});
+                return type.new({});
             }
             return paramsVisitor.run(params);
         },
