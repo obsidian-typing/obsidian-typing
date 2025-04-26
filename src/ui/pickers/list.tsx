@@ -8,6 +8,7 @@ import { Contexts, Picker } from "../components";
 import { PickerContext } from "../components/picker";
 import { useControls } from "../hooks";
 import { ControlSpec } from "../hooks/controls";
+import { MutableRef } from "preact/hooks";
 
 export const ListContext = createContext(false);
 
@@ -15,7 +16,8 @@ const REMOVE_CONST = "<|REMOVE|>";
 
 export function List({ SubPicker }: { SubPicker: any }) {
     let pickerCtx = useContext(PickerContext)!;
-    const refs = useRef<RefObject<HTMLButtonElement>[]>();
+    // Temporarily lie to the TypeScript compiler until the array is assigned below
+    const refs = useRef<MutableRef<HTMLButtonElement>[]>(undefined as any);
 
     let controls = useControls({
         parse: (value) => {
@@ -57,7 +59,8 @@ export function List({ SubPicker }: { SubPicker: any }) {
         controlsList.push(controls[i]);
     }
 
-    refs.current = controlsList.map(() => useRef());
+    // Temporarily lie to the TypeScript compiler until the DOM has been initialized
+    refs.current = controlsList.map(() => useRef(undefined as any));
 
     return (
         <Picker>
@@ -68,7 +71,7 @@ export function List({ SubPicker }: { SubPicker: any }) {
                               <ListPickerElement
                                   ref={refs.current[i]}
                                   index={i}
-                                  refs={refs.current}
+                                  refs={refs.current!}
                                   control={controlsList[i]}
                                   fieldName={pickerCtx.state.fieldName}
                               >
@@ -123,8 +126,8 @@ const ListElementWrapper = ({ children }: { children: ComponentChildren }) => {
 
 interface ListPickerElementProps {
     index: number;
-    ref: Ref<HTMLButtonElement>;
-    refs: RefObject<HTMLButtonElement>[];
+    ref: MutableRef<HTMLButtonElement>;
+    refs: MutableRef<HTMLButtonElement>[];
     children: ComponentChildren;
     control: ControlSpec<string>;
     fieldName: string;
@@ -156,7 +159,7 @@ const ListPickerElement = forwardRef<HTMLButtonElement, ListPickerElementProps>(
             }}
             onBlur={(e) => {
                 if (Platform.isMobile) return;
-                for (let container of [el(), promptCtx.state?.dropdownRef?.current]) {
+                for (let container of [el(), promptCtx?.state?.dropdownRef?.current]) {
                     for (let element of [e?.relatedTarget, document.activeElement]) {
                         if (container?.contains?.(element as Node)) {
                             return;
