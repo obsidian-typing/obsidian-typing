@@ -306,8 +306,8 @@ export class Visitor<
         >
     >(
         args: VisitorArgs<Return, Children, Utils, Cache, Super, This>
-    ): Visitor<OneOf<null, Return>, Children, Utils, Cache, Super> {
-        return Visitor.new<Visitor<OneOf<null, Return>, Children, Utils, Cache, Super>>({
+    ): Visitor<Return, Children, Utils, Cache, Super> {
+        return Visitor.new<Visitor<Return, Children, Utils, Cache, Super>>({
             // Ignore the fact that `This` might be different type
             // than the one specified in the type parameter default
             args: args as any,
