@@ -1,6 +1,8 @@
 name: on-push
 
-on: [push]
+on:
+  push:
+  pull_request:
 
 jobs:
   test:
@@ -17,7 +19,7 @@ jobs:
       - name: "test"
         run: |
           npm run test
-  deploy-docs:
+  docs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -30,6 +32,7 @@ jobs:
           npm install
           npm run build
       - name: "deploy"
+        if: ${{ github.ref == 'refs/heads/main' || github.refs == 'refs/heads/master' }}
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
