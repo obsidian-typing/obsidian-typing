@@ -706,6 +706,13 @@ export class Visitor<
         options?: TraversalOptions<Key>
     ): void {
         options = options ? mergeDeep(this.options.traversal, options) : this.options.traversal;
+        if (!options) {
+            throw new Error("Traversal error:" +
+                " No TraversalOptions have been provided to Visitor.traverse()." +
+                " Use visitor.traverse(..., traversalOptions)" +
+                " or createVisitor({ options: { traversal: traversalOptions } })" +
+                " to provide the traversal settings.");
+        }
 
         let activeChildren: Key[] = [];
         if (options.selectChildren) {
@@ -760,7 +767,7 @@ export class Visitor<
 
     _enter(node: NodeType, call: InternalCallType): void {
         if (!this.globalContext) {
-            throw "Global context not set!";
+            throw new Error("Global context not set!");
         }
         this.globalContext.callCount[call] = (this.globalContext.callCount[call] ?? 0) + 1;
         this.globalContext.callStack.push({
@@ -775,12 +782,15 @@ export class Visitor<
 
     exit(cached?: boolean): void {
         let lastContext = this.globalContext.callStack.pop();
+        if (!lastContext) {
+            throw new Error("Exiting while no traversal is in progress.");
+        }
         if (cached) {
             let call = lastContext.call + "_cached";
             this.globalContext.callCount[call] = (this.globalContext.callCount[call] ?? 0) + 1;
         }
         if (lastContext.visitor !== this) {
-            throw "Exiting not the same visitor as entered.";
+            throw new Error("Exiting not the same visitor as entered.");
         }
         if (!this.globalContext.callStack.length) {
             this.teardownCallContext();
@@ -828,6 +838,7 @@ export class Visitor<
 
     getChildText(name?: string) {
         let node = name ? this.node.getChild(name) : this.node;
+        if (!node) throw new Error("Failed to get text: Node not found");
         return this.getNodeText(node);
     }
 

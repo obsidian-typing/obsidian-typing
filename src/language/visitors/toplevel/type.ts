@@ -1,5 +1,6 @@
 import { Completion, snippet, snippetCompletion } from "@codemirror/autocomplete";
 import { Decoration, WidgetType } from "@codemirror/view";
+import { SyntaxNode } from "@lezer/common";
 import { Action, Field, Hook, HookContainer, Method, Prefix, Style, Type as TypeObject } from "src/typing";
 import { stripQuotes } from "src/utilities";
 import * as Visitors from "../composite";
@@ -84,8 +85,10 @@ export const TypeParentsClause = createVisitor({
     utils: {
         globalSymbols() {
             let globalScope = this.getParent({ tags: ["scope"] });
-            let globalScopeNode = this.node;
-            while (globalScopeNode.name != Rules.File) globalScopeNode = globalScopeNode.parent;
+            if (!globalScope) throw new Error("Failed to get global symbols: Not within a scope");
+            let globalScopeNode: SyntaxNode | null = this.node;
+            while (globalScopeNode && globalScopeNode.name != Rules.File) globalScopeNode = globalScopeNode.parent;
+            if (!globalScopeNode) throw new Error("Failed to get global symbols: Not within a scope");;
             return globalScope.symbols(globalScopeNode) ?? [];
         },
     },

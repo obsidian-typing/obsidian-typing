@@ -141,10 +141,12 @@ export const FieldType = () =>
         },
         run(node): FieldTypeObject {
             let name = this.runChildren({ keys: ["name"] })["name"];
-            let paramsVisitor = ((FieldTypes as any)[name] as typeof FieldTypeObject).ParametersVisitor();
+            // TODO: Graceful recovery by returning an InvalidType sentinel value?
+            if (!name) throw new Error("Failed to parse field type");
+            let paramsVisitor = FieldTypes[name as keyof typeof FieldTypes].ParametersVisitor();
             let params = node.getChild(Rules.ParameterList);
             if (!params) {
-                return (FieldTypes as any)[name].new({});
+                return FieldTypes[name as keyof typeof FieldTypes].new({});
             }
             return paramsVisitor.run(params);
         },
