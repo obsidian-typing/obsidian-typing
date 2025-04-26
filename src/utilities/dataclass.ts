@@ -38,7 +38,7 @@ export function field(options: FieldOptions = {}) {
 }
 
 export class DataClass {
-    static new<T extends DataClass>(this: new () => T, initialValues?: Partial<T>): T {
+    static new<T extends DataClass>(this: new () => T, initialValues?: Partial<NoInfer<T>>): T {
         const instance = new this();
         const fieldNames = getMetadata(Metadata.LIST_FIELDS, this.prototype) || [];
         if (initialValues && typeof initialValues === "object") {
