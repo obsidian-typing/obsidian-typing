@@ -118,7 +118,7 @@ export class Type extends DataClass {
         let path = `${this.folder}/${fullname}.md`;
 
         let vault = gctx.app.vault;
-        if (!vault.getAbstractFileByPath(this.folder)) {
+        if (this.folder && !vault.getAbstractFileByPath(this.folder)) {
             await vault.createFolder(this.folder);
         }
 
@@ -146,8 +146,11 @@ export class Type extends DataClass {
         if (gctx.dv != null) {
             paths = gctx.dv.pagePaths(`"${this.folder}"`);
         } else {
+            if (!this.folder) {
+                return [];
+            }
             let folder = gctx.app.vault.getAbstractFileByPath(this.folder);
-            if (folder == null) {
+            if (!folder) {
                 return [];
             }
             if (!(folder instanceof TFolder)) {
