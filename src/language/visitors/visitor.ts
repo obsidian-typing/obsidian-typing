@@ -188,32 +188,6 @@ const defaultVisitorOptions: VisitorOptions = {
     },
 };
 
-/** No-op function to force type inference. */
-export function VisitorArgs<
-    Return,
-    Children,
-    Utils,
-    Cache,
-    Super,
-    This extends Visitor<
-        OneOf<TReturnBase, Return>,
-        Children extends TChildrenBase ? Children : TChildrenBase,
-        Utils extends TUtilsBase ? Utils : TUtilsBase,
-        Cache,
-        Super extends TOptionalVisitorBase ? Super : TOptionalVisitorBase
-    > = Visitor<
-        OneOf<TReturnBase, Return>,
-        Children extends TChildrenBase ? Children : TChildrenBase,
-        Utils extends TUtilsBase ? Utils : TUtilsBase,
-        Cache,
-        Super extends TOptionalVisitorBase ? Super : TOptionalVisitorBase
-    >
->(
-    args: VisitorArgs<Return, Children, Utils, Cache, Super, This>
-): VisitorArgs<Return, Children, Utils, Cache, Super, This> {
-    return args;
-}
-
 export type VisitorArgs_Infer<
     Return extends TReturnBase,
     Children extends TChildrenBase,
