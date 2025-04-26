@@ -1,7 +1,7 @@
 import { Completion, snippet, snippetCompletion } from "@codemirror/autocomplete";
 import { Decoration, WidgetType } from "@codemirror/view";
 import { SyntaxNode } from "@lezer/common";
-import { Action, Field, Hook, HookContainer, Method, Prefix, Style, Type as TypeObject } from "src/typing";
+import { Action, Field, Hook, HookContainer, HookNames, Method, Prefix, Style, Type as TypeObject } from "src/typing";
 import { stripQuotes } from "src/utilities";
 import * as Visitors from "../composite";
 import { createVisitor, Rules, Symbol } from "../index_base";
@@ -179,7 +179,7 @@ export const Type = createVisitor({
                     "Style section"
                 ).override({
                     run(node) {
-                        let opts = this.runChildren({ keys: ["body"] })["body"];
+                        let opts = this.runChild("body");
                         return Style.new(opts);
                     },
                 }),
@@ -205,16 +205,15 @@ export const Type = createVisitor({
                             shortcut: Visitors.Attribute("shortcut", Visitors.String),
                         })
                     ).extend({
-                        run() {
-                            let { name: id, value } = this.super.runChildren();
+                        run(): Action {
+                            let { name: id, value } = this.runChildren();
                             return Action.new({ id, ...value });
                         },
                     })
                 ).extend({
                     run(): Record<string, Action> {
                         let result: Record<string, Action> = {};
-                        let action: Action;
-                        for (action of this.super.runChildren()["body"]) {
+                        for (let action of this.runChild("body") ?? []) {
                             result[action.id] = action;
                         }
                         return result;
@@ -233,9 +232,10 @@ export const Type = createVisitor({
                     "Hooks"
                 ).extend({
                     run(node) {
-                        let hooks = this.runChildren({ keys: ["body"] })["body"];
-                        for (let key in hooks) {
-                            hooks[key] = Hook.new({ func: hooks[key] });
+                        let hooksList = this.runChild("body");
+                        let hooks: Partial<Pick<HookContainer, HookNames>> = {};
+                        for (let key in hooksList) {
+                            hooks[key as HookNames] = Hook.new({ func: hooksList[key as HookNames] });
                         }
                         return HookContainer.new(hooks);
                     },
@@ -245,9 +245,10 @@ export const Type = createVisitor({
                     Visitors.NamedAttribute(Visitors.ExprScriptString("(${params}) => {\n\t${}\n}"))
                 ).extend({
                     run(node) {
-                        let methodsList = this.runChildren()["body"];
+                        let methodsList = this.runChild("body") ?? [];
                         let methods: Record<string, Method> = {};
                         for (let { name, value } of methodsList) {
+                            if (name === null || name === undefined) continue;
                             methods[name] = Method.new({ function: value });
                         }
                         return methods;

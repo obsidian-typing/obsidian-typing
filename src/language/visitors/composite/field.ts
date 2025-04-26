@@ -183,7 +183,15 @@ export const Field = () =>
             return FieldObject.new({
                 name: name ?? undefined,
                 type: type ?? undefined,
-                default: defaultValue ?? undefined,
+                // TODO: We temporarily cheat the compiler here:
+                //
+                //       While defaultValue might have a non-string type,
+                //       the constructor will turn it into a string value
+                //       using type.parseDefault anyway.
+                //
+                //       We will have to revisit this in the future once we
+                //       add better support for composite values (arrays, objects).
+                default: defaultValue as string ?? undefined,
                 ...opts
             });
         },

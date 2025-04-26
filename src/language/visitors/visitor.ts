@@ -10,8 +10,66 @@ import { Interpreter } from "../interpreter";
 
 export type NodeType = SyntaxNode;
 
-type Merge<A, B> = B extends void ? A : A extends void ? B : A & B;
-type OneOf<A, B> = B extends void ? A : B;
+type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
+type IsAny<T> = IfAny<T, true, never>;
+
+type IfSameType<A, B, Y, N> = A | B extends A & B ? Y : N;
+type IsSameType<A, B> = IfSameType<A, B, true, never>;
+
+type IfUnknown<T, Y, N> = IsAny<T> extends never ? unknown extends T ? keyof T extends never ? Y : N : N : N;
+type IsUnknown<T> = IfUnknown<T, true, never>;
+
+type Merge<A, B> = IsUnknown<B> extends never ? IsUnknown<A> extends never ? A & B : B : A;
+type OneOf<A, B> = IsUnknown<B> extends never ? B : A;
+
+// Static tests of IsUnknown, OneOf and Merge
+namespace StaticTests {
+    type SameType<A, B> = IfSameType<A, B, true, false>;
+
+    true satisfies SameType<true, true>;
+    true satisfies SameType<never, never>;
+    false satisfies SameType<unknown, never>;
+    false satisfies SameType<never, unknown>;
+    false satisfies SameType<true, never>;
+    false satisfies SameType<never, true>;
+
+    true satisfies SameType<string, string>;
+    true satisfies SameType<unknown, unknown>;
+    false satisfies SameType<string, number>;
+    false satisfies SameType<unknown, string>;
+    false satisfies SameType<string, unknown>;
+
+    true satisfies 0 extends (1 & any) ? true : false;
+    true satisfies IfAny<any, true, false>
+    true satisfies IsAny<any> extends never ? false : true;
+
+    false satisfies 0 extends (1 & unknown) ? true : false
+    false satisfies IfAny<unknown, true, false>;
+    false satisfies IsAny<unknown> extends never ? false : true;
+
+    true satisfies unknown extends unknown ? true : false;
+    true satisfies unknown extends Partial<{ item: string }> ? true : false;
+
+    true satisfies keyof unknown extends never ? true : false;
+    false satisfies keyof Partial<{ item: string }> extends never ? true : false;
+
+    true satisfies SameType<IsUnknown<unknown>, true>;
+    true satisfies SameType<IsUnknown<any>, never>;
+    true satisfies SameType<IsUnknown<Partial<{ item: string }>>, never>;
+    true satisfies SameType<IsUnknown<{}>, true>; // Edge case
+
+    true satisfies SameType<Merge<string, number>, string & number>;
+    true satisfies SameType<Merge<number, string>, string & number>;
+    true satisfies SameType<Merge<unknown, string>, string>;
+    true satisfies SameType<Merge<string, unknown>, string>;
+    true satisfies SameType<Merge<unknown, unknown>, unknown>;
+
+    true satisfies SameType<OneOf<string, number>, number>;
+    true satisfies SameType<OneOf<number, string>, string>;
+    true satisfies SameType<OneOf<unknown, string>, string>;
+    true satisfies SameType<OneOf<string, unknown>, string>;
+    true satisfies SameType<OneOf<unknown, unknown>, unknown>;
+}
 
 interface CompletionEntry extends Completion {
     symbol?: string;
@@ -40,7 +98,27 @@ export interface Symbol {
     metadata?: any;
 }
 
-type AnyVisitor = Visitor<any, any, any, any, any>;
+export type VisitorTypes<
+    Return = any,
+    Children = any,
+    Utils = any,
+    Cache = any,
+    Super = any
+> = {
+    Return?: Return,
+    Children?: Children,
+    Utils?: Utils,
+    Cache?: Cache,
+    Super?: Super
+};
+
+export type AnyVisitor<Args extends VisitorTypes = {}> = Visitor<
+    OneOf<VisitorTypes["Return"], Args["Return"]>,
+    OneOf<VisitorTypes["Children"], Args["Children"]>,
+    OneOf<VisitorTypes["Utils"], Args["Utils"]>,
+    OneOf<VisitorTypes["Cache"], Args["Cache"]>,
+    OneOf<VisitorTypes["Super"], Args["Super"]>
+>;
 
 let cache: NodeWeakMap<WeakMap<AnyVisitor, CacheEntry>>;
 
@@ -224,8 +302,8 @@ export class Visitor<
         >
     >(
         args: VisitorArgs<Return2, Children2, Utils2, CacheType2, Super, This>
-    ): Visitor<Return2, Children2, Utils2, CacheType2, Super> {
-        return Visitor.new<Visitor<Return2, Children2, Utils2, CacheType2, Super>>({
+    ): Visitor<OneOf<null, Return2>, Children2, Utils2, CacheType2, Super> {
+        return Visitor.new<Visitor<OneOf<null, Return2>, Children2, Utils2, CacheType2, Super>>({
             // Ignore the fact that `This` might be different type
             // than the one specified in the type parameter default
             args: args as any,
@@ -257,10 +335,23 @@ export class Visitor<
             OneOf<Utils, Utils2>,
             OneOf<CacheType, CacheType2>,
             NewSuper
+        >,
+        Args extends VisitorArgs<
+            Return2,
+            Children2,
+            Utils2,
+            CacheType2,
+            NewThis
+        > = VisitorArgs<
+            Return2,
+            Children2,
+            Utils2,
+            CacheType2,
+            NewThis
         >
-    >(args: VisitorArgs<Return2, Children2, Utils2, CacheType2, NewThis>) {
+    >(args: Args): Visitor<ReturnType<Args["run"]>, Children2, Utils2, CacheType2, NewSuper> {
         let newArgs = Object.assign({}, this.originalArgs, args);
-        let result = Visitor.fromArgs<Return2, Children2, Utils2, CacheType2, NewSuper>(newArgs as any);
+        let result = Visitor.fromArgs<ReturnType<Args["run"]>, Children2, Utils2, CacheType2, NewSuper>(newArgs as any);
         result.super = Visitor.fromArgs<Return, Children, Utils, CacheType, Super>(this.originalArgs as any) as NewSuper;
         result.super.derived = result;
         result.super.bind(result);

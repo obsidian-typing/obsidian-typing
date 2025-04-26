@@ -106,7 +106,7 @@ export class File extends FieldType<File> {
                 short: Visitors.Literal(Visitors.Boolean),
             },
             init(args, kwargs) {
-                if (kwargs.ext != null) {
+                if (kwargs.ext !== null && kwargs.ext !== undefined) {
                     if (!Array.isArray(kwargs.ext)) {
                         kwargs.ext = [kwargs.ext];
                     }
@@ -116,7 +116,7 @@ export class File extends FieldType<File> {
                         return x;
                     });
                 }
-                return File.new(kwargs);
+                return File.new(kwargs as (typeof kwargs) & { ext?: string[] });
             },
         });
 }

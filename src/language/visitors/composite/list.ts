@@ -3,7 +3,7 @@ import { SyntaxNode } from "@lezer/common";
 import * as Visitors from ".";
 import { createVisitor, Rules, TVisitorBase } from "../index_base";
 
-export const List = (valueType: TVisitorBase, opts?: { info?: string }) =>
+export const List = <V extends TVisitorBase>(valueType: V, opts?: { info?: string }) =>
     createVisitor({
         rules: Rules.List,
         children: {
@@ -13,7 +13,7 @@ export const List = (valueType: TVisitorBase, opts?: { info?: string }) =>
             return valueType.snippets();
         },
         run() {
-            let result: ReturnType<(typeof valueType)["run"]>[] = [];
+            let result: ReturnType<V["run"]>[] = [];
             let unexpectedNodes: SyntaxNode[] = [];
             this.traverse(
                 (node, child) => {
