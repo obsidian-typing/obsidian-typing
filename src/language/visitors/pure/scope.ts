@@ -11,7 +11,7 @@ export const Scope = <R, C extends TChildrenBase>(
         tags: ["scope"],
         children: { visitor },
         symbols() {
-            let symbols = [] as Symbol[];
+            let symbols: Symbol[] = [];
             this.traverse((_, visitor) => {
                 visitor.traverse((node, child) => {
                     for (let symbol of child.symbols(node)!) {
