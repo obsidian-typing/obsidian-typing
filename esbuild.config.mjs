@@ -50,7 +50,7 @@ export const scssTypesPlugin = (stylesPattern, watch) => {
     };
 };
 
-// renames `main.css` to `styles.css` in build dir
+// renames `main.css(.map)` to `styles.css(.map)` in build dir
 const renameCompiledCSS = {
     name: "rename-compiled-css",
     setup(build) {
@@ -61,6 +61,12 @@ const renameCompiledCSS = {
             if (fs.existsSync(outCssSrc)) {
                 console.log(`RENAME COMPILED CSS: ${outCssSrc} -> ${outCssDst}`);
                 fs.renameSync(outCssSrc, outCssDst);
+            }
+            const outCssMapSrc = `${outCssSrc}.map`;
+            const outCssMapDst = `${outCssDst}.map`;;
+            if (fs.existsSync(outCssMapSrc)) {
+                console.log(`RENAME COMPILED CSS SOURCE MAP: ${outCssMapSrc} -> ${outCssMapDst}`);
+                fs.renameSync(outCssMapSrc, outCssDst);
             }
         });
     },
