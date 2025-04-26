@@ -344,12 +344,14 @@ export class Visitor<
             NewChildren,
             NewUtils,
             NewCache,
+            NewSuper,
             NewThis
         > = VisitorArgs<
             NewReturn,
             NewChildren,
             NewUtils,
             NewCache,
+            NewSuper,
             NewThis
         >
     >(args: Args): Visitor<ReturnType<Exclude<Args["run"], undefined>>, NewChildren, NewUtils, NewCache, NewSuper> {
