@@ -20,7 +20,7 @@ export class Tag extends FieldType<Tag> {
     public fuzzy: boolean = true;
 
     Display: FieldType["Display"] = ({ value }) => {
-        if (this.context.field.type instanceof FieldTypes.List) {
+        if (this.context?.inList) {
             value = stripQuotes(value);
         }
         return <>{value}</>;

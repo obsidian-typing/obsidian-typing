@@ -8,7 +8,7 @@ export class Text extends FieldType<Text> {
     name = "Text";
 
     Display: FieldType["Display"] = ({ value }) => {
-        if (this.context.field.type instanceof FieldTypes.List) {
+        if (this.context?.inList) {
             value = stripQuotes(value);
         }
         return <>{value}</>;
