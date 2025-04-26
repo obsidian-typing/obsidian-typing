@@ -164,6 +164,9 @@ export type TVisitorBase<
     CacheType extends TCacheBase = any
 > = Visitor<Return, Children, Utils, CacheType, TVisitorBase>;
 
+type VisitorReturn<Key extends keyof Children, Children extends TChildrenBase> =
+    Partial<{ [K in Key]: ReturnType<Children[K]["run"]> }>;
+
 export class Visitor<
     Return extends TReturnBase,
     Children extends TChildrenBase,
@@ -621,13 +624,11 @@ export class Visitor<
         keys?: Key[] | null;
         eager?: boolean;
         traversalOptions?: TraversalOptions<Key>;
-    }) {
-        type VisitorReturn<K extends Key> = ReturnType<Children[K]["run"]>;
-
+    }): VisitorReturn<Key, Children> {
         options = options ?? {};
         // options = mergeDeep({ keys: [], eager: false, traversalOptions: {} }, options);
 
-        let result = {} as Partial<{ [K in Key]: VisitorReturn<K> }>;
+        let result = {} as VisitorReturn<Key, Children>;
         let traversalOptions = { ...options.traversalOptions };
         traversalOptions.selectChildren = options?.keys;
 
@@ -649,7 +650,7 @@ export class Visitor<
         return result;
     }
 
-    runChild<Key extends keyof Children>(key: Key) {
+    runChild<Key extends keyof Children>(key: Key): ReturnType<Children[Key]["run"]> | undefined {
         return this.runChildren({ keys: [key] })[key];
     }
 
@@ -847,12 +848,12 @@ export class Visitor<
     //     return this.cacheContainer.public;
     // }
 
-    getCachedResult<K extends keyof VisitorOptions["cache"]>(
+    getCachedResult<K extends keyof NonNullable<VisitorOptions["cache"]>>(
         call: K,
         opts?: { exitOnHit: boolean }
     ): CacheEntry["callCache"][K] {
         opts = opts ?? { exitOnHit: true };
-        let shouldUseCache = this.options.cache[call];
+        let shouldUseCache = this.options.cache?.[call];
         if (shouldUseCache) {
             let cached = this.callCache[call];
             if (cached !== undefined) {
