@@ -10,6 +10,10 @@ import { Interpreter } from "../interpreter";
 
 export type NodeType = SyntaxNode;
 
+type If<T, Y, N> = T extends true ? Y : T extends false ? N : Y | N;
+type Not<T> = If<T, false, true>;
+type IsCompiledInStrictMode = unknown extends {} ? false : true;
+
 type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
 type IsAny<T> = IfAny<T, true, never>;
 
@@ -48,7 +52,7 @@ namespace StaticTests {
     false satisfies IsAny<unknown> extends never ? false : true;
 
     true satisfies unknown extends unknown ? true : false;
-    true satisfies unknown extends Partial<{ item: string }> ? true : false;
+    true satisfies SameType<unknown extends Partial<{ item: string }> ? true : false, Not<IsCompiledInStrictMode>>
 
     true satisfies keyof unknown extends never ? true : false;
     false satisfies keyof Partial<{ item: string }> extends never ? true : false;
@@ -56,7 +60,7 @@ namespace StaticTests {
     true satisfies SameType<IsUnknown<unknown>, true>;
     true satisfies SameType<IsUnknown<any>, never>;
     true satisfies SameType<IsUnknown<Partial<{ item: string }>>, never>;
-    true satisfies SameType<IsUnknown<{}>, true>; // Edge case
+    true satisfies SameType<IsUnknown<{}>, If<IsCompiledInStrictMode, never, true>>; // Edge case
 
     true satisfies SameType<Merge<string, number>, string & number>;
     true satisfies SameType<Merge<number, string>, string & number>;
