@@ -1,5 +1,5 @@
 import { App, MarkdownView, Platform } from "obsidian";
-import { DataviewApi} from "obsidian-dataview";
+import { DataviewApi } from "obsidian-dataview";
 import { Interpreter } from "src/language";
 import TypingPlugin from "src/main";
 import { ImportManager } from "src/scripting";
