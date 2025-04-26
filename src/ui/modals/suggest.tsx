@@ -46,15 +46,20 @@ export class TypeSuggestModal extends SuggestModal<Type> {
             }
         }
     }
+
+    getTypeTitle(type: Type): string {
+        return type.category ? `${type.category}: ${type.displayName}` : type.displayName;
+    }
+
     renderSuggestion(type: Type, el: HTMLElement) {
-        render(<SuggestionWithIcon text={type.name} icon={type.icon} callback={() => {}} />, el);
+        render(<SuggestionWithIcon text={this.getTypeTitle(type)} icon={type.icon} callback={() => {}} />, el);
     }
 
     getSuggestions(query: string): Type[] {
         let fuzzySearch = prepareFuzzySearch(query);
         let result = [];
         for (let type of this.types) {
-            if (fuzzySearch(type.name)) {
+            if (fuzzySearch(this.getTypeTitle(type)) || fuzzySearch(type.name)) {
                 result.push(type);
             }
         }
