@@ -30,7 +30,7 @@ export const scssTypesPlugin = (stylesPattern, watch) => {
             console.log("setup", stylesPattern);
             build.onStart(async () => {
                 console.log("onstart");
-                await generateScssTypeDeclarations(stylesPattern);
+                await generateScssTypeDeclarations(stylesPattern, {  });
                 setupDone = true;
             });
 
@@ -92,6 +92,7 @@ const context = await esbuild.context({
     banner: {
         js: banner,
     },
+    tsconfig: "tsconfig.main.json",
     entryPoints: ["src/main.tsx"],
     bundle: true,
     external: [

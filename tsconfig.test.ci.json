@@ -1,0 +1,16 @@
+{
+
+    "extends": ["./tsconfig.base.json"],
+    "compilerOptions": {
+        "strict": false,
+    },
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "__mocks__/**/*.ts",
+        "__mocks__/**/*.tsx"
+    ],
+    "typeAcquisition": {
+        "include": ["jest"]
+    }
+}

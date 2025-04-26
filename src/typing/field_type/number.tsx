@@ -1,5 +1,5 @@
 import { Visitors } from "src/language";
-import { Pickers } from "src/ui";
+import { IComboboxOption, Pickers } from "src/ui";
 import { field } from "src/utilities";
 import { FieldType } from "./base";
 
@@ -20,7 +20,7 @@ export class Number extends FieldType<Number> {
     };
 
     Picker = () => {
-        let options = [];
+        let options: IComboboxOption[] = [];
         for (let i = this.min; i <= this.max; i++) {
             options.push({ value: `${i}` });
         }

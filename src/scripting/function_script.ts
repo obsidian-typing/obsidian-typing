@@ -4,19 +4,19 @@ import { Note } from "src/typing";
 import { DataClass, field } from "src/utilities";
 import { compileFunctionWithContext } from "./transpilation";
 
-interface IScriptContextBase {
+export interface IScriptContextBase {
     note?: Note;
     _import_explicit?: typeof gctx.api._import_explicit;
 }
 
 export class Script<T extends IScriptContextBase = IScriptContextBase> extends DataClass {
-    @field()
-    source: string;
+    @field({ required: true })
+    source!: string;
 
-    fn: Function;
+    fn!: Function;
 
     @field()
-    filePath: string = null;
+    filePath: string | null = null;
 
     onAfterCreate() {
         this.source = this.transformSource(this.source);
@@ -38,7 +38,7 @@ export class Script<T extends IScriptContextBase = IScriptContextBase> extends D
 
     call(ctx: T) {
         ctx._import_explicit = (path: string, symbols: string[]) =>
-            gctx.api._import_explicit(path, symbols, this.filePath);
+            gctx.api._import_explicit(path, symbols, this.filePath ?? undefined);
         return this.fn(ctx, ctx.note, ctx);
     }
 

@@ -14,7 +14,10 @@ async function testAccessor(
 }
 
 function defineType(fields: string[]) {
-    const result = {
+    const result: {
+        name: string,
+        fields: Record<string, Field>,
+    } = {
         name: "Test",
         fields: {},
     };

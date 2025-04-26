@@ -41,10 +41,13 @@ export const Boolean = createVisitor({
     },
 });
 
-export const LiteralString = (values: string[]) =>
+export const LiteralString = <const A extends T[], const T extends string = A extends (infer TT)[] ? TT : never>(values: A) =>
     String.override({
+        run(node) {
+            return this.super.run(node) as T;
+        },
         lint(node) {
-            if (!values.contains(stripQuotes(this.getNodeText(node)))) {
+            if (!values.contains(stripQuotes(this.getNodeText(node)) as T)) {
                 this.error(`Allowed values: ${values}`);
             }
         },
@@ -53,7 +56,7 @@ export const LiteralString = (values: string[]) =>
         },
     });
 
-export const Literal = (type: TVisitorBase) =>
+export const Literal = <V extends TVisitorBase>(type: V) =>
     createVisitor({
         rules: Rules.Literal,
         children: { type },

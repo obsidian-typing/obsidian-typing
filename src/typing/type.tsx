@@ -1,35 +1,47 @@
 import { TFile, TFolder } from "obsidian";
 import { gctx } from "src/context";
 import { StringFieldAccessor } from "src/middleware/field_accessor";
-import { Prompt } from "src/ui";
+import { Prompt, PromptState } from "src/ui";
 import { DataClass, field, mergeDeep } from "src/utilities";
-import { Action, Field, HookContainer, HookContextType, HookNames, Method, Note, NoteState, Prefix, Style } from ".";
+import { Action, Field, Hook, HookContainer, HookContextType, HookNames, Method, Note, NoteState, Prefix, Style } from ".";
 
 export class Type extends DataClass {
     @field()
     public isAbstract: boolean = false;
+
     @field()
-    public name: string;
+    public name!: string;
+
     @field()
     public parentNames: Array<string> = [];
+
     @field({ inherit: false })
     public parents: Array<Type> = [];
-    @field({ inherit: false })
-    public folder: string = null;
-    @field({ inherit: false })
-    public glob: string = null;
-    @field()
-    public icon: string = null;
-    @field()
-    public prefix: Prefix = null;
+
+    @field({ required: false, inherit: false })
+    public folder?: string;
+
+    @field({ required: false, inherit: false })
+    public glob?: string | null = null;
+
+    @field({ required: false })
+    public icon?: string;
+
+    @field({ required: false })
+    public prefix?: Prefix;
+
     @field()
     public style: Style = Style.new();
+
     @field({ inherit: (a, b) => ({ ...b, ...a }) })
     public fields: Record<string, Field> = {};
+
     @field({ inherit: (a, b) => ({ ...b, ...a }) })
     public actions: Record<string, Action> = {};
+
     @field({ inherit: (a, b) => ({ ...b, ...a }) })
     public methods: Record<string, Method> = {};
+
     @field()
     public hooks: HookContainer = HookContainer.new();
 
@@ -69,7 +81,7 @@ export class Type extends DataClass {
         for (let fieldName in this.fields) {
             defaults[fieldName] = this.fields[fieldName].default;
         }
-        let state = mergeDeep({ type: this, fields: defaults }, initialState) as NoteState;
+        let state = mergeDeep({ type: this, fields: defaults }, initialState) as PromptState;
 
         if (this.hooks.has(HookNames.CREATE)) {
             this.runHook(HookNames.CREATE, { type: this, state });
@@ -87,8 +99,8 @@ export class Type extends DataClass {
         return state;
     }
 
-    async create(state: NoteState | Promise<NoteState>) {
-        state = await state;
+    async create(stateFactory: Omit<NoteState, "type"> | Promise<Omit<NoteState, "type"> | null | undefined> | null | undefined) {
+        let state = await stateFactory;
         if (!state) {
             return;
         }
@@ -106,7 +118,7 @@ export class Type extends DataClass {
         let path = `${this.folder}/${fullname}.md`;
 
         let vault = gctx.app.vault;
-        if (!vault.getAbstractFileByPath(this.folder)) {
+        if (this.folder && !vault.getAbstractFileByPath(this.folder)) {
             await vault.createFolder(this.folder);
         }
 
@@ -134,8 +146,11 @@ export class Type extends DataClass {
         if (gctx.dv != null) {
             paths = gctx.dv.pagePaths(`"${this.folder}"`);
         } else {
+            if (!this.folder) {
+                return [];
+            }
             let folder = gctx.app.vault.getAbstractFileByPath(this.folder);
-            if (folder == null) {
+            if (!folder) {
                 return [];
             }
             if (!(folder instanceof TFolder)) {

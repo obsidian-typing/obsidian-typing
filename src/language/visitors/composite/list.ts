@@ -1,8 +1,9 @@
 import { snippet, startCompletion } from "@codemirror/autocomplete";
+import { SyntaxNode } from "@lezer/common";
 import * as Visitors from ".";
 import { createVisitor, Rules, TVisitorBase } from "../index_base";
 
-export const List = (valueType: TVisitorBase, opts?: { info?: string }) =>
+export const List = <V extends TVisitorBase>(valueType: V, opts?: { info?: string }) =>
     createVisitor({
         rules: Rules.List,
         children: {
@@ -12,11 +13,14 @@ export const List = (valueType: TVisitorBase, opts?: { info?: string }) =>
             return valueType.snippets();
         },
         run() {
-            let result: ReturnType<(typeof valueType)["run"]>[] = [];
-            let unexpectedNodes = [];
+            let result: ReturnType<V["run"]>[] = [];
+            let unexpectedNodes: SyntaxNode[] = [];
             this.traverse(
                 (node, child) => {
-                    result.push(child.run(node));
+                    let item = child.run(node);
+                    if (item !== undefined) {
+                        result.push(item);
+                    }
                 },
                 {
                     callbackNotAccepted(node) {

@@ -4,6 +4,7 @@ import { Visitors } from "src/language";
 import { Note, Type } from "src/typing";
 import * as ui from "src/ui";
 import { TypeSuggestModal } from "src/ui";
+import { Module } from "src/utilities/module_manager_sync";
 
 type PromiseType<T> = T extends Promise<infer U> ? U : never;
 
@@ -44,22 +45,22 @@ export class TypingAPI {
     note(path: string): Note {
         return Note.new(path);
     }
-    type(opt: string | { path?: string; folder?: string; name?: string }): Type {
-        if (typeof opt == "string") {
+    type(opt: string | { path?: string; folder?: string; name?: string }): Type | null {
+        if (typeof opt === "string") {
             return gctx.graph.get({ name: opt });
         }
         let { name, folder, path } = opt;
         return gctx.graph.get({ name, folder, path });
     }
 
-    lib: PromiseType<ReturnType<typeof importModules>>;
+    lib!: PromiseType<ReturnType<typeof importModules>>;
 
     import(path: string): Record<string, any> {
         let mod = gctx.importManager.importSmart(path);
-        if (mod == null) {
+        if (mod === null || mod === undefined) {
             throw new Error(`ImportError: Could not find module ${path}`);
         }
-        if (mod.error != null) {
+        if (mod.error !== null && mod.error !== undefined) {
             throw new Error(`ImportError: Error in module ${path}: ${mod.error}`);
         }
         return mod.env;
@@ -67,13 +68,13 @@ export class TypingAPI {
 
     _import_explicit(path: string, symbols: any[], base?: string): Record<string, any> {
         if (path in this.lib) {
-            return this.lib[path as keyof typeof this.lib];
+            return this.lib[path as keyof typeof this.lib]!;
         }
         let mod = gctx.importManager.importSmart(path, base);
-        if (mod == null) {
+        if (mod === null || mod === undefined) {
             throw new Error(`ImportError: Could not find module ${path}`);
         }
-        if (mod.error != null) {
+        if (mod.error !== null && mod.error !== undefined) {
             throw new Error(`ImportError: Error in module ${path}: ${mod.error}`);
         }
         for (let arg of symbols) {

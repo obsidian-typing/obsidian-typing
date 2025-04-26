@@ -5,7 +5,7 @@ import { useControls } from "../hooks";
 import styles from "src/styles/prompt.scss";
 
 export function Checkbox() {
-    const pickerCtx = useContext(Contexts.PickerContext);
+    const pickerCtx = useContext(Contexts.PickerContext)!;
     let inList = useContext(Contexts.ListContext);
     let controls = useControls({
         parse: (text) => {

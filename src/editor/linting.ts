@@ -33,7 +33,7 @@ export const visitorLinter = (rootVisitor: TVisitorBase) => {
                 ...rootVisitor.lint(syntaxTree(view.state).topNode, {
                     state: view.state,
                     interpreter: gctx.interpreter,
-                    path: view.state.field(codeEditorMetadataField).path,
+                    path: view.state.field(codeEditorMetadataField)?.path,
                 }).diagnostics
             );
             return diagnostics;

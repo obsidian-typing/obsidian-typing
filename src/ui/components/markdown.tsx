@@ -11,8 +11,8 @@ export const MarkdownRenderingContext = createContext<MarkdownRenderingContextTy
 
 export const Markdown = memo(
     ({
-        text,
         children,
+        text = children ?? "",
         compact,
         dedent: doDedent,
     }: {
@@ -21,10 +21,9 @@ export const Markdown = memo(
         compact?: boolean;
         dedent?: boolean;
     }) => {
-        let containerRef = useRef<HTMLElement>();
-        text = text ?? children;
+        let containerRef = useRef<HTMLElement>(null);
 
-        let context = useContext(MarkdownRenderingContext);
+        let context = useContext(MarkdownRenderingContext)!;
 
         useEffect(() => {
             if (!containerRef.current) return;
@@ -32,11 +31,11 @@ export const Markdown = memo(
             if (doDedent) {
                 text = dedent(text);
             }
-            MarkdownRenderer.renderMarkdown(text, containerRef.current, context?.sourcePath, context?.component).then(
+            MarkdownRenderer.renderMarkdown(text, containerRef.current, context.sourcePath, context.component).then(
                 () => {
                     if (!compact) return;
                     // ref: https://github.com/blacksmithgu/obsidian-dataview/blob/master/src/ui/markdown.tsx
-                    let container: HTMLElement = containerRef.current;
+                    let container: HTMLElement = containerRef.current!;
                     let paragraph = container.querySelector(":scope > p");
                     if (container.children.length == 1 && paragraph) {
                         while (paragraph.firstChild) {

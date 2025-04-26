@@ -17,13 +17,13 @@ const createKwargChildren = (kwargs: Record<string, TVisitorBase>) => {
             },
             accept(node) {
                 const nameNode = node.getChild(Rules.ParameterName);
-                return nameNode && this.getNodeText(nameNode) === key;
+                return !!nameNode && this.getNodeText(nameNode) === key;
             },
             run(node) {
                 return this.runChildren()["value"];
             },
             symbols(node) {
-                return [{ name: key, node: node, nameNode: node.getChild(Rules.ParameterName) }];
+                return [{ name: key, node: node, nameNode: node.getChild(Rules.ParameterName)! }];
             },
         });
     }
@@ -32,13 +32,13 @@ const createKwargChildren = (kwargs: Record<string, TVisitorBase>) => {
 };
 
 export const ParametersVisitorFactory = <Arg extends TVisitorBase, Kwargs extends Record<string, TVisitorBase>, Ret>({
-    args = null,
-    kwargs = null,
+    args,
+    kwargs,
     init,
 }: {
     args?: Arg;
     kwargs?: Kwargs;
-    init: (args: RetType<Arg>[], kwargs: RetTypeMap<Kwargs>) => Ret;
+    init: (this: TVisitorBase, args: Exclude<RetType<Arg>, undefined>[], kwargs: RetTypeMap<Kwargs>) => Ret;
 }) => {
     const argChildren: Partial<{ literal: TVisitorBase<any> }> = args
         ? { literal: Visitors.Proxy(Rules.ParameterValue, args) }
@@ -62,16 +62,19 @@ export const ParametersVisitorFactory = <Arg extends TVisitorBase, Kwargs extend
         },
         run(node) {
             const argVisitor = this.children.__arg;
-            const args: RetType<Arg>[] = [];
+            const args: Exclude<RetType<Arg>, undefined>[] = [];
 
             this.traverse((node, child) => {
-                if (child == argVisitor) {
-                    args.push(child.run(node));
+                if (child === argVisitor) {
+                    let arg = child.run(node);
+                    if (arg !== undefined) {
+                        args.push(arg);
+                    }
                 }
             });
 
             const kwargsResults = this.runChildren();
-            return init(args, kwargsResults as RetTypeMap<Kwargs>);
+            return init.call(this, args, kwargsResults as RetTypeMap<Kwargs>);
         },
         lint(node) {
             let metKwarg = false;
@@ -88,7 +91,7 @@ export const ParametersVisitorFactory = <Arg extends TVisitorBase, Kwargs extend
                     }
                     if (child != argVisitor) {
                         metKwarg = true;
-                        for (let symbol of child.symbols(node)) {
+                        for (let symbol of child.symbols(node)!) {
                             if (kwargsSet.has(symbol.name)) {
                                 repeatedKwargs.push(symbol.node);
                             }
@@ -110,6 +113,11 @@ export const ParametersVisitorFactory = <Arg extends TVisitorBase, Kwargs extend
     });
 };
 
+const fieldTypesByName = FieldTypes as Partial<Record<string, {
+    new: (args: {}) => FieldTypeObject,
+    ParametersVisitor: (typeof FieldTypeObject)["ParametersVisitor"]
+}>>;
+
 export const FieldType = () =>
     createVisitor({
         rules: Rules.AssignmentType,
@@ -118,6 +126,7 @@ export const FieldType = () =>
         },
         lint(node) {
             let name = this.runChildren({ keys: ["name"] })["name"];
+            if (!name) return;
             if (!(name in FieldTypes)) {
                 this.error(`Unknown field type: ${name}. Allowed types: ${Object.keys(FieldTypes)}`);
                 return;
@@ -140,10 +149,14 @@ export const FieldType = () =>
         },
         run(node): FieldTypeObject {
             let name = this.runChildren({ keys: ["name"] })["name"];
-            let paramsVisitor = ((FieldTypes as any)[name] as typeof FieldTypeObject).ParametersVisitor();
+            // TODO: Graceful recovery by returning an InvalidType sentinel value?
+            if (!name) throw new Error("Failed to parse field type");
+            let type = fieldTypesByName[name];
+            if (!type) throw new Error(`No field type named '${name}' was found`);
+            let paramsVisitor = type.ParametersVisitor();
             let params = node.getChild(Rules.ParameterList);
             if (!params) {
-                return (FieldTypes as any)[name].new({});
+                return type.new({});
             }
             return paramsVisitor.run(params);
         },
@@ -169,13 +182,27 @@ export const Field = () =>
             }),
         },
         run(): FieldObject {
-            let opts = this.runChildren();
-            return FieldObject.new(opts);
+            let { name, type, default: defaultValue, ...opts } = this.runChildren();
+            return FieldObject.new({
+                name: name ?? undefined,
+                type: type ?? undefined,
+                // TODO: We temporarily cheat the compiler here:
+                //
+                //       While defaultValue might have a non-string type,
+                //       the constructor will turn it into a string value
+                //       using type.parseDefault anyway.
+                //
+                //       We will have to revisit this in the future once we
+                //       add better support for composite values (arrays, objects).
+                default: defaultValue as string ?? undefined,
+                ...opts
+            });
         },
         symbols(node) {
             let nameNode = node.getChild(Rules.AssignmentName);
-            if (!nameNode) return;
+            if (!nameNode) return null;;
             let name = this.children.name.run(nameNode);
+            if (!name) return null;
             return [{ name, nameNode, node }];
         },
     });

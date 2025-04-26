@@ -1,4 +1,4 @@
-import { getLinkpath, MarkdownPostProcessor, MarkdownPostProcessorContext, MarkdownRenderChild, TFile } from "obsidian";
+import { getLinkpath, MarkdownPostProcessor, MarkdownPostProcessorContext, MarkdownRenderChild, TAbstractFile, TFile } from "obsidian";
 import TypingPlugin from "src/main";
 import { eagerDebounce, render, RenderLink } from "src/utilities";
 import { gctx } from "../context";
@@ -7,10 +7,10 @@ import { Note } from "../typing/note";
 const TIMEOUT = 1000;
 
 class LinkRenderChild extends MarkdownRenderChild {
-    note: Note;
+    note?: Note;
     updateDebounced: () => void;
 
-    constructor(containerEl: HTMLElement, public path: string, public text: string) {
+    constructor(containerEl: HTMLElement, public path: string, public text?: string) {
         super(containerEl);
 
         this.updateDebounced = eagerDebounce(this.update, TIMEOUT);
@@ -21,8 +21,8 @@ class LinkRenderChild extends MarkdownRenderChild {
     }
     show = async () => {
         let note = this.note;
-        let type = note.type;
-        // if (!type) return;
+        let type = note?.type;
+        if (!note || !type) return;
 
         let el = RenderLink({ note, type, container: this.containerEl, linkText: this.text });
 
@@ -34,12 +34,12 @@ class LinkRenderChild extends MarkdownRenderChild {
         this.updateDebounced();
     }
     onunload() {}
-    onMetadataChange = (op: "update", file: TFile) => {
+    onMetadataChange = (op: "rename" | "delete" | "update", file: TAbstractFile, _oldPath?: string) => {
         if (file.path === this.path) {
             this.updateDebounced();
         }
     };
-    onSchemaChange = (op: "update", file: TFile) => {
+    onSchemaChange = () => {
         this.updateDebounced();
     };
     update = async () => {
@@ -60,27 +60,26 @@ class LinkRenderChild extends MarkdownRenderChild {
 function linkPostProcessor(plugin: TypingPlugin): MarkdownPostProcessor {
     return async (el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
         if (!gctx.settings.linksInPreview) return;
-        el.querySelectorAll("a.internal-link").forEach(async (linkEl: HTMLElement) => {
+        el.querySelectorAll<HTMLAnchorElement>("a.internal-link").forEach((linkEl) => {
             if (!(linkEl instanceof HTMLAnchorElement)) {
                 return;
             }
-
             if (linkEl.classList.contains("no-postprocessing")) {
                 return;
             }
 
             let linkText = linkEl.getAttr("href");
+            if (linkText === null) {
+                return;
+            }
             let linkPath = getLinkpath(linkText);
 
             let resolvedTFile = plugin.app.metadataCache.getFirstLinkpathDest(linkPath, ctx.sourcePath);
-            if (!resolvedTFile) {
+            if (!resolvedTFile || resolvedTFile.extension !== "md") {
                 return;
             }
 
             let resolvedPath = resolvedTFile.path;
-
-            if (resolvedTFile.extension != "md") return;
-
             let linkDisplay;
 
             if (linkEl.innerText != linkEl.getAttr("data-href")) {

@@ -5,7 +5,7 @@ import { ComponentChildren } from "preact";
 import React, { createContext, useContext, useEffect, useReducer, useRef } from "react";
 import styles from "src/styles/prompt.scss";
 import { useBlurCallbacks } from "../hooks";
-import { ControlsResult } from "../hooks/controls";
+import { ControlsRecord, ControlsResult } from "../hooks/controls";
 import { Portal } from "./portal";
 import { PromptContext } from "./prompt";
 
@@ -31,6 +31,7 @@ export interface PickerState extends PickerConfig {
     modalRef?: React.RefObject<any>;
     displayRef?: React.RefObject<any>;
     isActiveControlled?: boolean;
+    value: string;
 }
 
 type PickerActionType =
@@ -87,15 +88,15 @@ export const Picker = ({ children }: ChildrenProps) => {
     return <>{children}</>;
 };
 
-Picker.SubmitButton = (props: { controls: ControlsResult<any> }) => {
-    let pickerCtx = useContext(PickerContext);
+Picker.SubmitButton = <T extends ControlsRecord,>(props: { controls: ControlsResult<T> }) => {
+    let pickerCtx = useContext(PickerContext)!;
     if (!Platform.isMobile) return null;
     return (
         <button
             ref={pickerCtx.state.submitButtonRef}
             tabIndex={-1}
             onClick={(e) => {
-                const inputTarget = pickerCtx.state.focusedControl.current;
+                const inputTarget = pickerCtx.state.focusedControl?.current;
                 try {
                     inputTarget?.focus?.();
                 } catch {}
@@ -117,24 +118,24 @@ Picker.SubmitButton = (props: { controls: ControlsResult<any> }) => {
 };
 
 Picker.Display = React.memo(
-    ({ children, static: static_ = false, value, ...props }: ChildrenProps & { static?: boolean; value?: string }) => {
-        let { state, dispatch } = useContext(PickerContext);
-        let promptCtx = useContext(PromptContext);
+    ({ children, static: static_ = false, value = "", ...props }: ChildrenProps & { static?: boolean; value?: string }) => {
+        let { state, dispatch } = useContext(PickerContext)!;
+        let promptCtx = useContext(PromptContext)!;
 
-        const onFocus = (e) => {
+        const onFocus = (e: FocusEvent) => {
             if (state.isMobile) return;
             if (!state.isActiveControlled && !state.isActive && !state.isSelected)
                 dispatch({ type: "SET_IS_ACTIVE", payload: true });
             if (!state.isSelected) dispatch({ type: "SET_IS_SELECTED", payload: true });
         };
 
-        const onBlur = (e) => {
+        const onBlur = (e: FocusEvent) => {
             if (state.isMobile) return;
             if (!state.isActiveControlled && !state.isActive && state.isSelected)
                 dispatch({ type: "SET_IS_SELECTED", payload: false });
         };
 
-        const onClick = (e) => {
+        const onClick = (e: MouseEvent) => {
             if (!state.isActiveControlled && !state.isActive) {
                 dispatch({ type: "SET_IS_ACTIVE", payload: true });
             }
@@ -143,7 +144,7 @@ Picker.Display = React.memo(
             }
         };
 
-        const onKeyDown = (e) => {
+        const onKeyDown = (e: KeyboardEvent) => {
             if (state.isMobile) return;
             if (e.key == "Enter") {
                 if (!state.isActiveControlled && !state.isActive) dispatch({ type: "SET_IS_ACTIVE", payload: true });
@@ -152,8 +153,12 @@ Picker.Display = React.memo(
         };
 
         let field = promptCtx.state.type?.fields?.[state.fieldName];
-        let fieldType = field.type?.underlyingType;
+        let fieldType = field?.type?.underlyingType;
         let DisplayComponent = fieldType?.Display;
+
+        if (!DisplayComponent) {
+            throw new Error("No display component configured for this field type (or invalid field type).");
+        }
 
         return (
             <div
@@ -176,7 +181,7 @@ Picker.Display = React.memo(
 );
 
 Picker.Body = React.memo(({ children }: ChildrenProps) => {
-    let pickerCtx = useContext(PickerContext);
+    let pickerCtx = useContext(PickerContext)!;
     let { state, dispatch } = pickerCtx;
     const { onPickerBlur } = useBlurCallbacks();
 
@@ -221,7 +226,7 @@ Picker.Body = React.memo(({ children }: ChildrenProps) => {
     }
 });
 
-Picker.Wrapper = ({ children, ...config }: PickerConfig & ChildrenProps) => {
+Picker.Wrapper = ({ children, ...config }: PickerState & ChildrenProps) => {
     const pickerState: PickerState = {
         isActive: false,
         isSelected: false,

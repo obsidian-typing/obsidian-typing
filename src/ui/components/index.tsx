@@ -6,4 +6,4 @@ export { Markdown } from "./markdown";
 export { modal, ReactModal } from "./modal";
 export { Picker } from "./picker";
 export { Portal } from "./portal";
-export { Prompt, prompt } from "./prompt";
+export { Prompt, PromptState, prompt } from "./prompt";

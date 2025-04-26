@@ -36,7 +36,13 @@ export const File = ({
     short?: boolean;
     search?: boolean;
 }) => {
-    const composeWithoutBrackets = ({ folder, name, extension, subpath, display }) => {
+    const composeWithoutBrackets = ({ folder, name, extension, subpath, display }: {
+        folder?: string;
+        name: string;
+        extension?: string;
+        subpath?: string;
+        display?: string;
+    }) => {
         let result = "";
         let path;
 
@@ -56,7 +62,7 @@ export const File = ({
 
         return result;
     };
-    const compose = (options) => {
+    const compose = (options: Parameters<typeof composeWithoutBrackets>[0]) => {
         let result = composeWithoutBrackets(options);
         if (result.length) {
             return `[[${result}]]`;
@@ -68,25 +74,25 @@ export const File = ({
         parse: parseLinkExtended,
         compose,
     });
-    const promptCtx = useContext(Contexts.PromptContext);
-    const pickerCtx = useContext(Contexts.PickerContext);
+    const promptCtx = useContext(Contexts.PromptContext)!;
+    const pickerCtx = useContext(Contexts.PickerContext)!;
 
-    const [file, setFile] = useState<File>(null);
+    const [file, setFile] = useState<File>();
 
-    if (file == null) {
+    if (!file) {
         let filename = composeWithoutBrackets({ name: controls.name.value, extension: controls.extension.value });
         let uploadSpec = promptCtx.state?.uploads?.find((value) => {
             return (short || value.destination == controls.folder.value) && value.name == filename;
         });
-        if (uploadSpec != null) {
+        if (uploadSpec !== null && uploadSpec !== undefined) {
             setFile(uploadSpec.file);
         }
     }
 
     const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
         let oldFile = file;
-        if (!e.target.files) return;
-        for (let newFile of e.target.files) {
+        if (!e.currentTarget.files) return;
+        for (let newFile of Array.from(e.currentTarget.files)) {
             let filenameInVault = await generateFileShortcut(newFile, autoRename);
             let { name, extension } = parseFileExtension(filenameInVault);
 
@@ -116,12 +122,12 @@ export const File = ({
         }
     };
 
-    let options = {};
+    let options: {
+        accept?: string,
+        capture?: any
+    } = {};
     if (accept != null) {
         options.accept = accept;
-    }
-    if (capture != null) {
-        options.capture = capture;
     }
     if (capture != null) {
         options.capture = capture;
@@ -137,10 +143,12 @@ export const File = ({
             type: "CANCEL_UPLOAD",
             payload: { name: oldFilename },
         });
-        promptCtx.dispatch({
-            type: "DEFER_UPLOAD",
-            payload: { name: newFilename, file, destination: folder },
-        });
+        if (file) {
+            promptCtx.dispatch({
+                type: "DEFER_UPLOAD",
+                payload: { name: newFilename, file, destination: folder },
+            });
+        }
     };
 
     const id = `file-upload-${pickerCtx.state.fieldName}`;
@@ -212,7 +220,7 @@ export const File = ({
                                 controls.name.submitValue(value);
                             }}
                             preview={(name) =>
-                                preview(
+                                preview?.(
                                     compose({
                                         name,
                                         extension: controls.extension.value,

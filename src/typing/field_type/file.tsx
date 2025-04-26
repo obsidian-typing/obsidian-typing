@@ -1,4 +1,5 @@
 import { TFile, TFolder, Vault } from "obsidian";
+import { Link } from "obsidian-dataview";
 import { gctx } from "src/context";
 import { Visitors } from "src/language";
 import { Script } from "src/scripting";
@@ -11,36 +12,41 @@ export class File extends FieldType<File> {
 
     @field()
     upload: boolean = true;
+
     @field()
     search: boolean = true;
+
     @field()
     subpath: boolean = false;
+
     @field()
     display: boolean = false;
+
     @field()
     rename: boolean = false;
+
     @field()
     short: boolean = false;
 
     @field()
     folder: string = "files";
 
-    @field()
-    accept: string = null;
+    @field({ required: false })
+    accept?: string;
+
+    @field({ required: false })
+    ext?: string[];
+
+    @field({ required: false })
+    kind?: "video" | "audio" | "image" | "document";
+
+    @field({ required: false })
+    capture?: string | boolean;
 
     @field()
-    ext: string[] = null;
+    autorename?: Script;
 
-    @field()
-    kind: "video" | "audio" | "image" | "document" = null;
-
-    @field()
-    capture: string | boolean = null;
-
-    @field()
-    autorename: Script = null;
-
-    Display: FieldType["Display"] = ({ value }) => {
+    Display: FieldType["Display"] = ({ value }: { value: Link | string }) => {
         if (typeof value != "string") value = value.markdown();
         let { name, extension, display, path } = parseLinkExtended(value);
 
@@ -60,7 +66,7 @@ export class File extends FieldType<File> {
             if (folder && folder instanceof TFolder) {
                 Vault.recurseChildren(folder, (file) => {
                     if (!file || !(file instanceof TFile)) return;
-                    if (!this.ext.includes(file.extension)) return;
+                    if (this.ext && !this.ext.includes(file.extension)) return;
                     let relativePath = file.path.slice(folder.path.length + 1); // plus one slash
                     paths.push({ value: relativePath, display: preview });
                 });
@@ -105,7 +111,7 @@ export class File extends FieldType<File> {
                 short: Visitors.Literal(Visitors.Boolean),
             },
             init(args, kwargs) {
-                if (kwargs.ext != null) {
+                if (kwargs.ext !== null && kwargs.ext !== undefined) {
                     if (!Array.isArray(kwargs.ext)) {
                         kwargs.ext = [kwargs.ext];
                     }
@@ -115,7 +121,7 @@ export class File extends FieldType<File> {
                         return x;
                     });
                 }
-                return File.new(kwargs);
+                return File.new(kwargs as (typeof kwargs) & { ext?: string[] });
             },
         });
 }

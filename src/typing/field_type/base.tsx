@@ -35,14 +35,13 @@ export abstract class FieldType<InstanceType extends FieldType = any>
         return `${value}`;
     }
 
-    bind(context: FieldTypeBindingContext): InstanceType {
+    bind(this: InstanceType, context: FieldTypeBindingContext): InstanceType {
         let instance = this.copy();
         instance.context = context;
         return instance;
     }
 
     static ParametersVisitor: () => TVisitorBase<any>;
-    static ValueVisitor: TVisitorBase<any> = null;
 
     get isRelation(): boolean {
         return false;

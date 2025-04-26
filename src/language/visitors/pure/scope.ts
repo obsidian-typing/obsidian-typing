@@ -4,16 +4,17 @@ export const Scope = <R, C extends TChildrenBase>(
     visitor: TVisitorBase<R, C>,
     opts?: { shouldComplete: boolean }
 ): TVisitorBase<R> => {
-    let options: typeof opts = opts ?? { shouldComplete: opts?.shouldComplete ?? true };
+    let options: typeof opts = opts ?? { shouldComplete: true };
+    // TODO: Review whether we can remove the type assertion;
     return createVisitor({
         rules: visitor.rules,
         tags: ["scope"],
         children: { visitor },
         symbols() {
-            let symbols = [] as Symbol[];
+            let symbols: Symbol[] = [];
             this.traverse((_, visitor) => {
                 visitor.traverse((node, child) => {
-                    for (let symbol of child.symbols(node)) {
+                    for (let symbol of child.symbols(node)!) {
                         symbols.push(symbol);
                     }
                 });
@@ -36,7 +37,7 @@ export const Scope = <R, C extends TChildrenBase>(
             }
 
             let set = new Set();
-            for (let symbol of this.symbols(node)) {
+            for (let symbol of this.symbols(node)!) {
                 if (set.has(symbol.name)) {
                     this.error(`Duplicate symbol: ${symbol.name}`, symbol.nameNode);
                 }
@@ -49,7 +50,7 @@ export const Scope = <R, C extends TChildrenBase>(
             for (let key in visitor.children) {
                 result.push(...visitor.children[key].snippets());
             }
-            let symbols = this.symbols(node).map((x) => x.name);
+            let symbols = this.symbols(node)!.map((x) => x.name);
             result = result.filter((x) => !x.symbol || !symbols.contains(x.symbol));
             for (let i = 0; i < result.length; i++) {
                 result[i].boost = -i;
@@ -67,5 +68,5 @@ export const Scope = <R, C extends TChildrenBase>(
             // TODO: fix back
             cache: { lint: false, run: false, complete: false },
         },
-    });
+    }) as TVisitorBase<R>;
 };

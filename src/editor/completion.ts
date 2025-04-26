@@ -32,7 +32,7 @@ export function visitorCompletion(context: CompletionContext): CompletionResult 
     let result = {
         options,
         from,
-        to,
+        to: to ?? undefined,
         // from: isWord ? inner.from : context.pos,
         // from: context.pos,
     };

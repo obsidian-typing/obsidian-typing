@@ -1,24 +1,26 @@
 import { snippetCompletion } from "@codemirror/autocomplete";
 import { gctx } from "src/context";
-import { ExprScript, FnScript } from "src/scripting";
+import { ExprScript, FnScript, TranspilationError } from "src/scripting";
 import { Values } from "src/typing";
 import { dedent } from "src/utilities/dedent";
 import * as Visitors from ".";
 import { createVisitor, Rules } from "../index_base";
+import { SyntaxNode } from "@lezer/common";
 
 // TODO: reimplement with `tag` as an Identifier() child
 export const TaggedString = ({ tags, strict = false }: { tags: string[]; strict?: boolean }) =>
     createVisitor({
         rules: Rules.TaggedString,
+        run: undefined as ((node: SyntaxNode) => null) | undefined,
         accept(node) {
-            if (!strict) {
-                return true;
-            }
+            if (!strict) return true;
             let nodeTag = node.getChild(Rules.Tag);
+            if (!nodeTag) return false;
             return tags.contains(this.getNodeText(nodeTag));
         },
         lint(node) {
             let nodeTag = node.getChild(Rules.Tag);
+            if (!nodeTag) return;
             let tag = this.getNodeText(nodeTag);
 
             if (!tags.contains(tag)) {
@@ -55,12 +57,12 @@ export const FnScriptString = (content = "\n\t${}\n", tags = ["fn", "function"])
         run(node) {
             if (!gctx.settings.enableScripting) return undefined;
             return FnScript.new({
-                source: dedent(this.runChild("code")),
+                source: dedent(this.runChild("code") ?? ""),
                 filePath: this.globalContext?.callContext?.interpreter?.activeModule?.file?.path,
             });
         },
         lint(node) {
-            let result = FnScript.validate(this.runChild("code"));
+            let result = FnScript.validate(this.runChild("code") ?? "");
             if (!gctx.settings.enableScripting) {
                 this.warning(
                     "Safe mode: JS scripting is currently disabled. Until you enable it in the plugin settings, this expression will be ignored.",
@@ -93,12 +95,12 @@ export const ExprScriptString = (content = "\n\t${}\n", tags = ["expr", "express
         run(node) {
             if (!gctx.settings.enableScripting) return undefined;
             return ExprScript.new({
-                source: dedent(this.runChild("code")),
+                source: dedent(this.runChild("code") ?? ""),
                 filePath: this.globalContext?.callContext?.interpreter?.activeModule?.file?.path,
             });
         },
         lint(node) {
-            let result = ExprScript.validate(this.runChild("code"));
+            let result = ExprScript.validate(this.runChild("code") ?? "");
             if (!gctx.settings.enableScripting) {
                 this.warning(
                     "Safe mode: JS scripting is currently disabled. Until you enable it in the plugin settings, this expression will be ignored.",
@@ -129,7 +131,7 @@ export const MarkdownString = (tags = ["md", "markdown"]) =>
             code: Visitors.String,
         },
         run(node) {
-            return new Values.Markdown(dedent(this.runChild("code")));
+            return new Values.Markdown(dedent(this.runChild("code") ?? ""));
         },
         snippets() {
             return [

@@ -9,23 +9,25 @@ export class TypeGraph {
     public isReady: boolean = false;
 
     public isinstance(left: Note | Type | string, right: Type | string) {
-        if (left instanceof Note) {
-            left = left.type;
+        let left_type: typeof left | null = left;
+        if (left_type instanceof Note) {
+            left_type = left_type.type;
         }
-        if (typeof left == "string") {
-            left = this.get({ name: left });
+        if (typeof left_type == "string") {
+            left_type = this.get({ name: left_type });
         }
-        if (typeof right == "string") {
-            right = this.get({ name: right });
+        let right_type: typeof right | null = right;
+        if (typeof right_type == "string") {
+            right_type = this.get({ name: right_type });
         }
-        if (!left) return false;
-        if (!right) return false;
-        if (!left.parentNames) return false;
-        if (left.parentNames.includes(right.name)) {
+        if (!left_type) return false;
+        if (!right_type) return false;
+        if (!left_type.parentNames) return false;
+        if (left_type.parentNames.includes(right_type.name)) {
             return true;
         }
-        for (let parent of left.parentNames) {
-            if (this.isinstance(parent, right)) {
+        for (let parent of left_type.parentNames) {
+            if (this.isinstance(parent, right_type)) {
                 return true;
             }
         }

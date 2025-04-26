@@ -1,3 +1,4 @@
+import { DataArray, Link, Literal, SMarkdownPage } from "obsidian-dataview";
 import { Suspense } from "react";
 import { gctx } from "src/context";
 import { Visitors } from "src/language";
@@ -14,18 +15,18 @@ export class Note extends FieldType<Note> {
     @field()
     public typeNames: Array<string> = [];
 
-    private _types: Array<Type> = null;
+    private _types?: Array<Type>;
 
     @field({ required: false })
-    public dv: string = null;
+    public dv?: string;
 
     @field({ required: false })
     public short: boolean = true;
 
-    @field()
+    @field({ required: false })
     public subpath: boolean = false;
 
-    @field()
+    @field({ required: false })
     public display: boolean = false;
 
     @field({ required: false })
@@ -38,12 +39,12 @@ export class Note extends FieldType<Note> {
         return this._types;
     }
 
-    Display: FieldType["Display"] = ({ value }) => {
-        if (typeof value != "string") value = value.markdown();
-        let { path, subpath, display } = parseLink(value);
+    Display: FieldType["Display"] = ({ value }: { value: Link | string }) => {
+        if (typeof value !== "string") value = value.markdown();
+        let { path, display }: { path: string, display?: string} = parseLink(value);
         if (!display) {
             // to not pass empty linkText to RenderLink
-            display = null;
+            display = undefined;
         }
 
         // TODO: supply current path: which one should it be?
@@ -53,7 +54,7 @@ export class Note extends FieldType<Note> {
         return (
             <a class="internal-link" href={note.path} tabIndex={-1}>
                 <Suspense fallback={note.title}>
-                    <RenderLink type={note.type} note={note} container={null} linkText={display} />
+                    <RenderLink type={note.type} note={note} container={undefined} linkText={display} />
                 </Suspense>
             </a>
         );
@@ -63,7 +64,7 @@ export class Note extends FieldType<Note> {
         const preview = (value: string) => <this.Display value={value} />;
 
         let options: IComboboxOption[] = Array.from(
-            gctx.dv.pages(this.query).map(
+            (gctx.dv.pages(this.query) as DataArray<Record<string, Literal> & SMarkdownPage>).map(
                 (p): IComboboxOption => ({
                     value: this.short ? p.file.name : p.file.path,
                     label: p.file.name,

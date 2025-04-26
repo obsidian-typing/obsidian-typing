@@ -41,7 +41,7 @@ export class Workspace {
 }
 
 export class MetadataCache extends Events {
-    getFileCache(tfile: TFile) {
+    getFileCache(tfile: TFile): null {
         return null;
     }
 }
@@ -57,6 +57,7 @@ export class App {
     vault: Vault;
     workspace: Workspace;
     metadataCache: MetadataCache;
+    fileManager: FileManager;
     constructor(vault: Vault) {
         this.vault = vault;
         this.workspace = new Workspace();
@@ -83,29 +84,32 @@ export class Plugin {
 export abstract class TextFileView {}
 
 export abstract class TAbstractFile {
-    vault: Vault;
-    path: string;
-    name: string;
-    parent: TFolder;
+    abstract vault: Vault;
+    abstract path: string;
+    abstract name: string;
+    abstract parent: TFolder | null;
 }
 
 export class TFile extends TAbstractFile {
     stat: any;
+    name: string;
     basename: string;
     extension: string;
     content: string | ArrayBuffer;
 
-    constructor(public vault: Vault, public path: string, public parent: TFolder, content: string | ArrayBuffer) {
+    constructor(public vault: Vault, public path: string, public parent: TFolder | null, content: string | ArrayBuffer) {
         super();
         this.name = Path.basename(this.path);
         this.basename = Path.basename(this.path, Path.extname(this.path));
         this.extension = Path.extname(this.path);
         this.content = content;
-        this.stat = { size: content.byteLength || content.length };
+        this.stat = { size: (content as ArrayBuffer).byteLength || (content as string).length };
     }
 }
 
 export class TFolder extends TAbstractFile {
+    name: string;
+
     isRoot(): boolean {
         return this.path === "/";
     }
@@ -113,7 +117,7 @@ export class TFolder extends TAbstractFile {
     constructor(
         public vault: Vault,
         public path: string,
-        public parent: TFolder,
+        public parent: TFolder | null,
         public children: TAbstractFile[] = []
     ) {
         super();
@@ -125,7 +129,7 @@ export class Vault extends Events {
     files: Map<string, TAbstractFile>;
     root: TFolder;
     name: string = "mock-vault";
-    vaultPath: string;
+    vaultPath?: string;
 
     constructor(vaultPath?: string) {
         super();
@@ -138,6 +142,9 @@ export class Vault extends Events {
     }
 
     private loadFilesFromFS(folderPath: string, parent: TFolder | null) {
+        if (this.vaultPath === undefined) {
+            throw new Error("No vaultPath has been configured")
+        }
         const directoryEntries = fs.readdirSync(Path.join(this.vaultPath, folderPath));
         for (const entryName of directoryEntries) {
             const entryPath = Path.join(folderPath, entryName);

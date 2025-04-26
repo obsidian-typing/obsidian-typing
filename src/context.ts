@@ -1,5 +1,5 @@
 import { App, MarkdownView, Platform } from "obsidian";
-import { DataviewAPI } from "obsidian-dataview";
+import { DataviewApi } from "obsidian-dataview";
 import { Interpreter } from "src/language";
 import TypingPlugin from "src/main";
 import { ImportManager } from "src/scripting";
@@ -8,20 +8,20 @@ import { TypingAPI } from "./api";
 import { CSSManager } from "./utilities";
 
 export class GlobalContext {
-    app: App;
-    plugin: TypingPlugin;
-    importManager: ImportManager;
-    interpreter: Interpreter;
-    cssManager: CSSManager;
-    userDefinedCssManager: CSSManager;
-    noteCache: NoteCache;
+    app!: App;
+    plugin!: TypingPlugin;
+    importManager!: ImportManager;
+    interpreter!: Interpreter;
+    cssManager!: CSSManager;
+    userDefinedCssManager!: CSSManager;
+    noteCache!: NoteCache;
 
     testing: boolean = false;
     platform = Platform;
 
     // TODO: rename to `types` to resolve ambiguity with relations?
-    graph: TypeGraph;
-    relations: RelationsManager;
+    graph!: TypeGraph;
+    relations!: RelationsManager;
 
     get settings() {
         return this.plugin.settings;
@@ -30,18 +30,22 @@ export class GlobalContext {
     get api(): TypingAPI {
         return this.plugin.api;
     }
-    get dv(): DataviewAPI {
-        if (this.testing) return {};
-        return this.app.plugins.plugins.dataview?.api;
+
+    get dv(): DataviewApi {
+        if (this.testing) return {} as DataviewApi;
+        // TODO: Throw when dataview is not available
+        return this.app.plugins.plugins.dataview?.api!;
     }
+
     get currentNote(): Note | null {
         let view = this.app.workspace.getActiveViewOfType(MarkdownView);
-        if (!view) {
+        if (!view || !view.file) {
             return null;
         }
         let note = gctx.api.note(view.file.path);
         return note;
     }
+
     get isMobile(): boolean {
         return Platform.isMobile;
     }

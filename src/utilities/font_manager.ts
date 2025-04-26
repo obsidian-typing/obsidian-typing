@@ -13,6 +13,8 @@ interface FontSpec {
     fontFiles: { [relativePath: string]: string };
 }
 
+export type FontName = FONTS | string;
+
 type FONTS = "fontawesome" | "lucide";
 const FONT_SPECS: Record<FONTS, FontSpec> = {
     fontawesome: {
@@ -58,11 +60,11 @@ function getFontCacheDir() {
     return `${gctx.plugin.manifest.dir}/font-cache/`;
 }
 
-function getFontCachePath(name: FONTS) {
+function getFontCachePath(name: FontName) {
     return `${getFontCacheDir()}/${name}.css`;
 }
 
-export async function getFont(name: FONTS) {
+export async function getFont(name: FontName) {
     const cacheDir = getFontCacheDir();
     const cachePath = getFontCachePath(name);
     const adapter = gctx.app.vault.adapter;
@@ -70,7 +72,7 @@ export async function getFont(name: FONTS) {
         return await adapter.read(cachePath);
     }
 
-    const spec = FONT_SPECS[name];
+    const spec = FONT_SPECS[name as FONTS];
     if (!spec) return null;
 
     const css = await downloadFont(spec);

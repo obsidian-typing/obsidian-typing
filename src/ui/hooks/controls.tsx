@@ -1,25 +1,37 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Contexts } from "..";
 
-export interface ControlSpec<T extends string | number | boolean> {
+export type ControlKey = string | number;
+export type ControlValue = string | number | boolean;
+export type ControlsRecord = Record<ControlKey, ControlValue>;
+
+export interface ControlSpec<T extends ControlValue = ControlValue> {
     value: T;
     setValue: (value: T) => Promise<T>;
     submitValue: (value: T) => Promise<T>;
 }
 
-export type ControlsResult<T extends Record<string | number, string | number | boolean>> = {
-    [K in keyof T]: ControlSpec<T[K]>;
-} & { value: string; submitCurrentValue: () => void };
+type CompositeControl = {
+    value: string;
+    submitCurrentValue: () => void;
+};
 
-export function useControls<T extends Record<string | number, string | number | boolean>>({
+export type ControlsResult<T extends ControlsRecord> = CompositeControl & {
+    [K in keyof T | keyof CompositeControl]:
+    K extends keyof CompositeControl ? CompositeControl[K] :
+    ControlSpec<T[K]>;
+};
+
+
+export function useControls<T extends ControlsRecord>({
     parse,
     compose,
 }: {
     parse: (value: string) => T;
     compose: (values: T) => string;
     id?: string;
-}): ControlsResult<T> {
-    const pickerCtx = useContext(Contexts.PickerContext);
+}): ControlsResult<Omit<T, keyof CompositeControl>> {
+    const pickerCtx = useContext(Contexts.PickerContext)!;
     const value = pickerCtx.state.value;
     const [state, setState] = useState<T>(() => parse(value));
 
@@ -27,20 +39,20 @@ export function useControls<T extends Record<string | number, string | number | 
         setState(parse(value));
     }, [value, setState]);
 
-    const updateStateAndContext = (key: keyof T, val: string, actionType: "SET_VALUE" | "SUBMIT_VALUE") => {
-        return new Promise((resolve) =>
+    const updateStateAndContext = <K extends keyof T>(key: K, val: T[K], actionType: "SET_VALUE" | "SUBMIT_VALUE") => {
+        return new Promise<T[K]>((resolve) =>
             setState((prevState) => {
                 // NOTE: without functional setState we cannot edit two list components: one is reset
                 const newState = { ...prevState, [key]: val };
                 const newValue = compose(newState);
                 pickerCtx.dispatch({ type: actionType, payload: newValue });
-                resolve(newValue);
+                resolve(parse(newValue)[key]);
                 return newState;
             })
         );
     };
 
-    const controls: Partial<ControlsResult<T>> = {
+    const controls: CompositeControl = {
         value: compose(state),
         // TODO: or make functional
         submitCurrentValue: useCallback(
@@ -56,16 +68,13 @@ export function useControls<T extends Record<string | number, string | number | 
     };
     const keys = Object.keys(state) as (keyof T)[];
 
-    keys.forEach((key) => {
-        controls[key] = {
-            value: state[key] ?? "",
-            setValue: (val: string) => {
-                return updateStateAndContext(key, val, "SET_VALUE");
-            },
-            submitValue: (val: string) => {
-                return updateStateAndContext(key, val, "SUBMIT_VALUE");
-            },
+    keys.forEach(<K extends keyof T>(key: K) => {
+        let control: ControlSpec<T[K]> = {
+            value: state[key],
+            setValue: (val) => updateStateAndContext(key, val, "SET_VALUE"),
+            submitValue: (val) => updateStateAndContext(key, val, "SUBMIT_VALUE"),
         };
+        (controls as { [K in keyof T]: ControlSpec<T[K]> })[key] = control;
     });
 
     return controls as ControlsResult<T>;

@@ -8,9 +8,10 @@ let leafToClasses: Record<string, string[]> = {};
 
 const processLeaf = (leaf: WorkspaceLeaf) => {
     let view = leaf.view;
-    if (!(view instanceof MarkdownView)) {
+    if (!(view instanceof MarkdownView) || !view.file) {
         return;
     }
+    let leaf_ = leaf as WorkspaceLeaf & { id: string };
 
     let note = gctx.api.note(view.file.path);
 
@@ -19,16 +20,16 @@ const processLeaf = (leaf: WorkspaceLeaf) => {
     if (dynamicCss) {
         newClasses.push(gctx.userDefinedCssManager.emotion.css`${dynamicCss}`);
     }
-    let appliedClasses = leafToClasses[leaf.id] ?? [];
+    let appliedClasses = leafToClasses[leaf_.id] ?? [];
 
     let classesToRemove = appliedClasses.filter((x) => !newClasses.includes(x));
     let classesToAdd = newClasses.filter((x) => !appliedClasses.includes(x));
 
-    leafToClasses[leaf.id] = newClasses;
+    leafToClasses[leaf_.id] = newClasses;
 
     for (let selector of VIEW_CONTAINER_SELECTORS) {
-        if (classesToRemove) view.contentEl.querySelector(selector).removeClasses(classesToRemove);
-        if (classesToAdd) view.contentEl.querySelector(selector).addClasses(classesToAdd);
+        if (classesToRemove) view.contentEl.querySelector(selector)?.removeClasses(classesToRemove);
+        if (classesToAdd) view.contentEl.querySelector(selector)?.addClasses(classesToAdd);
     }
 };
 
@@ -41,5 +42,5 @@ export function registerCssClassesHook(plugin: TypingPlugin) {
 
     plugin.registerEvent(plugin.app.metadataCache.on("typing:schema-change", processLeaves));
     plugin.registerEvent(plugin.app.workspace.on("layout-change", processLeaves));
-    plugin.registerEvent(plugin.app.workspace.on("active-leaf-change", processLeaf));
+    plugin.registerEvent(plugin.app.workspace.on("active-leaf-change", processLeaves));
 }

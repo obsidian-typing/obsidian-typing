@@ -2,14 +2,14 @@ import { snippet, startCompletion } from "@codemirror/autocomplete";
 import * as Visitors from ".";
 import { createVisitor, Rules, TVisitorBase } from "../index_base";
 
-export const NamedAttribute = (valueType: TVisitorBase) =>
+export const NamedAttribute = <V extends TVisitorBase>(valueType: V) =>
     createVisitor({
         rules: Rules.Assignment,
         children: {
             name: Visitors.Proxy(Rules.AssignmentName, Visitors.Identifier()),
             value: createVisitor({
                 rules: Rules.AssignmentValue,
-                run() {
+                run(): ReturnType<V["run"]> | undefined {
                     return this.runChildren({ keys: ["literal"], eager: true })["literal"];
                 },
                 children: { literal: Visitors.Literal(valueType) },
@@ -36,13 +36,14 @@ export const NamedAttribute = (valueType: TVisitorBase) =>
         },
         symbols(node) {
             let nameNode = node.getChild(Rules.AssignmentName);
-            if (!nameNode) return;
+            if (!nameNode) return null;
             let name = this.children.name.run(nameNode);
+            if (!name) return null;
             return [{ name, nameNode, node }];
         },
     });
 
-export const Attribute = (name: string, valueType: TVisitorBase, info?: string) =>
+export const Attribute = <N extends string, V extends TVisitorBase>(name: N, valueType: V, info?: string) =>
     NamedAttribute(valueType).extend({
         accept(node) {
             if (name == null) return true;
@@ -50,7 +51,7 @@ export const Attribute = (name: string, valueType: TVisitorBase, info?: string) 
             if (!nameNode) return false;
             return this.children.name.run(nameNode) == name;
         },
-        run() {
+        run(): ReturnType<V["run"]> | undefined {
             return this.runChildren({ keys: ["value"], eager: true })["value"];
         },
         snippets() {

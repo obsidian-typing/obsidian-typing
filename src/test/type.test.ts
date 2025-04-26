@@ -5,9 +5,11 @@ import { dedent } from "src/utilities/dedent";
 
 beforeAll(async () => {
     gctx.testing = true;
+    // @ts-ignore
     let app = new App(new Vault("__vault__"));
     let plugin = new TypingPlugin(app, null);
     await plugin.onload();
+    // @ts-ignore
     await app.workspace.triggerLayoutReady();
 });
 

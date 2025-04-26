@@ -10,15 +10,77 @@ import { Interpreter } from "../interpreter";
 
 export type NodeType = SyntaxNode;
 
-type Merge<A, B> = B extends void ? A : A extends void ? B : A & B;
-type OneOf<A, B> = B extends void ? A : B;
+type If<T, Y, N> = T extends true ? Y : T extends false ? N : Y | N;
+type Not<T> = If<T, false, true>;
+type IsCompiledInStrictMode = unknown extends {} ? false : true;
+
+type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
+type IsAny<T> = IfAny<T, true, never>;
+
+type IfSameType<A, B, Y, N> = A | B extends A & B ? Y : N;
+type IsSameType<A, B> = IfSameType<A, B, true, never>;
+
+type IfUnknown<T, Y, N> = IsAny<T> extends never ? unknown extends T ? keyof T extends never ? Y : N : N : N;
+type IsUnknown<T> = IfUnknown<T, true, never>;
+
+type Merge<A, B> = IsUnknown<B> extends never ? IsUnknown<A> extends never ? A & B : B : A;
+type OneOf<A, B> = IsUnknown<B> extends never ? B : A;
+
+// Static tests of IsUnknown, OneOf and Merge
+namespace StaticTests {
+    type SameType<A, B> = IfSameType<A, B, true, false>;
+
+    true satisfies SameType<true, true>;
+    true satisfies SameType<never, never>;
+    false satisfies SameType<unknown, never>;
+    false satisfies SameType<never, unknown>;
+    false satisfies SameType<true, never>;
+    false satisfies SameType<never, true>;
+
+    true satisfies SameType<string, string>;
+    true satisfies SameType<unknown, unknown>;
+    false satisfies SameType<string, number>;
+    false satisfies SameType<unknown, string>;
+    false satisfies SameType<string, unknown>;
+
+    true satisfies 0 extends (1 & any) ? true : false;
+    true satisfies IfAny<any, true, false>
+    true satisfies IsAny<any> extends never ? false : true;
+
+    false satisfies 0 extends (1 & unknown) ? true : false
+    false satisfies IfAny<unknown, true, false>;
+    false satisfies IsAny<unknown> extends never ? false : true;
+
+    true satisfies unknown extends unknown ? true : false;
+    true satisfies SameType<unknown extends Partial<{ item: string }> ? true : false, Not<IsCompiledInStrictMode>>
+
+    true satisfies keyof unknown extends never ? true : false;
+    false satisfies keyof Partial<{ item: string }> extends never ? true : false;
+
+    true satisfies SameType<IsUnknown<unknown>, true>;
+    true satisfies SameType<IsUnknown<any>, never>;
+    true satisfies SameType<IsUnknown<Partial<{ item: string }>>, never>;
+    true satisfies SameType<IsUnknown<{}>, If<IsCompiledInStrictMode, never, true>>; // Edge case
+
+    true satisfies SameType<Merge<string, number>, string & number>;
+    true satisfies SameType<Merge<number, string>, string & number>;
+    true satisfies SameType<Merge<unknown, string>, string>;
+    true satisfies SameType<Merge<string, unknown>, string>;
+    true satisfies SameType<Merge<unknown, unknown>, unknown>;
+
+    true satisfies SameType<OneOf<string, number>, number>;
+    true satisfies SameType<OneOf<number, string>, string>;
+    true satisfies SameType<OneOf<unknown, string>, string>;
+    true satisfies SameType<OneOf<string, unknown>, string>;
+    true satisfies SameType<OneOf<unknown, unknown>, unknown>;
+}
 
 interface CompletionEntry extends Completion {
     symbol?: string;
 }
 
 interface CacheEntry {
-    callCache: {
+    callCache: Partial<{
         accept: boolean;
         run: any;
         lint: { diagnostics: Diagnostic[]; hasErrors: boolean };
@@ -26,7 +88,7 @@ interface CacheEntry {
         snippets: CompletionEntry[];
         symbols: Symbol[];
         decorations: Range<Decoration>[];
-    };
+    }>;
     diagnostics: Diagnostic[];
 }
 
@@ -40,22 +102,45 @@ export interface Symbol {
     metadata?: any;
 }
 
-let cache: NodeWeakMap<WeakMap<Visitor<any, any, any, any, any>, CacheEntry>>;
+export type VisitorTypes<
+    Return = any,
+    Children = any,
+    Utils = any,
+    Cache = any,
+    Super = any
+> = {
+    Return?: Return,
+    Children?: Children,
+    Utils?: Utils,
+    Cache?: Cache,
+    Super?: Super
+};
+
+export type AnyVisitor<Args extends VisitorTypes = {}> = Visitor<
+    OneOf<VisitorTypes["Return"], Args["Return"]>,
+    OneOf<VisitorTypes["Children"], Args["Children"]>,
+    OneOf<VisitorTypes["Utils"], Args["Utils"]>,
+    OneOf<VisitorTypes["Cache"], Args["Cache"]>,
+    OneOf<VisitorTypes["Super"], Args["Super"]>
+>;
+
+let cache: NodeWeakMap<WeakMap<AnyVisitor, CacheEntry>>;
 
 function resetCache() {
-    cache = new NodeWeakMap<WeakMap<Visitor<any, any, any, any, any>, CacheEntry>>();
+    cache = new NodeWeakMap<WeakMap<AnyVisitor, CacheEntry>>();
 }
 
 type CallType = "lint" | "run" | "complete" | "accept" | "symbols" | "snippets" | "decorations" | "hover";
+type InternalCallType = CallType | "traverse";
 
 interface StackFrame {
     node: SyntaxNode;
-    visitor: Visitor<any, any, any, any, any>;
+    visitor: AnyVisitor;
     context: LocalContext;
-    call: CallType;
+    call: InternalCallType;
 }
 
-interface GlobalCallContext {
+export interface GlobalCallContext {
     input?: string;
     doc?: Text;
     state?: EditorState;
@@ -66,7 +151,7 @@ interface GlobalCallContext {
 interface GlobalContext {
     callStack: StackFrame[];
     callContext: GlobalCallContext;
-    callCount: Record<string, number>;
+    callCount: Partial<Record<string, number>>;
 }
 
 interface LocalContext {
@@ -107,11 +192,10 @@ const defaultVisitorOptions: VisitorOptions = {
 export interface VisitorArgs<
     Return extends TReturnBase,
     Children extends TChildrenBase,
-    Utils extends Record<string, (this: This, ...args: any) => any>,
-    // Utils extends { [name: string]: (this: This, ...args: any) => any },
-    CacheType extends TCacheBase,
-    Super extends TVisitorBase,
-    This = Visitor<Return, Children, Utils, CacheType, Super>
+    Utils extends TUtilsBase,
+    Cache extends TCacheBase,
+    Super extends TOptionalVisitorBase,
+    This = Visitor<Return, Children, Utils, Cache, Super>
 > {
     // TODO: probably should rename to `node`(s) or `nodetype`(s) or `nodeType`(s), `Rules` -> `NodeType`
     rules?: Rules | Rules[];
@@ -137,7 +221,7 @@ export interface VisitorArgs<
     decorations?: (this: This, node: NodeType, view: EditorView) => Range<Decoration>[];
 
     children?: Children;
-    utils?: Utils;
+    utils?: Utils & ThisType<This>;
 
     options?: VisitorOptions;
     // cache?: () => CacheType;
@@ -152,31 +236,37 @@ export type TVisitorArgsBase<
     Return extends TReturnBase = any,
     Children extends TChildrenBase = any,
     Utils extends TUtilsBase = any,
-    CacheType extends TCacheBase = any
-> = VisitorArgs<Return, Children, Utils, CacheType, null, TVisitorBase>;
+    Cache extends TCacheBase = any
+> = VisitorArgs<Return, Children, Utils, Cache, TNoVisitor, TVisitorBase>;
 
 export type TVisitorBase<
     Return extends TReturnBase = any,
     Children extends TChildrenBase = any,
     Utils extends TUtilsBase = any,
-    CacheType extends TCacheBase = any
-> = Visitor<Return, Children, Utils, CacheType, TVisitorBase>;
+    Cache extends TCacheBase = any
+> = Visitor<Return, Children, Utils, Cache, TOptionalVisitorBase>;
+
+type TOptionalVisitorBase = TVisitorBase;
+type TNoVisitor = any;
+
+type VisitorReturn<Key extends keyof Children, Children extends TChildrenBase> =
+    Partial<{ [K in Key]: ReturnType<Children[K]["run"]> }>;
 
 export class Visitor<
     Return extends TReturnBase,
     Children extends TChildrenBase,
     Utils extends TUtilsBase,
-    CacheType extends TCacheBase,
-    Super extends TVisitorBase
+    Cache extends TCacheBase,
+    Super extends TOptionalVisitorBase
 > extends DataClass {
     @field()
-    args: VisitorArgs<Return, Children, Utils, CacheType, Super>;
+    args!: VisitorArgs<Return, Children, Utils, Cache, Super, any>;
 
-    super: Super;
-    derived: TVisitorBase;
+    super: Super = null as any;
+    derived?: TVisitorBase;
     isInitialized: boolean = false;
 
-    originalArgs: VisitorArgs<Return, Children, Utils, CacheType, Super>;
+    originalArgs!: VisitorArgs<Return, Children, Utils, Cache, Super, any>;
     hasDecorations: boolean = false;
     childrenWithDecorations: (keyof Children)[] = [];
     hasHover: boolean = false;
@@ -191,103 +281,118 @@ export class Visitor<
         return this.args.tags;
     }
     get children() {
-        return this.args.children;
+        return this.args.children!;
     }
     get utils() {
-        return this.args.utils;
+        return this.args.utils!;
     }
     get options() {
-        return this.args.options;
+        // TODO: This is not correct, this.args.options may actually be undefined
+        return this.args.options!;
     }
 
     static fromArgs<
-        Return2 extends TReturnBase,
-        Children2 extends TChildrenBase,
-        Utils2 extends TUtilsBase,
-        CacheType2 extends TCacheBase,
+        Return extends TReturnBase,
+        Children extends TChildrenBase,
+        Utils extends TUtilsBase,
+        Cache extends TCacheBase,
         Super extends TVisitorBase,
-        This extends Visitor<Return2, Children2, Utils2, CacheType2, Super> = Visitor<
-            Return2,
-            Children2,
-            Utils2,
-            CacheType2,
+        This extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<
+            Return,
+            Children,
+            Utils,
+            Cache,
             Super
         >
     >(
-        args: VisitorArgs<Return2, Children2, Utils2, CacheType2, Super, This>
-    ): Visitor<Return2, Children2, Utils2, CacheType2, Super> {
-        return Visitor.new<Visitor<Return2, Children2, Utils2, CacheType2, Super>>({
-            args: args,
+        args: VisitorArgs<Return, Children, Utils, Cache, Super, This>
+    ): Visitor<Return, Children, Utils, Cache, Super> {
+        return Visitor.new<Visitor<Return, Children, Utils, Cache, Super>>({
+            // Ignore the fact that `This` might be different type
+            // than the one specified in the type parameter default
+            args: args as any,
         });
     }
 
     override<
-        Return2 extends TReturnBase,
-        Children2 extends TChildrenBase,
-        Utils2 extends TUtilsBase,
-        CacheType2 extends TCacheBase,
-        NewSuper extends Visitor<Return, Children, Utils, CacheType, Super> = Visitor<
+        NewReturn extends TReturnBase,
+        NewChildren extends TChildrenBase,
+        NewUtils extends TUtilsBase,
+        NewCache extends TCacheBase,
+        NewSuper extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<
             Return,
             Children,
             Utils,
-            CacheType,
+            Cache,
             Super
         >,
         NewThis extends Visitor<
-            OneOf<Return, Return2>,
-            // Children2 extends unknown ? Children : Children | Children2,
-            OneOf<Children, Children2>,
-            OneOf<Utils, Utils2>,
-            OneOf<CacheType, CacheType2>,
+            OneOf<Return, NewReturn>,
+            OneOf<Children, NewChildren>,
+            OneOf<Utils, NewUtils>,
+            OneOf<Cache, NewCache>,
             NewSuper
         > = Visitor<
-            OneOf<Return, Return2>,
-            OneOf<Children, Children2>,
-            OneOf<Utils, Utils2>,
-            OneOf<CacheType, CacheType2>,
+            OneOf<Return, NewReturn>,
+            OneOf<Children, NewChildren>,
+            OneOf<Utils, NewUtils>,
+            OneOf<Cache, NewCache>,
             NewSuper
+        >,
+        Args extends VisitorArgs<
+            NewReturn,
+            NewChildren,
+            NewUtils,
+            NewCache,
+            NewThis
+        > = VisitorArgs<
+            NewReturn,
+            NewChildren,
+            NewUtils,
+            NewCache,
+            NewThis
         >
-    >(args: VisitorArgs<Return2, Children2, Utils2, CacheType2, NewThis>) {
+    >(args: Args): Visitor<ReturnType<Exclude<Args["run"], undefined>>, NewChildren, NewUtils, NewCache, NewSuper> {
         let newArgs = Object.assign({}, this.originalArgs, args);
-        let result = Visitor.fromArgs<Return2, Children2, Utils2, CacheType2, NewSuper>(newArgs);
-        result.super = Visitor.fromArgs<Return, Children, Utils, CacheType, Super>(this.originalArgs) as NewSuper;
+        let result = Visitor.fromArgs<ReturnType<Exclude<Args["run"], undefined>>, NewChildren, NewUtils, NewCache, NewSuper>(newArgs as any);
+        result.super = Visitor.fromArgs<Return, Children, Utils, Cache, Super>(this.originalArgs as any) as NewSuper;
         result.super.derived = result;
         result.super.bind(result);
         return result;
     }
 
     extend<
-        Return2 extends TReturnBase,
-        Children2 extends TChildrenBase,
-        Utils2 extends TUtilsBase,
-        CacheType2 extends TCacheBase,
-        NewSuper extends Visitor<Return, Children, Utils, CacheType, Super> = Visitor<
+        NewReturn extends TReturnBase,
+        NewChildren extends TChildrenBase,
+        NewUtils extends TUtilsBase,
+        NewCache extends TCacheBase,
+        NewSuper extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<
             Return,
             Children,
             Utils,
-            CacheType,
+            Cache,
             Super
         >,
         NewThis extends Visitor<
-            OneOf<Return, Return2>,
-            Merge<Children, Children2>,
-            Merge<Utils, Utils2>,
-            Merge<CacheType, CacheType2>,
+            OneOf<Return, NewReturn>,
+            Merge<Children, NewChildren>,
+            Merge<Utils, NewUtils>,
+            Merge<Cache, NewCache>,
             NewSuper
         > = Visitor<
-            OneOf<Return, Return2>,
-            Merge<Children, Children2>,
-            Merge<Utils, Utils2>,
-            Merge<CacheType, CacheType2>,
+            OneOf<Return, NewReturn>,
+            Merge<Children, NewChildren>,
+            Merge<Utils, NewUtils>,
+            Merge<Cache, NewCache>,
             NewSuper
         >
     >(
-        args: VisitorArgs<Return2, Children2, Utils2, CacheType2, NewSuper, NewThis>
+        args: VisitorArgs<NewReturn, NewChildren, NewUtils, NewCache, NewSuper, NewThis>
     ): Visitor<
-        OneOf<Return, Return2>,
-        Merge<Children, Children2>,
-        Merge<Utils, Utils2>,
-        Merge<CacheType, CacheType2>,
+        OneOf<Return, NewReturn>,
+        Merge<Children, NewChildren>,
+        Merge<Utils, NewUtils>,
+        Merge<Cache, NewCache>,
         NewSuper
     > {
         // let newArgs = mergeDeep(this.originalArgs, args); // BUG: could probably merge internal visitors too
@@ -295,14 +400,13 @@ export class Visitor<
         newArgs.children = Object.assign({}, this.originalArgs.children, args.children);
         newArgs.utils = Object.assign({}, this.originalArgs.utils, args.utils);
         let result = Visitor.fromArgs<
-            OneOf<Return, Return2>,
-            Merge<Children, Children2>,
-            Merge<Utils, Utils2>,
-            Merge<CacheType, CacheType2>,
+            OneOf<Return, NewReturn>,
+            Merge<Children, NewChildren>,
+            Merge<Utils, NewUtils>,
+            Merge<Cache, NewCache>,
             NewSuper
-            // @ts-expect-error TODO: fix
-        >(newArgs);
-        result.super = Visitor.fromArgs<Return, Children, Utils, CacheType, Super>(this.originalArgs) as NewSuper;
+        >(newArgs as any);
+        result.super = Visitor.fromArgs<Return, Children, Utils, Cache, Super>(this.originalArgs as any) as NewSuper;
         result.super.derived = result;
         result.super.bind(result);
         return result;
@@ -329,7 +433,7 @@ export class Visitor<
                 if (this.args.utils[key] != null) {
                     try {
                         this.args.utils[key] = this.args.utils[key].bind(this);
-                    } catch {}
+                    } catch { }
                 }
             }
         }
@@ -376,7 +480,8 @@ export class Visitor<
     static globalContexts: GlobalContext[] = [];
 
     get globalContext() {
-        return Visitor.globalContexts.last();
+        // TODO: Assert that a traversal is in progress and thus globalContexts is not empty
+        return Visitor.globalContexts.last()!;
     }
 
     get localContext() {
@@ -396,9 +501,9 @@ export class Visitor<
         return this.globalContext.callContext;
     }
 
-    setCallContext(callContext?: GlobalCallContext): boolean {
-        if (callContext == null) {
-            return true;
+    setCallContext(callContext?: GlobalCallContext) {
+        if (callContext === null || callContext === undefined) {
+            return;
         }
 
         // TODO: temporarily flush cache each call
@@ -597,11 +702,11 @@ export class Visitor<
         return result;
     }
 
-    run(node: NodeType, callContext?: GlobalCallContext): Return | null {
-        if (!this.enter(node, "run", callContext)) return null;
+    run(node: NodeType, callContext?: GlobalCallContext): Return {
+        if (!this.enter(node, "run", callContext)) return null as Return;
         if (this.lint(node).hasErrors) {
             this.exit();
-            return null;
+            return null as Return;
         }
         let cached = this.getCachedResult("run");
         if (cached !== undefined) return cached;
@@ -612,34 +717,32 @@ export class Visitor<
 
         this.cacheResult("run", result);
         this.exit();
-        return result;
+        return result as Return;
     }
 
     runChildren<Key extends keyof Children>(options?: {
         keys?: Key[] | null;
         eager?: boolean;
         traversalOptions?: TraversalOptions<Key>;
-    }) {
-        type VisitorReturn<K extends Key> = ReturnType<Children[K]["run"]>;
-
+    }): VisitorReturn<Key, Children> {
         options = options ?? {};
         // options = mergeDeep({ keys: [], eager: false, traversalOptions: {} }, options);
 
-        let result = {} as Partial<{ [K in Key]: VisitorReturn<K> }>;
-        let traversalOptions = options.traversalOptions ?? {};
-        traversalOptions.selectChildren = options?.keys;
+        let result = {} as VisitorReturn<Key, Children>;
+        let traversalOptions = { ...options.traversalOptions };
+        traversalOptions.selectChildren = options?.keys ?? undefined;
 
         let fulfilledKeys: Set<Key>;
         if (options?.eager) {
             fulfilledKeys = new Set();
             traversalOptions.exitCriterion = () => {
-                return fulfilledKeys.size == options?.keys.length;
+                return fulfilledKeys.size === options?.keys?.length;
             };
         }
 
         this.traverse((node, child, key) => {
             let res = child.run(node);
-            if (res != null) {
+            if (res !== null && res !== undefined) {
                 result[key] = res;
                 if (options?.eager) fulfilledKeys.add(key);
             }
@@ -647,12 +750,12 @@ export class Visitor<
         return result;
     }
 
-    runChild<Key extends keyof Children>(key: Key) {
+    runChild<Key extends keyof Children>(key: Key): ReturnType<Children[Key]["run"]> | undefined {
         return this.runChildren({ keys: [key] })[key];
     }
 
     snippets(): CompletionEntry[] {
-        return this.runFunc("snippets", [], []);
+        return this.runFunc("snippets", [], null) ?? [];
     }
 
     symbols(node: NodeType): Symbol[] | null {
@@ -660,11 +763,11 @@ export class Visitor<
         let cached = this.getCachedResult("symbols");
         if (cached !== undefined) return cached;
 
-        let result = this.runFunc("symbols", [node], null);
+        let result = this.runFunc("symbols", [node]);
 
-        this.cacheResult("symbols", result);
+        this.cacheResult("symbols", result ?? undefined);
         this.exit();
-        return result;
+        return result ?? null;
     }
 
     rebase(node: NodeType): NodeType {
@@ -685,7 +788,6 @@ export class Visitor<
     ): boolean {
         for (let key of keys) {
             let child = this.children[key];
-            // @ts-ignore
             if (child.enter(node.node, "traverse")) {
                 try {
                     callback(node.node, child, key);
@@ -702,8 +804,15 @@ export class Visitor<
     traverse<Key extends keyof Children = keyof Children>(
         callback: (node: SyntaxNode, child: Children[Key], key: Key) => void,
         options?: TraversalOptions<Key>
-    ) {
+    ): void {
         options = options ? mergeDeep(this.options.traversal, options) : this.options.traversal;
+        if (!options) {
+            throw new Error("Traversal error:" +
+                " No TraversalOptions have been provided to Visitor.traverse()." +
+                " Use visitor.traverse(..., traversalOptions)" +
+                " or createVisitor({ options: { traversal: traversalOptions } })" +
+                " to provide the traversal settings.");
+        }
 
         let activeChildren: Key[] = [];
         if (options.selectChildren) {
@@ -741,7 +850,7 @@ export class Visitor<
         }
     }
 
-    enter(node: NodeType, call: CallType, callContext?: GlobalCallContext): boolean {
+    enter(node: NodeType, call: InternalCallType, callContext?: GlobalCallContext): boolean {
         if (callContext) {
             this.setCallContext(callContext);
         }
@@ -756,9 +865,9 @@ export class Visitor<
         }
     }
 
-    _enter(node: NodeType, call: CallType) {
+    _enter(node: NodeType, call: InternalCallType): void {
         if (!this.globalContext) {
-            throw "Global context not set!";
+            throw new Error("Global context not set!");
         }
         this.globalContext.callCount[call] = (this.globalContext.callCount[call] ?? 0) + 1;
         this.globalContext.callStack.push({
@@ -771,14 +880,17 @@ export class Visitor<
         });
     }
 
-    exit(cached?: boolean) {
+    exit(cached?: boolean): void {
         let lastContext = this.globalContext.callStack.pop();
+        if (!lastContext) {
+            throw new Error("Exiting while no traversal is in progress.");
+        }
         if (cached) {
             let call = lastContext.call + "_cached";
             this.globalContext.callCount[call] = (this.globalContext.callCount[call] ?? 0) + 1;
         }
         if (lastContext.visitor !== this) {
-            throw "Exiting not the same visitor as entered.";
+            throw new Error("Exiting not the same visitor as entered.");
         }
         if (!this.globalContext.callStack.length) {
             this.teardownCallContext();
@@ -793,7 +905,7 @@ export class Visitor<
         this.cacheContainer().diagnostics.push(...diagnostics);
     }
 
-    diagnostics(severity: "error" | "warning" | "info", message: string | Partial<Diagnostic>, node?: NodeType) {
+    diagnostics(severity: "error" | "warning" | "info", message: string | Partial<Diagnostic>, node?: NodeType | null) {
         node = node ?? this.node;
         let diagnostic: Partial<Diagnostic>;
         if (typeof message == "string") {
@@ -807,16 +919,16 @@ export class Visitor<
         this.cacheContainer().diagnostics.push(diagnostic as Diagnostic);
     }
 
-    error(message: string | Partial<Diagnostic>, node?: NodeType) {
+    error(message: string | Partial<Diagnostic>, node?: NodeType | null) {
         // TODO: path?
         this.diagnostics("error", message, node);
     }
 
-    warning(message: string | Partial<Diagnostic>, node?: NodeType) {
+    warning(message: string | Partial<Diagnostic>, node?: NodeType | null) {
         this.diagnostics("warning", message, node);
     }
 
-    info(message: string | Partial<Diagnostic>, node?: NodeType) {
+    info(message: string | Partial<Diagnostic>, node?: NodeType | null) {
         this.diagnostics("info", message, node);
     }
 
@@ -826,6 +938,7 @@ export class Visitor<
 
     getChildText(name?: string) {
         let node = name ? this.node.getChild(name) : this.node;
+        if (!node) throw new Error("Failed to get text: Node not found");
         return this.getNodeText(node);
     }
 
@@ -833,7 +946,7 @@ export class Visitor<
         if (this.callContext.input) return this.callContext.input.slice(node.from, node.to);
         if (this.callContext.doc) return this.callContext.doc.sliceString(node.from, node.to);
         if (this.callContext.state) return this.callContext.state.sliceDoc(node.from, node.to);
-        if (this.callContext.interpreter)
+        if (this.callContext.interpreter?.activeModule)
             return this.callContext.interpreter.activeModule.file.source.slice(node.from, node.to);
         throw Error();
     }
@@ -846,12 +959,12 @@ export class Visitor<
     //     return this.cacheContainer.public;
     // }
 
-    getCachedResult<K extends keyof VisitorOptions["cache"]>(
+    getCachedResult<K extends keyof NonNullable<VisitorOptions["cache"]>>(
         call: K,
         opts?: { exitOnHit: boolean }
     ): CacheEntry["callCache"][K] {
         opts = opts ?? { exitOnHit: true };
-        let shouldUseCache = this.options.cache[call];
+        let shouldUseCache = this.options.cache?.[call];
         if (shouldUseCache) {
             let cached = this.callCache[call];
             if (cached !== undefined) {
@@ -862,8 +975,8 @@ export class Visitor<
         return undefined;
     }
 
-    cacheResult<K extends keyof VisitorOptions["cache"]>(call: K, result: CacheEntry["callCache"][K]) {
-        let shouldUseCache = this.options.cache[call];
+    cacheResult<K extends keyof NonNullable<VisitorOptions["cache"]>>(call: K, result: CacheEntry["callCache"][K]) {
+        let shouldUseCache = this.options.cache?.[call];
         if (shouldUseCache) {
             this.callCache[call] = result;
         }
@@ -913,20 +1026,21 @@ export class Visitor<
 
     // } CACHE
 
-    getParent<R extends Rules>({ tags, rules }: { tags?: string[]; rules?: R }): VisitorWithRule<R> {
+    getParent<R extends Rules>({ tags, rules }: { tags?: string[]; rules?: R }): TVisitorBase | null {
         for (let i = this.globalContext.callStack.length - 1; i >= 0; i--) {
             let visitor = this.globalContext.callStack[i].visitor;
             if (tags && visitor.tags) {
                 for (let tag of tags) {
                     if (visitor.tags.contains(tag)) {
-                        return visitor;
+                        return visitor as VisitorWithRule<R>;
                     }
                 }
             }
             if (rules && visitor.rules) {
+                let visitorRules = visitor.rules instanceof Array ? visitor.rules : [visitor.rules];
                 for (let rule of rules) {
-                    if (visitor.rules.contains(rule)) {
-                        return visitor;
+                    if (visitorRules.contains(rule as Rules)) {
+                        return visitor as VisitorWithRule<R>;
                     }
                 }
             }
@@ -934,22 +1048,45 @@ export class Visitor<
         return null;
     }
 
-    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, CacheType, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, Cache, Super>>(
         call: K,
-        args: Parameters<Args[K]>,
-        defaultReturn?: ReturnType<Args[K]>
-    ): ReturnType<Args[K]> {
-        let result = defaultReturn;
-        const func = this.args[call] as (...args: Parameters<Args[K]>) => ReturnType<Args[K]>;
-        if (func != null) {
+        args: Parameters<NonNullable<Args[K]>>,
+        defaultReturn: ReturnType<NonNullable<Args[K]>>
+    ): ReturnType<NonNullable<Args[K]>>;
+
+    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, Cache, Super>>(
+        call: K,
+        args: Parameters<NonNullable<Args[K]>>,
+        defaultReturn: null
+    ): ReturnType<NonNullable<Args[K]>> | null;
+
+    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, Cache, Super>>(
+        call: K,
+        args: Parameters<NonNullable<Args[K]>>,
+        defaultReturn: undefined
+    ): ReturnType<NonNullable<Args[K]>> | undefined;
+
+    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, Cache, Super>>(
+        call: K,
+        args: Parameters<NonNullable<Args[K]>>,
+        defaultReturn?: ReturnType<NonNullable<Args[K]>>
+    ): ReturnType<NonNullable<Args[K]>> | undefined;
+
+    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, Cache, Super>>(
+        call: K,
+        args: Parameters<NonNullable<Args[K]>>,
+        defaultReturn?: ReturnType<NonNullable<Args[K]>>
+    ): ReturnType<NonNullable<Args[K]>> | undefined {
+        const func = this.args[call] as null | undefined | ((...args: Parameters<NonNullable<Args[K]>>) => ReturnType<NonNullable<Args[K]>>);
+        if (func !== null && func !== undefined) {
             try {
-                result = func(...args); // as ReturnType<this["args"][K]>;
+                return func(...args);
             } catch (e) {
                 log.error(`runFunc ${call} error`, { e, call, args, defaultReturn, func, this: this });
                 this.error(`Visitor.${call}() failed.`);
             }
         }
-        return result;
+        return defaultReturn;
     }
 }
 

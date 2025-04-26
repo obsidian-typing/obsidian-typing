@@ -9,7 +9,7 @@ import { useControls } from "../hooks";
 
 import styles from "src/styles/prompt.scss";
 
-const noNewLineField = StateField.define({
+const noNewLineField = StateField.define<null>({
     create() {
         return null;
     },
@@ -36,7 +36,7 @@ const noNewLineField = StateField.define({
 
 export function Text() {
     let inList = useContext(Contexts.ListContext);
-    let pickerCtx = useContext(Contexts.PickerContext);
+    let pickerCtx = useContext(Contexts.PickerContext)!;
     let controls = useControls({
         parse: (text) => {
             if (inList) {

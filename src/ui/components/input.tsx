@@ -6,33 +6,35 @@ import { Contexts } from ".";
 import { useActiveControl, useBlurCallbacks } from "../hooks";
 import { ControlSpec } from "../hooks/controls";
 
+export interface InputProps {
+    control?: ControlSpec<string>;
+    value?: string;
+    onChange?: (value: string, event: Event) => void;
+    onSubmitValue?: (value: string, event: Event) => void;
+    onSetValue?: (value: string, event: Event) => void;
+    preview?: (value: string) => any;
+    onBeforeKeyDown?: (event: KeyboardEvent) => boolean;
+    onBeforeFocus?: (event: FocusEvent) => boolean;
+    onBeforeBlur?: (event: FocusEvent) => boolean;
+    autofocus?: boolean;
+    autofocusMobile?: boolean;
+    placeholder?: string;
+    style?: any;
+    isActive?: boolean;
+}
+
 export const Input = React.memo(
-    (props: {
-        control?: ControlSpec;
-        value?: string;
-        onChange?: (value: string, event: Event) => void;
-        onSubmitValue?: (value: string, event: Event) => void;
-        onSetValue?: (value: string, event: Event) => void;
-        preview?: (value: string) => any;
-        onBeforeKeyDown?: (event: Event) => boolean;
-        onBeforeFocus?: (event: Event) => boolean;
-        onBeforeBlur?: (event: Event) => boolean;
-        autofocus?: boolean;
-        autofocusMobile?: boolean;
-        placeholder?: string;
-        style?: any;
-        isActive?: boolean;
-    }) => {
+    (props: InputProps) => {
         const dropdownCtx = useContext(Contexts.DropdownContext);
         const pickerCtx = useContext(Contexts.PickerContext);
-        const inputRef = useRef();
+        const inputRef = useRef<HTMLInputElement>(null);
         const [active, setActive] = useState(false);
         const { onDropdownBlur, onPickerBlur } = useBlurCallbacks();
         const { onBeforeFocus } = useActiveControl();
 
         const isActive = props.isActive !== undefined ? props.isActive : dropdownCtx?.isActive || active;
 
-        const onFocus = (e) => {
+        const onFocus = (e: FocusEvent) => {
             onBeforeFocus(e);
             if (props.onBeforeFocus?.(e)) return;
             setActive(true);
@@ -53,7 +55,7 @@ export const Input = React.memo(
 
         if ((props.autofocus && !Platform.isMobile) || (props.autofocusMobile && Platform.isMobile)) {
             useEffect(() => {
-                inputRef.current.focus();
+                inputRef.current?.focus();
             }, []);
         }
 
@@ -64,14 +66,14 @@ export const Input = React.memo(
             <div class={styles.inputContainer}>
                 <input
                     value={props.value ?? props.control?.value}
-                    onChange={(e) => props.onChange?.(e.target.value, e)}
+                    onChange={(e) => props.onChange?.(e.currentTarget.value, e)}
                     onKeyDown={(e) => {
                         if (props.onBeforeKeyDown?.(e)) return;
                         if (e.key == "Enter") {
                             if (e.metaKey || e.ctrlKey) {
-                                onSubmitValueHandler?.(e.target.value, e);
+                                onSubmitValueHandler?.(e.currentTarget.value, e);
                             } else {
-                                onSetValueHandler?.(e.target.value, e);
+                                onSetValueHandler?.(e.currentTarget.value, e);
                             }
                         }
                         if (pickerCtx && e.key == "Backspace" && (e.metaKey || e.ctrlKey)) {
@@ -90,7 +92,7 @@ export const Input = React.memo(
                 {!isActive && (
                     <span class={styles.inputPreview}>
                         {props.preview
-                            ? props.preview(props.value ?? props.control?.value)
+                            ? props.preview(props.value ?? props.control?.value ?? "")
                             : props.value ?? props.control?.value}
                     </span>
                 )}

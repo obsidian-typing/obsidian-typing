@@ -1,5 +1,5 @@
 import { TFile } from "obsidian";
-import { LiteralValue } from "obsidian-dataview";
+import { Literal } from "obsidian-dataview";
 import { useRef } from "react";
 import { gctx } from "src/context";
 import { autoFieldAccessor, IFieldAccessor } from "src/middleware/field_accessor";
@@ -10,27 +10,37 @@ import { bindCollection, DataClass, field, RenderLink } from "src/utilities";
 import { HookContextType, HookNames, RelationsProxy, Style, Type } from ".";
 
 export interface NoteState {
-    type: Type;
+    type?: Type;
     prefix?: string;
     title?: string;
     fields?: Record<string, string>;
     text?: string;
 }
 
+export type TypedNote = Note & ({
+    typed: true;
+    type: Type;
+    fields: FieldsProxy["proxy"];
+} | {
+    typed: false;
+    type?: undefined;
+    fields?: undefined;
+});
+
 export class Note {
     public path: string;
     public type: Type | null;
-    private _methods: Record<string, Function>;
-    private _actions: Record<string, Function>;
-    private _relations: RelationsProxy;
+    private _methods?: Record<string, Function>;
+    private _actions?: Record<string, Function>;
+    private _relations?: RelationsProxy;
 
-    private get _fields() {
+    private get _fields(): FieldsProxy | null {
         if (!this.type) return null;
 
         let cached = gctx.noteCache.get(this.path, "fields");
         if (cached) return cached;
 
-        let newProxy = FieldsProxy.new({ note: this });
+        let newProxy = FieldsProxy.new({ note: this as this & { type: Type } });
         gctx.noteCache.set(this.path, "fields", newProxy);
         return newProxy;
     }
@@ -57,11 +67,12 @@ export class Note {
         return this._relations;
     }
 
-    get page(): Record<string, LiteralValue> {
+    get page(): Record<string, Literal> {
         let cached = gctx.noteCache.get(this.path, "page");
         if (cached) return cached;
 
-        let newPage = gctx.dv.page(this.path);
+        // TODO: Properly handle "page not found"
+        let newPage = gctx.dv.page(this.path)!;
         gctx.noteCache.set(this.path, "page", newPage);
         return newPage;
     }
@@ -71,11 +82,15 @@ export class Note {
         this.type = type;
     }
 
-    static new(path: string, opts?: { type?: Type; isSuperCall?: boolean }) {
+    static new(path: string, opts?: { type?: Type; isSuperCall?: false } | { type: Type; isSuperCall: true }) {
         opts = opts ?? {};
 
+        if (opts.isSuperCall && !opts.type) {
+            throw new Error("Note type must be specified when isSuperCall is true");
+        }
+
         if (opts.isSuperCall) {
-            let cached = gctx.noteCache.get(path, "superInstances")?.[opts.type?.name];
+            let cached = gctx.noteCache.get(path, "superInstances")?.[opts.type.name];
             if (cached) return cached;
         } else {
             let cached = gctx.noteCache.get(path, "note");
@@ -100,12 +115,12 @@ export class Note {
 
         let note = new Note(path, type);
 
-        if (!opts.isSuperCall && !opts.type) {
-            gctx.noteCache.set(path, "note", note);
-        } else {
+        if (opts.type) {
             let superInstances = gctx.noteCache.get(path, "superInstances") ?? {};
-            superInstances[opts?.type?.name] = note;
+            superInstances[opts.type.name] = note;
             gctx.noteCache.set(path, "superInstances", superInstances);
+        } else {
+            gctx.noteCache.set(path, "note", note);
         }
 
         return note;
@@ -173,26 +188,27 @@ export class Note {
 
     async getState(): Promise<NoteState> {
         let fields: Record<string, string> = {};
-        if (this.typed) {
-            for (let fieldName in this.type.fields) {
-                fields[fieldName] = await this.fields[fieldName];
+        let self = this as TypedNote;
+        if (self.typed) {
+            for (let fieldName in self.type.fields) {
+                fields[fieldName] = await self.fields[fieldName];
             }
         }
-        return { title: this.title, fields, type: this.type, prefix: this.prefix };
+        return { title: self.title, fields, type: self.type, prefix: this.prefix };
     }
 
     // TODO: rename to setState?
     async applyState(newState?: NoteState) {
-        if (newState == null) {
+        if (!newState) {
             return;
         }
 
         let state = await this.state;
         let somethingChanged = false;
         for (let fieldName in newState.fields) {
-            if (state.fields[fieldName] != newState.fields[fieldName]) {
+            if (state.fields?.[fieldName] != newState.fields[fieldName]) {
                 somethingChanged = true;
-                await this._fields.setValue(fieldName, newState.fields[fieldName]);
+                await this._fields!.setValue(fieldName, newState.fields[fieldName]);
             }
         }
         if (somethingChanged) {
@@ -208,7 +224,7 @@ export class Note {
     async promptState() {
         let state = await this.getState();
         let newState = await prompt(
-            <Prompt submitText="Save" returnOnExit={true} noteState={state}>
+            <Prompt submitText="Save" returnOnExit={true} noteState={{ fields: {}, ...state }}>
                 <Prompt.Title />
                 <Prompt.Fields />
             </Prompt>,
@@ -241,8 +257,9 @@ export class Note {
         folder?: string;
         path?: string;
     }) {
-        if (path == null) {
-            if (filename == null) {
+        if (!this.file) return;
+        if (path === null || path === undefined) {
+            if (filename === null || filename === undefined) {
                 title = title ?? this.title;
                 prefix = prefix ?? this.prefix;
                 extension = extension ?? this.extension;
@@ -290,10 +307,10 @@ export class Note {
     }
 
     get typed() {
-        return this.type != null;
+        return this.type !== null;
     }
 
-    private static file(path: string): TFile {
+    private static file(path: string): TFile | null {
         let tfile = gctx.app.vault.getAbstractFileByPath(path);
         if (!tfile) {
             return null;
@@ -305,7 +322,7 @@ export class Note {
         return tfile;
     }
 
-    get file(): TFile {
+    get file(): TFile | null {
         return Note.file(this.path);
     }
 
@@ -318,7 +335,7 @@ export class Note {
     }
 
     Link = ({ children, linkText, ...props }: { children?: any; linkText?: string }) => {
-        let ref = useRef();
+        let ref = useRef<HTMLAnchorElement>(null);
         return (
             <a
                 class="internal-link no-postprocessing"
@@ -359,9 +376,9 @@ export class Note {
 
 class FieldsProxy extends DataClass {
     @field()
-    note: Note;
+    note!: Note & { type: Type };
 
-    accessor: IFieldAccessor;
+    accessor!: IFieldAccessor;
     proxy: Record<string, Promise<string> | string> = {};
 
     onAfterCreate() {
@@ -369,16 +386,23 @@ class FieldsProxy extends DataClass {
     }
 
     refreshAccessor(): void {
-        this.accessor = autoFieldAccessor(this.note.path, gctx.plugin);
-        let proxy = this;
+        let accessor = autoFieldAccessor(this.note.path, gctx.plugin);
+        if (accessor) {
+            this.accessor = accessor;
+        } else {
+            // TODO: Determine how to best handle this error case (which occurs when
+            //       getAbstractFileByPath(this.note.path) doesn't return a valid file).
+            throw new Error(`Failed to refresh field accessor for note at ${this.note.path}`);
+        }
+        let target = this;
 
         for (let fieldName in this.note.type.fields) {
             Reflect.defineProperty(this.proxy, fieldName, {
                 get: async function () {
-                    return proxy.getValue(fieldName);
+                    return target.getValue(fieldName);
                 },
                 set: async function (value: string | Promise<string>) {
-                    return proxy.setValue(fieldName, value);
+                    return target.setValue(fieldName, value);
                 },
             });
         }
@@ -405,7 +429,7 @@ export interface NoteCacheEntry {
 }
 
 export class NoteCache {
-    entries: Record<string, NoteCacheEntry> = {};
+    entries: Partial<Record<string, NoteCacheEntry>> = {};
 
     invalidate(path: string) {
         this.entries[path] = undefined;
@@ -423,7 +447,7 @@ export class NoteCache {
 
     startWatch() {
         gctx.plugin.registerEvent(
-            gctx.app.metadataCache.on("dataview:metadata-change", (op, file) => {
+            gctx.app.metadataCache.on("dataview:metadata-change", (op, file, _?) => {
                 if (gctx.graph.isReady) this.invalidate(file.path);
             })
         );

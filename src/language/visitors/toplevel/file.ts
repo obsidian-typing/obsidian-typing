@@ -15,7 +15,8 @@ export const File = createVisitor({
         let module: Record<string, TypeObject> = {};
         this.traverse((node, child) => {
             let types = child.run(node);
-            for (let type of types) {
+            // TODO: Review this and see if we can get rid of "types as any"
+            for (let type of types as any) {
                 module[type.name] = type;
                 if (!type.parentNames) continue;
                 // NOTE: the order of inheritance is correct because a type has to be defined below its parents

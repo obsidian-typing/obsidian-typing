@@ -216,6 +216,7 @@ input[type="text"].Input {
     }
 
     &-modal {
+        /*! */
     }
 
     &-submit-button {
@@ -233,6 +234,10 @@ input[type="text"].Input {
         min-height: calc(var(--font-ui-medium) * var(--line-height-normal));
         height: fit-content;
 
+        &-selected {
+            /*! */
+        }
+
         &-hidden {
             min-height: 0;
             height: 0;
@@ -242,6 +247,7 @@ input[type="text"].Input {
     }
 
     &-file {
+        /*! */
         &-input {
             position: absolute;
             left: -9999px;
