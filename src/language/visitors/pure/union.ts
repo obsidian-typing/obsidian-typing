@@ -24,8 +24,10 @@ export const Union = <
             let values = this.runChildren();
             for (let key in values) {
                 // return first accepted value
-                return values[key as keyof typeof this.children];
+                return values[key as keyof typeof this.children] as R;
             }
+            // TODO: Is this safe?
+            return null as any;
         },
         snippets() {
             let result = [];

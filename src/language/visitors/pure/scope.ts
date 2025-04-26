@@ -5,6 +5,7 @@ export const Scope = <R, C extends TChildrenBase>(
     opts?: { shouldComplete: boolean }
 ): TVisitorBase<R> => {
     let options: typeof opts = opts ?? { shouldComplete: true };
+    // TODO: Review whether we can remove the type assertion;
     return createVisitor({
         rules: visitor.rules,
         tags: ["scope"],
@@ -67,5 +68,5 @@ export const Scope = <R, C extends TChildrenBase>(
             // TODO: fix back
             cache: { lint: false, run: false, complete: false },
         },
-    });
+    }) as TVisitorBase<R>;
 };

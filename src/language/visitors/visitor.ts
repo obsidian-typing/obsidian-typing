@@ -226,7 +226,9 @@ export class Visitor<
         args: VisitorArgs<Return2, Children2, Utils2, CacheType2, Super, This>
     ): Visitor<Return2, Children2, Utils2, CacheType2, Super> {
         return Visitor.new<Visitor<Return2, Children2, Utils2, CacheType2, Super>>({
-            args: args,
+            // Ignore the fact that `This` might be different type
+            // than the one specified in the type parameter default
+            args: args as any,
         });
     }
 
@@ -258,8 +260,8 @@ export class Visitor<
         >
     >(args: VisitorArgs<Return2, Children2, Utils2, CacheType2, NewThis>) {
         let newArgs = Object.assign({}, this.originalArgs, args);
-        let result = Visitor.fromArgs<Return2, Children2, Utils2, CacheType2, NewSuper>(newArgs);
-        result.super = Visitor.fromArgs<Return, Children, Utils, CacheType, Super>(this.originalArgs) as NewSuper;
+        let result = Visitor.fromArgs<Return2, Children2, Utils2, CacheType2, NewSuper>(newArgs as any);
+        result.super = Visitor.fromArgs<Return, Children, Utils, CacheType, Super>(this.originalArgs as any) as NewSuper;
         result.super.derived = result;
         result.super.bind(result);
         return result;
