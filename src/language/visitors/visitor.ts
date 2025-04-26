@@ -69,7 +69,7 @@ interface GlobalCallContext {
 interface GlobalContext {
     callStack: StackFrame[];
     callContext: GlobalCallContext;
-    callCount: Record<string, number>;
+    callCount: Partial<Record<string, number>>;
 }
 
 interface LocalContext {
