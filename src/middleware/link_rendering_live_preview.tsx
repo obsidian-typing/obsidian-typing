@@ -9,7 +9,7 @@ import {
     ViewUpdate,
     WidgetType,
 } from "@codemirror/view";
-import { editorInfoField, editorLivePreviewField, getLinkpath, Plugin, View } from "obsidian";
+import { editorInfoField, editorLivePreviewField, getLinkpath, Plugin, TFile, View } from "obsidian";
 import ReactDOM from "react-dom";
 import { gctx } from "src/context";
 import { RenderLink } from "src/utilities";
@@ -31,7 +31,7 @@ export class LinkWidget extends WidgetType {
 
         container.onmouseenter = (e) => {
             // ref: https://github.com/nothingislost/obsidian-hover-editor/blob/5df5230895d476f9777281e355d0dea1c577c974/src/main.ts#L266
-            let instance = gctx.app.workspace.getActiveViewOfType(View);
+            let instance = gctx.app.workspace.getActiveViewOfType(View) as { getFile?(): TFile; info?: { getFile(): TFile} };
             gctx.app.workspace.trigger("hover-link", {
                 event: e,
                 source: "editor",
@@ -43,7 +43,7 @@ export class LinkWidget extends WidgetType {
         };
 
         container.onclick = (e) => {
-            let instance = gctx.app.workspace.getActiveViewOfType(View);
+            let instance = gctx.app.workspace.getActiveViewOfType(View) as { getFile?(): TFile; info?: { getFile(): TFile} };
             let sourcePath = (instance.info ?? instance).getFile?.()?.path || "";
             let newLeaf = e.metaKey || e.ctrlKey;
             gctx.app.workspace.openLinkText(this.linkText, sourcePath, newLeaf);

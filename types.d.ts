@@ -28,4 +28,7 @@ declare module "obsidian" {
             ctx?: any
         ): EventRef;
     }
+    interface MarkdownPostProcessorContext {
+        containerEl?: HTMLElement;
+    }
 }

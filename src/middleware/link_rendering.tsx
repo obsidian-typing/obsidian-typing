@@ -39,7 +39,7 @@ class LinkRenderChild extends MarkdownRenderChild {
             this.updateDebounced();
         }
     };
-    onSchemaChange = (op: "update", file: TFile) => {
+    onSchemaChange = () => {
         this.updateDebounced();
     };
     update = async () => {
