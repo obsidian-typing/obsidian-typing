@@ -352,9 +352,9 @@ export class Visitor<
             NewCache,
             NewThis
         >
-    >(args: Args): Visitor<ReturnType<Args["run"]>, NewChildren, NewUtils, NewCache, NewSuper> {
+    >(args: Args): Visitor<ReturnType<Exclude<Args["run"], undefined>>, NewChildren, NewUtils, NewCache, NewSuper> {
         let newArgs = Object.assign({}, this.originalArgs, args);
-        let result = Visitor.fromArgs<ReturnType<Args["run"]>, NewChildren, NewUtils, NewCache, NewSuper>(newArgs as any);
+        let result = Visitor.fromArgs<ReturnType<Exclude<Args["run"], undefined>>, NewChildren, NewUtils, NewCache, NewSuper>(newArgs as any);
         result.super = Visitor.fromArgs<Return, Children, Utils, Cache, Super>(this.originalArgs as any) as NewSuper;
         result.super.derived = result;
         result.super.bind(result);
