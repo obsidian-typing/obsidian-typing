@@ -40,7 +40,27 @@ export interface Symbol {
     metadata?: any;
 }
 
-type AnyVisitor = Visitor<any, any, any, any, any>;
+export type VisitorTypes<
+    Return = any,
+    Children = any,
+    Utils = any,
+    Cache = any,
+    Super = any
+> = {
+    Return?: Return,
+    Children?: Children,
+    Utils?: Utils,
+    Cache?: Cache,
+    Super?: Super
+};
+
+export type AnyVisitor<Args extends VisitorTypes = {}> = Visitor<
+    OneOf<VisitorTypes["Return"], Args["Return"]>,
+    OneOf<VisitorTypes["Children"], Args["Children"]>,
+    OneOf<VisitorTypes["Utils"], Args["Utils"]>,
+    OneOf<VisitorTypes["Cache"], Args["Cache"]>,
+    OneOf<VisitorTypes["Super"], Args["Super"]>
+>;
 
 let cache: NodeWeakMap<WeakMap<AnyVisitor, CacheEntry>>;
 
