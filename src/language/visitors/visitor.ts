@@ -257,12 +257,23 @@ export class Visitor<
             OneOf<Utils, Utils2>,
             OneOf<CacheType, CacheType2>,
             NewSuper
+        >,
+        Args extends VisitorArgs<
+            Return2,
+            Children2,
+            Utils2,
+            CacheType2,
+            NewThis
+        > = VisitorArgs<
+            Return2,
+            Children2,
+            Utils2,
+            CacheType2,
+            NewThis
         >
-    >(
-        args: VisitorArgs<Return2, Children2, Utils2, CacheType2, NewThis>
-    ): Visitor<Return2, Children2, Utils2, CacheType2, NewSuper> {
+    >(args: Args): Visitor<ReturnType<Args["run"]>, Children2, Utils2, CacheType2, NewSuper> {
         let newArgs = Object.assign({}, this.originalArgs, args);
-        let result = Visitor.fromArgs<Return2, Children2, Utils2, CacheType2, NewSuper>(newArgs as any);
+        let result = Visitor.fromArgs<ReturnType<Args["run"]>, Children2, Utils2, CacheType2, NewSuper>(newArgs as any);
         result.super = Visitor.fromArgs<Return, Children, Utils, CacheType, Super>(this.originalArgs as any) as NewSuper;
         result.super.derived = result;
         result.super.bind(result);
