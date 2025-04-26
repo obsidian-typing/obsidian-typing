@@ -38,8 +38,11 @@ export const ScopeWrapper = <Super, This extends TVisitorBase>({ shouldComplete 
                 }
                 set.add(symbol.name);
             }
-            // TODO
-            // this.super?.lint(node);
+
+            let diagnostics = this.super?.lint(node);
+            if (diagnostics) {
+                this.joinDiagnostics(diagnostics.diagnostics);
+            }
         },
         complete(node) {
             if (!shouldComplete) return [];
