@@ -31,7 +31,7 @@ export function useControls<T extends ControlsRecord>({
     compose: (values: T) => string;
     id?: string;
 }): ControlsResult<Omit<T, keyof CompositeControl>> {
-    const pickerCtx = useContext(Contexts.PickerContext);
+    const pickerCtx = useContext(Contexts.PickerContext)!;
     const value = pickerCtx.state.value;
     const [state, setState] = useState<T>(() => parse(value));
 

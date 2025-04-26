@@ -74,8 +74,8 @@ export const File = ({
         parse: parseLinkExtended,
         compose,
     });
-    const promptCtx = useContext(Contexts.PromptContext);
-    const pickerCtx = useContext(Contexts.PickerContext);
+    const promptCtx = useContext(Contexts.PromptContext)!;
+    const pickerCtx = useContext(Contexts.PickerContext)!;
 
     const [file, setFile] = useState<File>(null);
 

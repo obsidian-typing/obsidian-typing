@@ -36,7 +36,7 @@ const noNewLineField = StateField.define<null>({
 
 export function Text() {
     let inList = useContext(Contexts.ListContext);
-    let pickerCtx = useContext(Contexts.PickerContext);
+    let pickerCtx = useContext(Contexts.PickerContext)!;
     let controls = useControls({
         parse: (text) => {
             if (inList) {
