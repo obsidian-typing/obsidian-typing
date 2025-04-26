@@ -46,6 +46,7 @@ meta/dependencies:
 - changed-files:
   - any-glob-to-any-file:
     - .github/dependabot.yml
+    - docs/package.json
     - package.json
 
 ###########################
