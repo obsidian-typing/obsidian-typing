@@ -8,20 +8,20 @@ import { TypingAPI } from "./api";
 import { CSSManager } from "./utilities";
 
 export class GlobalContext {
-    app: App;
-    plugin: TypingPlugin;
-    importManager: ImportManager;
-    interpreter: Interpreter;
-    cssManager: CSSManager;
-    userDefinedCssManager: CSSManager;
-    noteCache: NoteCache;
+    app!: App;
+    plugin!: TypingPlugin;
+    importManager!: ImportManager;
+    interpreter!: Interpreter;
+    cssManager!: CSSManager;
+    userDefinedCssManager!: CSSManager;
+    noteCache!: NoteCache;
 
     testing: boolean = false;
     platform = Platform;
 
     // TODO: rename to `types` to resolve ambiguity with relations?
-    graph: TypeGraph;
-    relations: RelationsManager;
+    graph!: TypeGraph;
+    relations!: RelationsManager;
 
     get settings() {
         return this.plugin.settings;
@@ -30,9 +30,11 @@ export class GlobalContext {
     get api(): TypingAPI {
         return this.plugin.api;
     }
+
     get dv(): DataviewApi {
         if (this.testing) return {} as DataviewApi;
-        return this.app.plugins.plugins.dataview?.api;
+        // TODO: Throw when dataview is not available
+        return this.app.plugins.plugins.dataview?.api!;
     }
     get currentNote(): Note | null {
         let view = this.app.workspace.getActiveViewOfType(MarkdownView);
