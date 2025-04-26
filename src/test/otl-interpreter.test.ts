@@ -1,14 +1,21 @@
 import { App, Vault } from "obsidian";
 import { gctx } from "src/context";
 import TypingPlugin from "src/main";
-import { ExprScript } from "src/scripting";
-import { FieldTypes, Type } from "src/typing";
+import { ExprScript, FnScript, IScriptContextBase } from "src/scripting";
+import { FieldTypes, Method, Type, Values } from "src/typing";
+import { ILinkScriptContext } from "src/typing/style";
+
+// `assume` is used to tell the TypeScript compiler about facts already verified via jest.
+function assume<E extends abstract new (...args: any) => any = any>(value: any, expected?: E): asserts value is InstanceType<E> {
+}
 
 beforeAll(async () => {
     gctx.testing = true;
+    // @ts-ignore
     let app = new App(new Vault());
     let plugin = new TypingPlugin(app, null);
     await plugin.onload();
+    // @ts-ignore
     await app.workspace.triggerLayoutReady();
 });
 
@@ -20,7 +27,7 @@ function evaluateOTL(source: string): Record<string, Type> {
     return module.env;
 }
 
-function evaluateOTLErrors(source: string): Record<string, Type> {
+function evaluateOTLErrors(source: string): string {
     let module = gctx.interpreter.importModule("test.otl", source);
     expect(module).toBeDefined();
     expect(module.error).toBeDefined();
@@ -109,6 +116,7 @@ type A {
 }
 `);
         expect(A.fields.field.type).toBeInstanceOf(FieldTypes.Number);
+        assume(A.fields.field.type, FieldTypes.Number);
         expect(A.fields.field.type.min).toBe(38);
         expect(A.fields.field.type.max).toBe(138);
     });
@@ -143,6 +151,7 @@ type A {
 }
 `);
         expect(A.fields.field.type).toBeInstanceOf(FieldTypes.Number);
+        assume(A.fields.field.type, FieldTypes.Number);
         expect(A.fields.field.type.min).toBe(-200);
         expect(A.fields.field.type.max).toBe(200);
     });
@@ -156,6 +165,7 @@ type A {
 }
 `);
         expect(A.fields.field.type).toBeInstanceOf(FieldTypes.Choice);
+        assume(A.fields.field.type, FieldTypes.Choice);
         expect(A.fields.field.type.options).toEqual(["A", "B", "C"]);
     });
 
@@ -168,6 +178,7 @@ type A {
 }
 `);
         expect(A.fields.field.type).toBeInstanceOf(FieldTypes.Tag);
+        assume(A.fields.field.type, FieldTypes.Tag);
         expect(A.fields.field.type.options).toEqual(["A", "B", "C"]);
         expect(A.fields.field.type.dynamic).toBe(true);
     });
@@ -181,6 +192,7 @@ type A {
 }
 `);
         expect(A.fields.field.type).toBeInstanceOf(FieldTypes.Note);
+        assume(A.fields.field.type, FieldTypes.Note);
         expect(A.fields.field.type.typeNames).toEqual(["A", "B", "C"]);
     });
 
@@ -215,6 +227,7 @@ type A {
 }
 `);
         expect(A.fields.field.type).toBeInstanceOf(FieldTypes.List);
+        assume(A.fields.field.type, FieldTypes.List);
         expect(A.fields.field.type.type).toBeInstanceOf(FieldTypes.Note);
     });
 
@@ -227,6 +240,7 @@ type A {
 }
 `);
         expect(A.fields.field.type).toBeInstanceOf(FieldTypes.File);
+        assume(A.fields.field.type, FieldTypes.File);
         expect(A.fields.field.type.kind).toEqual("video");
         expect(A.fields.field.type.ext).toEqual(["avi", "mkv"]);
         expect(A.fields.field.type.folder).toEqual("attachments");
@@ -236,7 +250,7 @@ type A {
 });
 
 describe("style", () => {
-    const marginals = ["header", "footer"];
+    const marginals = ["header", "footer"] as const;
     for (let marginal of marginals) {
         test(`fn ${marginal}`, () => {
             let { A } = evaluateOTL(`
@@ -248,7 +262,8 @@ type A {
     }
 }
 `);
-            expect(A.style[marginal]).toBeDefined();
+            expect(A.style[marginal]).toBeInstanceOf(FnScript);
+            assume(A.style[marginal], FnScript<IScriptContextBase>);
             expect(A.style[marginal].call({})).toBeDefined();
         });
 
@@ -262,7 +277,8 @@ type A {
     }
 }
 `);
-            expect(A.style[marginal]).toBeDefined();
+            expect(A.style[marginal]).toBeInstanceOf(ExprScript);
+            assume(A.style[marginal], ExprScript<IScriptContextBase>);
             expect(A.style[marginal].call({})).toBeDefined();
         });
 
@@ -277,7 +293,8 @@ type A {
     }
 }
 `);
-            expect(A.style[marginal]).toBeDefined();
+            expect(A.style[marginal]).toBeInstanceOf(Values.Markdown);
+            assume(A.style[marginal], Values.Markdown);
             expect(A.style[marginal].source).toEqual("# Kek\n- one");
         });
     }
@@ -292,7 +309,8 @@ type A {
     }
 }
 `);
-        expect(A.style.link).toBeDefined();
+        expect(A.style.link).toBeInstanceOf(FnScript);
+        assume(A.style.link, FnScript<ILinkScriptContext>)
         expect(A.style.link.call({})).toBeDefined();
     });
 
@@ -306,7 +324,8 @@ type A {
     }
 }
 `);
-        expect(A.style.link).toBeDefined();
+        expect(A.style.link).toBeInstanceOf(ExprScript);
+        assume(A.style.link, ExprScript<ILinkScriptContext>);
         expect(A.style.link.call({})).toBeDefined();
     });
 });
@@ -326,8 +345,8 @@ type A {
 `);
     expect(A).toBeDefined();
     expect(A.methods).toBeDefined();
-    expect(A.methods.one).toBeDefined();
-    expect(A.methods.inc).toBeDefined();
+    expect(A.methods.one).toBeInstanceOf(Method);
+    expect(A.methods.inc).toBeInstanceOf(Method);
 });
 
 test(`actions`, () => {
@@ -340,7 +359,7 @@ type A {
             script = fn"""
                 console.log("i am action one")
             """
-        }   
+        }
     }
 }
 `);
@@ -349,5 +368,5 @@ type A {
     expect(A.actions.one.id).toEqual("one");
     expect(A.actions.one.name).toEqual("Action One");
     expect(A.actions.one.icon).toEqual("far fa-fire");
-    expect(A.actions.one.script).toBeDefined();
+    expect(A.actions.one.script).toBeInstanceOf(FnScript);
 });
