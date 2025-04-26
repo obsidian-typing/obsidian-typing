@@ -199,13 +199,14 @@ export class Visitor<
         return this.args.tags;
     }
     get children() {
-        return this.args.children;
+        return this.args.children!;
     }
     get utils() {
-        return this.args.utils;
+        return this.args.utils!;
     }
     get options() {
-        return this.args.options;
+        // TODO: This is not correct, this.args.options may actually be undefined
+        return this.args.options!;
     }
 
     static fromArgs<
@@ -384,7 +385,8 @@ export class Visitor<
     static globalContexts: GlobalContext[] = [];
 
     get globalContext() {
-        return Visitor.globalContexts.last();
+        // TODO: Assert that a traversal is in progress and thus globalContexts is not empty
+        return Visitor.globalContexts.last()!;
     }
 
     get localContext() {

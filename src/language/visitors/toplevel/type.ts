@@ -54,7 +54,7 @@ export const TypeParentsClause = createVisitor({
         return result;
     },
     complete(node) {
-        let currentParents = this.symbols(node).map((x) => x.name);
+        let currentParents = this.symbols(node)!.map((x) => x.name);
         return this.utils
             .globalSymbols()
             .filter((x: Symbol) => x.node.to < node.from)

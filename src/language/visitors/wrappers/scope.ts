@@ -25,7 +25,7 @@ export const ScopeWrapper = ({ shouldComplete = true }: { shouldComplete: boolea
             }
 
             let set = new Set();
-            for (let symbol of this.symbols(node)) {
+            for (let symbol of this.symbols(node)!) {
                 if (set.has(symbol.name)) {
                     this.error(`Duplicate symbol: ${symbol.name}`, symbol.nameNode);
                 }
@@ -40,7 +40,7 @@ export const ScopeWrapper = ({ shouldComplete = true }: { shouldComplete: boolea
             for (let key in this.children) {
                 result.push(...this.children[key].snippets());
             }
-            let symbols = this.symbols(node).map((x) => x.name);
+            let symbols = this.symbols(node)!.map((x) => x.name);
             result = result.filter((x) => !x.symbol || !symbols.contains(x.symbol));
             for (let i = 0; i < result.length; i++) {
                 result[i].boost = -i;

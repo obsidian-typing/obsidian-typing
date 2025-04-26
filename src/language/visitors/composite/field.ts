@@ -23,7 +23,7 @@ const createKwargChildren = (kwargs: Record<string, TVisitorBase>) => {
                 return this.runChildren()["value"];
             },
             symbols(node) {
-                return [{ name: key, node: node, nameNode: node.getChild(Rules.ParameterName) }];
+                return [{ name: key, node: node, nameNode: node.getChild(Rules.ParameterName)! }];
             },
         });
     }
@@ -88,7 +88,7 @@ export const ParametersVisitorFactory = <Arg extends TVisitorBase, Kwargs extend
                     }
                     if (child != argVisitor) {
                         metKwarg = true;
-                        for (let symbol of child.symbols(node)) {
+                        for (let symbol of child.symbols(node)!) {
                             if (kwargsSet.has(symbol.name)) {
                                 repeatedKwargs.push(symbol.node);
                             }
