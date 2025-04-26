@@ -112,7 +112,7 @@ export interface VisitorArgs<
     Children extends TChildrenBase,
     Utils extends TUtilsBase,
     CacheType extends TCacheBase,
-    Super extends TVisitorBase,
+    Super extends TOptionalVisitorBase,
     This = Visitor<Return, Children, Utils, CacheType, Super>
 > {
     // TODO: probably should rename to `node`(s) or `nodetype`(s) or `nodeType`(s), `Rules` -> `NodeType`
@@ -155,14 +155,17 @@ export type TVisitorArgsBase<
     Children extends TChildrenBase = any,
     Utils extends TUtilsBase = any,
     CacheType extends TCacheBase = any
-> = VisitorArgs<Return, Children, Utils, CacheType, null, TVisitorBase>;
+> = VisitorArgs<Return, Children, Utils, CacheType, TNoVisitor, TVisitorBase>;
 
 export type TVisitorBase<
     Return extends TReturnBase = any,
     Children extends TChildrenBase = any,
     Utils extends TUtilsBase = any,
     CacheType extends TCacheBase = any
-> = Visitor<Return, Children, Utils, CacheType, TVisitorBase>;
+> = Visitor<Return, Children, Utils, CacheType, TOptionalVisitorBase>;
+
+type TOptionalVisitorBase = TVisitorBase;
+type TNoVisitor = any;
 
 type VisitorReturn<Key extends keyof Children, Children extends TChildrenBase> =
     Partial<{ [K in Key]: ReturnType<Children[K]["run"]> }>;
@@ -172,16 +175,16 @@ export class Visitor<
     Children extends TChildrenBase,
     Utils extends TUtilsBase,
     CacheType extends TCacheBase,
-    Super extends TVisitorBase
+    Super extends TOptionalVisitorBase
 > extends DataClass {
     @field()
-    args: VisitorArgs<Return, Children, Utils, CacheType, Super>;
+    args!: VisitorArgs<Return, Children, Utils, CacheType, Super, any>;
 
-    super: Super;
-    derived: TVisitorBase;
+    super: Super = null as any;
+    derived?: TVisitorBase;
     isInitialized: boolean = false;
 
-    originalArgs: VisitorArgs<Return, Children, Utils, CacheType, Super>;
+    originalArgs!: VisitorArgs<Return, Children, Utils, CacheType, Super, any>;
     hasDecorations: boolean = false;
     childrenWithDecorations: (keyof Children)[] = [];
     hasHover: boolean = false;
@@ -926,7 +929,7 @@ export class Visitor<
 
     // } CACHE
 
-    getParent<R extends Rules>({ tags, rules }: { tags?: string[]; rules?: R }): VisitorWithRule<R> {
+    getParent<R extends Rules>({ tags, rules }: { tags?: string[]; rules?: R }): TVisitorBase | null {
         for (let i = this.globalContext.callStack.length - 1; i >= 0; i--) {
             let visitor = this.globalContext.callStack[i].visitor;
             if (tags && visitor.tags) {
