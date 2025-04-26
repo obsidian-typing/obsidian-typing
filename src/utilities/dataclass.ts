@@ -1,6 +1,13 @@
 import "reflect-metadata";
 import { log } from "src/utilities";
 
+declare global {
+    namespace Reflect {
+        function defineMetadata(metadataKey: any, metadataValue: any, target: Object, propertyKey?: string | symbol): void;
+        function getMetadata(metadataKey: any, target: Object, propertyKey?: string | symbol): any;
+    }
+}
+
 interface FieldOptions {
     inherit?: boolean | (<T>(a: T, b: T) => T);
     init?: boolean;
@@ -42,7 +49,7 @@ export class DataClass {
         const instance = new this();
         const fieldNames = getMetadata(Metadata.LIST_FIELDS, this.prototype) || [];
         if (initialValues && typeof initialValues === "object") {
-            let key: keyof typeof initialValues;
+            let key: keyof T;
             for (key in initialValues) {
                 if (!fieldNames.includes(key)) {
                     continue;
@@ -51,14 +58,14 @@ export class DataClass {
                 if (!inConstructor) {
                     continue;
                 }
-                instance[key] = initialValues[key];
+                // We lie to the TypeScript compiler about the possibility
+                // of initialValues[key] being `undefined`.
+                instance[key] = initialValues[key] as T[keyof T];
             }
         }
         let key: keyof typeof instance;
         for (key of fieldNames) {
-            // @ts-expect-error
-            if (getMetadata(Metadata.REQUIRED, instance, key) && !(key in instance)) {
-                // @ts-expect-error
+            if (typeof key === "string" && getMetadata(Metadata.REQUIRED, instance, key) && !(key in instance)) {
                 log.error(`Dataclass: Required parameter not initialized: ${key}`);
             }
         }
@@ -66,8 +73,8 @@ export class DataClass {
         return instance;
     }
 
-    onAfterCreate() {}
-    onAfterInherit() {}
+    onAfterCreate() { }
+    onAfterInherit() { }
 
     protected inheritAttribute<T extends DataClass>(this: T, attr: keyof T, parent: T): void {
         const inheritable = getMetadata(Metadata.INHERIT, this, attr as string);

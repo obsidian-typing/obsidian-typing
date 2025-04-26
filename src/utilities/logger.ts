@@ -145,6 +145,7 @@ function safeStringify(obj: any, depth: number = 1): string {
         },
         2
     );
+    // @ts-ignore
     cache = null; // Enable garbage collection
     return stringify;
 }

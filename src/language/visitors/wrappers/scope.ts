@@ -1,4 +1,4 @@
-import { NodeType, Rules, Symbol, TVisitorArgsBase } from ".";
+import { NodeType, Rules, Symbol, TVisitorArgsBase } from "..";
 
 export const ScopeWrapper = ({ shouldComplete = true }: { shouldComplete: boolean }) => {
     return {

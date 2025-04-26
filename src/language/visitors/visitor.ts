@@ -58,7 +58,7 @@ interface StackFrame {
     call: InternalCallType;
 }
 
-interface GlobalCallContext {
+export interface GlobalCallContext {
     input?: string;
     doc?: Text;
     state?: EditorState;

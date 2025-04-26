@@ -11,9 +11,9 @@ custom.parsers.splice(
         },
         extract: (context, match) => {
             let result = {
-                month: +match.groups["month"],
-                day: +(match.groups["day"] ?? context.refDate.getDay()),
-                year: +(match.groups["year"] ?? context.refDate.getFullYear()),
+                month: +match.groups!["month"],
+                day: +(match.groups!["day"] ?? context.refDate.getDay()),
+                year: +(match.groups!["year"] ?? context.refDate.getFullYear()),
             };
             return result;
         },
@@ -24,9 +24,9 @@ custom.parsers.splice(
         },
         extract: (context, match) => {
             let result = {
-                day: +match.groups["day"],
-                month: +(match.groups["month"] ?? context.refDate.getMonth()),
-                year: +(match.groups["year"] ?? context.refDate.getFullYear()),
+                day: +match.groups!["day"],
+                month: +(match.groups!["month"] ?? context.refDate.getMonth()),
+                year: +(match.groups!["year"] ?? context.refDate.getFullYear()),
             };
             return result;
         },
@@ -37,9 +37,9 @@ custom.parsers.splice(
         },
         extract: (context, match) => {
             let result = {
-                year: +match.groups["year"],
-                month: +(match.groups["month"] ?? context.refDate.getMonth()),
-                day: +(match.groups["day"] ?? context.refDate.getDay()),
+                year: +match.groups!["year"],
+                month: +(match.groups!["month"] ?? context.refDate.getMonth()),
+                day: +(match.groups!["day"] ?? context.refDate.getDay()),
             };
             return result;
         },
