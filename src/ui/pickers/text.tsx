@@ -9,7 +9,7 @@ import { useControls } from "../hooks";
 
 import styles from "src/styles/prompt.scss";
 
-const noNewLineField = StateField.define({
+const noNewLineField = StateField.define<null>({
     create() {
         return null;
     },

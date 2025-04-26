@@ -9,7 +9,7 @@ export function useBlurCallbacks() {
     const onPickerBlur = useCallback(
         (e: FocusEvent) => {
             if (pickerCtx.state.isMobile) return;
-            let containers = [pickerCtx?.state?.bodyRef?.current, promptCtx?.state?.dropdownRef?.current?.base];
+            let containers = [pickerCtx?.state?.bodyRef?.current, promptCtx?.state?.dropdownRef?.current];
             if (e.relatedTarget) {
                 let element = e.relatedTarget;
                 for (let container of containers) {

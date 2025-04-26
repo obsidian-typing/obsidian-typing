@@ -1,6 +1,7 @@
 import classNames from "classnames";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { Platform, prepareFuzzySearch } from "obsidian";
+import { JSX } from "preact";
 import { useContext, useRef, useState } from "react";
 import styles from "src/styles/prompt.scss";
 import { Contexts, Dropdown, Input } from ".";
@@ -10,6 +11,23 @@ export interface IComboboxOption {
     value: string;
     label?: string;
     display?: (value: string) => JSX.Element;
+}
+
+export interface ComboboxProps {
+    control?: ControlSpec<string>;
+    value?: string;
+    onSetValue?: (value: string) => void;
+    onSubmitValue?: (value: string) => void;
+    preview?: (value: string) => any;
+    onBeforeFocus?: (e: FocusEvent) => boolean;
+    autofocus?: boolean;
+    autofocusMobile?: boolean;
+    placeholder?: string;
+    static?: boolean;
+    open?: boolean;
+    options: IComboboxOption[];
+    dynamic?: boolean;
+    maxOptions?: number;
 }
 
 export const Combobox = ({
@@ -25,27 +43,15 @@ export const Combobox = ({
     preview,
     onBeforeFocus,
     ...props
-}: {
-    value?: string;
-    options: IComboboxOption[];
-    dynamic?: boolean;
-    maxOptions?: number;
-    onSetValue?: (value: string) => void;
-    onSubmitValue?: (value: string) => void;
-    control?: ControlSpec;
-    static?: boolean;
-    open?: boolean;
-    preview?: (value: string) => any;
-    onBeforeFocus?: (e) => boolean;
-}) => {
+}: ComboboxProps) => {
     const numOptions = maxOptions;
     // const [numOptions, setNumOptions] = useState(maxOptions);
     const [query, setQuery] = useState(value ?? control?.value ?? "");
     const [activeIndex, setActiveIndex] = useState(-1); // Index of currently active option
     const [dropdownActive, setDropdownActive] = useState(open ?? false);
     const [offset, setOffset] = useState(0);
-    const targetRef = useRef();
-    const panelRef = useRef();
+    const targetRef = useRef<HTMLDivElement>();
+    const panelRef = useRef<HTMLDivElement>();
     const pickerCtx = useContext(Contexts.PickerContext);
 
     const filterHook = () => {
@@ -61,7 +67,7 @@ export const Combobox = ({
         filtered = reorderValueToTop(filtered);
         return filtered;
     };
-    const reorderValueToTop = (options) => {
+    const reorderValueToTop = (options: IComboboxOption[]) => {
         let indexOfValue = getIndexOfValue(options);
         if (indexOfValue != -1) {
             let valueEl = options.splice(indexOfValue, 1);
@@ -69,7 +75,7 @@ export const Combobox = ({
         }
         return options;
     };
-    const getIndexOfValue = (options) => {
+    const getIndexOfValue = (options: IComboboxOption[]) => {
         return options.findIndex((x) => x.value == (value ?? control?.value));
     };
     let allFilteredOptions = query.length ? filterHook() : reorderValueToTop(options);
@@ -77,7 +83,7 @@ export const Combobox = ({
     // let filteredOptions =
     //     numOptions < allFilteredOptions.length ? allFilteredOptions.slice(0, numOptions) : allFilteredOptions;
 
-    const handleArrowNavigation = (direction) => {
+    const handleArrowNavigation = (direction: -1 | 1) => {
         const newActiveIndex = activeIndex + direction;
 
         if (newActiveIndex < 0) {
@@ -117,10 +123,10 @@ export const Combobox = ({
                         return;
                     }
 
-                    if (dropdownActive && targetRef?.current?.contains(e?.relatedTarget)) {
+                    if (dropdownActive && targetRef?.current?.contains(e?.relatedTarget as Node)) {
                         return true;
                     }
-                    if (dropdownActive && panelRef?.current?.contains(e?.relatedTarget)) {
+                    if (dropdownActive && panelRef?.current?.contains(e?.relatedTarget as Node)) {
                         return true;
                     }
                     setDropdownActive(false);
@@ -199,7 +205,7 @@ export const Combobox = ({
                         <ChevronUp size={Platform.isMobile ? 24 : 12} />
                     </div>
                 )}
-                <div as="div" tabIndex={-1} className={styles.comboboxContainer}>
+                <div tabIndex={-1} className={styles.comboboxContainer}>
                     {filteredOptions.map((opt, index) => (
                         <div
                             key={opt.value}

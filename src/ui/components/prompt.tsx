@@ -2,7 +2,7 @@ import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import CodeMirror from "@uiw/react-codemirror";
 import classNames from "classnames";
 import { EditorView } from "codemirror";
-import { ComponentChildren, RefObject } from "preact";
+import { ComponentChildren, JSX, RefObject } from "preact";
 import React, { createContext, useContext, useEffect, useReducer, useRef, useState } from "react";
 import { gctx } from "src/context";
 import { obsidianMarkdownTheme } from "src/editor/themes/obsidian";
@@ -141,7 +141,7 @@ function PromptRoot({
     }
 
     if (callback) {
-        let asyncUpdateState = debounce(async (latestState) => {
+        let asyncUpdateState = debounce(async (latestState: PromptState) => {
             const newState = { ...latestState };
             await callback(newState);
             if (!statesAreEqual(state, newState)) {
@@ -173,7 +173,7 @@ function PromptRoot({
                         {submitText ?? "Create new note"}
                     </button>
                 </div>
-                <Portal.Receiver ref={state.dropdownRef} />
+                <Portal.Receiver receiverRef={state.dropdownRef} />
             </Portal.Scope>
         </PromptContext.Provider>
     );
@@ -224,7 +224,7 @@ function PromptTitle({ disabled, prefix = true }: { disabled?: boolean; prefix?:
                     type="text"
                     placeholder="Note title..."
                     className={styles.input}
-                    onChange={(e) => dispatch({ type: "SET_TITLE", payload: e.target.value })}
+                    onChange={(e) => dispatch({ type: "SET_TITLE", payload: e.currentTarget.value })}
                     value={state.title}
                 />
             </div>
@@ -400,7 +400,7 @@ function statesAreEqual(state1: PromptState, state2: PromptState): boolean {
         if (
             state1.uploads.length !== state2.uploads.length ||
             !state1.uploads.every((upload, idx) =>
-                Object.keys(upload).every((key) => upload[key] === state2.uploads![idx][key])
+                Object.keys(upload).every((key: keyof UploadSpec) => upload[key] === state2.uploads![idx][key])
             )
         ) {
             return false;
@@ -414,7 +414,7 @@ function statesAreEqual(state1: PromptState, state2: PromptState): boolean {
         if (
             state1.errors.length !== state2.errors.length ||
             !state1.errors.every((error, idx) =>
-                Object.keys(error).every((key) => error[key] === state2.errors![idx][key])
+                Object.keys(error).every((key: keyof ErrorSpec) => error[key] === state2.errors![idx][key])
             )
         ) {
             return false;

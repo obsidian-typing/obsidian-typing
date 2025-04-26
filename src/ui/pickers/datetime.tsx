@@ -1,3 +1,4 @@
+import { ComponentChildren } from "preact";
 import { useEffect, useRef, useState } from "react";
 import { default as ReactDatePicker } from "react-datepicker";
 import "src/styles/react-datepicker.notranspile.scss";
@@ -33,9 +34,9 @@ export function DateTime({ showTime }: { showTime: boolean }) {
         },
     });
 
-    let ref = useRef();
+    let ref = useRef<HTMLDivElement>();
 
-    function DummyContainer({ children }) {
+    function DummyContainer({ children }: { children: ComponentChildren }) {
         return (
             <div ref={ref} style={{ position: "relative" }}>
                 {children}
@@ -82,7 +83,7 @@ export function DateTime({ showTime }: { showTime: boolean }) {
 
                                     const selectedDay =
                                         calendarContainer &&
-                                        calendarContainer.querySelector('.react-datepicker__day[tabindex="0"]');
+                                        calendarContainer.querySelector<HTMLElement>('.react-datepicker__day[tabindex="0"]');
 
                                     selectedDay && selectedDay.focus({ preventScroll: true });
 
