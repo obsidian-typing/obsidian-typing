@@ -958,6 +958,30 @@ export class Visitor<
     runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, CacheType, Super>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
+        defaultReturn: ReturnType<NonNullable<Args[K]>>
+    ): ReturnType<NonNullable<Args[K]>>;
+
+    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, CacheType, Super>>(
+        call: K,
+        args: Parameters<NonNullable<Args[K]>>,
+        defaultReturn: null
+    ): ReturnType<NonNullable<Args[K]>> | null;
+
+    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, CacheType, Super>>(
+        call: K,
+        args: Parameters<NonNullable<Args[K]>>,
+        defaultReturn: undefined
+    ): ReturnType<NonNullable<Args[K]>> | undefined;
+
+    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, CacheType, Super>>(
+        call: K,
+        args: Parameters<NonNullable<Args[K]>>,
+        defaultReturn?: ReturnType<NonNullable<Args[K]>>
+    ): ReturnType<NonNullable<Args[K]>> | undefined;
+
+    runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, CacheType, Super>>(
+        call: K,
+        args: Parameters<NonNullable<Args[K]>>,
         defaultReturn?: ReturnType<NonNullable<Args[K]>>
     ): ReturnType<NonNullable<Args[K]>> | undefined {
         const func = this.args[call] as null | undefined | ((...args: Parameters<NonNullable<Args[K]>>) => ReturnType<NonNullable<Args[K]>>);
