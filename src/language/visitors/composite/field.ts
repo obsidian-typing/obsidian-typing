@@ -17,7 +17,7 @@ const createKwargChildren = (kwargs: Record<string, TVisitorBase>) => {
             },
             accept(node) {
                 const nameNode = node.getChild(Rules.ParameterName);
-                return nameNode && this.getNodeText(nameNode) === key;
+                return !!nameNode && this.getNodeText(nameNode) === key;
             },
             run(node) {
                 return this.runChildren()["value"];
@@ -32,13 +32,13 @@ const createKwargChildren = (kwargs: Record<string, TVisitorBase>) => {
 };
 
 export const ParametersVisitorFactory = <Arg extends TVisitorBase, Kwargs extends Record<string, TVisitorBase>, Ret>({
-    args = null,
-    kwargs = null,
+    args,
+    kwargs,
     init,
 }: {
     args?: Arg;
     kwargs?: Kwargs;
-    init: (args: RetType<Arg>[], kwargs: RetTypeMap<Kwargs>) => Ret;
+    init: (this: TVisitorBase, args: RetType<Arg>[], kwargs: RetTypeMap<Kwargs>) => Ret;
 }) => {
     const argChildren: Partial<{ literal: TVisitorBase<any> }> = args
         ? { literal: Visitors.Proxy(Rules.ParameterValue, args) }
@@ -71,7 +71,7 @@ export const ParametersVisitorFactory = <Arg extends TVisitorBase, Kwargs extend
             });
 
             const kwargsResults = this.runChildren();
-            return init(args, kwargsResults as RetTypeMap<Kwargs>);
+            return init.call(this, args, kwargsResults as RetTypeMap<Kwargs>);
         },
         lint(node) {
             let metKwarg = false;
@@ -118,6 +118,7 @@ export const FieldType = () =>
         },
         lint(node) {
             let name = this.runChildren({ keys: ["name"] })["name"];
+            if (!name) return;
             if (!(name in FieldTypes)) {
                 this.error(`Unknown field type: ${name}. Allowed types: ${Object.keys(FieldTypes)}`);
                 return;
@@ -174,8 +175,9 @@ export const Field = () =>
         },
         symbols(node) {
             let nameNode = node.getChild(Rules.AssignmentName);
-            if (!nameNode) return;
+            if (!nameNode) return null;;
             let name = this.children.name.run(nameNode);
+            if (!name) return null;
             return [{ name, nameNode, node }];
         },
     });

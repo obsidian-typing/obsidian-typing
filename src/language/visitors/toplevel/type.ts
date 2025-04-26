@@ -47,6 +47,7 @@ export const TypeParentsClause = createVisitor({
         let result: string[] = [];
         this.traverse((node, child) => {
             let name = child.run(node);
+            if (!name) return;
             result.push(name);
         });
         return result;
@@ -75,6 +76,7 @@ export const TypeParentsClause = createVisitor({
         let res: Symbol[] = [];
         this.traverse((node, child) => {
             let name = child.run(node);
+            if (!name) return;
             res.push({ node, nameNode: node, name: name });
         });
         return res;
@@ -287,7 +289,9 @@ export const Type = createVisitor({
     },
     symbols(node) {
         let nameNode = node.getChild(Rules.LooseIdentifier);
+        if (!nameNode) return null;
         let name = this.children.name.run(nameNode);
+        if (!name) return null;
         return [{ name, nameNode, node }];
     },
 });

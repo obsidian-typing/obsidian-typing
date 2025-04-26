@@ -8,7 +8,7 @@ export const Section = <V extends TVisitorBase>(name: string, member: V, info?: 
         rules: Rules.SectionDeclaration,
         accept(node) {
             let nameNode = node.getChild(Rules.Identifier);
-            if (!nameNode) return;
+            if (!nameNode) return false;
             return this.children.name.run(nameNode) == name;
         },
         children: {
@@ -43,7 +43,9 @@ export const Section = <V extends TVisitorBase>(name: string, member: V, info?: 
         },
         symbols(node) {
             let nameNode = node.getChild(Rules.Identifier);
+            if (!nameNode) return null;
             let name = this.children.name.run(nameNode);
+            if (!name) return null;
             return [{ name, nameNode, node }];
         },
         run(node) {
@@ -56,7 +58,7 @@ export const StructuredSection = <Children extends TChildrenBase>(name: string, 
         rules: Rules.SectionDeclaration,
         accept(node) {
             let nameNode = node.getChild(Rules.Identifier);
-            if (!nameNode) return;
+            if (!nameNode) return false;
             return this.children.name.run(nameNode) == name;
         },
         children: {
@@ -86,7 +88,9 @@ export const StructuredSection = <Children extends TChildrenBase>(name: string, 
         },
         symbols(node) {
             let nameNode = node.getChild(Rules.Identifier);
+            if (!nameNode) return null;
             let name = this.children.name.run(nameNode);
+            if (!name) return null;
             return [{ name, nameNode, node }];
         },
         run(node) {

@@ -36,8 +36,9 @@ export const NamedAttribute = (valueType: TVisitorBase) =>
         },
         symbols(node) {
             let nameNode = node.getChild(Rules.AssignmentName);
-            if (!nameNode) return;
+            if (!nameNode) return null;
             let name = this.children.name.run(nameNode);
+            if (!name) return null;
             return [{ name, nameNode, node }];
         },
     });

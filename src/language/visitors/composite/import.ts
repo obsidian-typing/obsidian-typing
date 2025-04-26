@@ -77,6 +77,7 @@ export const Import = () =>
         },
         symbols() {
             let symbols = this.runChildren({ keys: ["symbols"] })["symbols"];
+            if (!symbols) return null;
             return symbols.map((x) => ({ nameNode: x.node, node: x.node, name: x.alias }));
         },
     });
