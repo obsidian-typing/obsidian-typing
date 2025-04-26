@@ -4,7 +4,7 @@ export const Scope = <R, C extends TChildrenBase>(
     visitor: TVisitorBase<R, C>,
     opts?: { shouldComplete: boolean }
 ): TVisitorBase<R> => {
-    let options: typeof opts = opts ?? { shouldComplete: opts?.shouldComplete ?? true };
+    let options: typeof opts = opts ?? { shouldComplete: true };
     return createVisitor({
         rules: visitor.rules,
         tags: ["scope"],

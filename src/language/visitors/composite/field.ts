@@ -170,8 +170,13 @@ export const Field = () =>
             }),
         },
         run(): FieldObject {
-            let opts = this.runChildren();
-            return FieldObject.new(opts);
+            let { name, type, default: defaultValue, ...opts } = this.runChildren();
+            return FieldObject.new({
+                name: name ?? undefined,
+                type: type ?? undefined,
+                default: defaultValue ?? undefined,
+                ...opts
+            });
         },
         symbols(node) {
             let nameNode = node.getChild(Rules.AssignmentName);

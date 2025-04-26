@@ -4,8 +4,8 @@ import { createVisitor, Rules } from "../index_base";
 import * as Visitors from "../pure";
 
 interface ImportSymbol {
-    symbol: string;
-    alias: string;
+    symbol?: string;
+    alias?: string;
     node: SyntaxNode;
 }
 
@@ -30,8 +30,8 @@ export const Import = () =>
                 run(node) {
                     let result: ImportSymbol[] = [];
                     this.traverse((node, child) => {
-                        let { symbol, alias } = child.run(node);
-                        result.push({ alias: alias ?? symbol, symbol, node });
+                        let { symbol, alias } = child.run(node)!;
+                        result.push({ alias: alias ?? symbol ?? undefined, symbol: symbol ?? undefined, node });
                     });
                     return result;
                 },

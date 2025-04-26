@@ -50,7 +50,7 @@ export class Interpreter extends ModuleManagerSync {
     }
 
     protected onAfterPreload(): void {
-        this.importModule(gctx.plugin.settings.schemaPath, null, true);
+        this.importModule(gctx.plugin.settings.schemaPath, undefined, true);
         gctx.graph.isReady = true;
         gctx.noteCache.invalidateAll();
         gctx.app.metadataCache.trigger("typing:schema-ready");

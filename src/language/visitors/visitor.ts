@@ -401,9 +401,9 @@ export class Visitor<
         return this.globalContext.callContext;
     }
 
-    setCallContext(callContext?: GlobalCallContext): boolean {
-        if (callContext == null) {
-            return true;
+    setCallContext(callContext?: GlobalCallContext) {
+        if (callContext === null || callContext === undefined) {
+            return;
         }
 
         // TODO: temporarily flush cache each call
@@ -630,7 +630,7 @@ export class Visitor<
 
         let result = {} as VisitorReturn<Key, Children>;
         let traversalOptions = { ...options.traversalOptions };
-        traversalOptions.selectChildren = options?.keys;
+        traversalOptions.selectChildren = options?.keys ?? undefined;
 
         let fulfilledKeys: Set<Key>;
         if (options?.eager) {
@@ -642,7 +642,7 @@ export class Visitor<
 
         this.traverse((node, child, key) => {
             let res = child.run(node);
-            if (res != null) {
+            if (res !== null && res !== undefined) {
                 result[key] = res;
                 if (options?.eager) fulfilledKeys.add(key);
             }
@@ -655,7 +655,7 @@ export class Visitor<
     }
 
     snippets(): CompletionEntry[] {
-        return this.runFunc("snippets", [], []);
+        return this.runFunc("snippets", [], null) ?? [];
     }
 
     symbols(node: NodeType): Symbol[] | null {
@@ -663,11 +663,11 @@ export class Visitor<
         let cached = this.getCachedResult("symbols");
         if (cached !== undefined) return cached;
 
-        let result = this.runFunc("symbols", [node], null);
+        let result = this.runFunc("symbols", [node]);
 
-        this.cacheResult("symbols", result);
+        this.cacheResult("symbols", result ?? undefined);
         this.exit();
-        return result;
+        return result ?? null;
     }
 
     rebase(node: NodeType): NodeType {
@@ -795,7 +795,7 @@ export class Visitor<
         this.cacheContainer().diagnostics.push(...diagnostics);
     }
 
-    diagnostics(severity: "error" | "warning" | "info", message: string | Partial<Diagnostic>, node?: NodeType) {
+    diagnostics(severity: "error" | "warning" | "info", message: string | Partial<Diagnostic>, node?: NodeType | null) {
         node = node ?? this.node;
         let diagnostic: Partial<Diagnostic>;
         if (typeof message == "string") {
@@ -809,16 +809,16 @@ export class Visitor<
         this.cacheContainer().diagnostics.push(diagnostic as Diagnostic);
     }
 
-    error(message: string | Partial<Diagnostic>, node?: NodeType) {
+    error(message: string | Partial<Diagnostic>, node?: NodeType | null) {
         // TODO: path?
         this.diagnostics("error", message, node);
     }
 
-    warning(message: string | Partial<Diagnostic>, node?: NodeType) {
+    warning(message: string | Partial<Diagnostic>, node?: NodeType | null) {
         this.diagnostics("warning", message, node);
     }
 
-    info(message: string | Partial<Diagnostic>, node?: NodeType) {
+    info(message: string | Partial<Diagnostic>, node?: NodeType | null) {
         this.diagnostics("info", message, node);
     }
 
