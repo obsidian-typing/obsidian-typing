@@ -36,14 +36,16 @@ export class GlobalContext {
         // TODO: Throw when dataview is not available
         return this.app.plugins.plugins.dataview?.api!;
     }
+
     get currentNote(): Note | null {
         let view = this.app.workspace.getActiveViewOfType(MarkdownView);
-        if (!view) {
+        if (!view || !view.file) {
             return null;
         }
         let note = gctx.api.note(view.file.path);
         return note;
     }
+
     get isMobile(): boolean {
         return Platform.isMobile;
     }

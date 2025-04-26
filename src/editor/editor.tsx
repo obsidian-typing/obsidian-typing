@@ -103,6 +103,7 @@ let parserWithMetadata = parser.configure({
         if (!node.type.isError && node.name == Rules.String && node.matchContext([Rules.TaggedString])) {
             let syntaxNode = node.node;
             let prevSibling = syntaxNode?.prevSibling;
+            if (!prevSibling) return null;
 
             let tag = input.read(prevSibling.from, prevSibling.to);
             if (tag in TAGGED_STRING_ISLAND_GRAMMARS) {
@@ -162,7 +163,7 @@ function statusPanel(view: EditorView): Panel {
 }
 
 class BaseEditorView extends TextFileView {
-    private view: EditorView;
+    private view?: EditorView;
     navigation = true;
 
     constructor(leaf: WorkspaceLeaf, private viewType: string, private extensions: Extension[]) {
@@ -170,15 +171,15 @@ class BaseEditorView extends TextFileView {
     }
 
     getViewData(): string {
-        let result = this.view.state.doc.toString();
-        return result;
+        let result = this.view?.state.doc.toString();
+        return result ?? "";
     }
 
     setViewData(data: string, clear: boolean): void {
-        if (data == null) {
+        if (data === null) {
             return;
         }
-        this.view.dispatch(
+        this.view?.dispatch(
             this.view.state.update({
                 changes: {
                     from: 0,
@@ -226,12 +227,12 @@ class BaseEditorView extends TextFileView {
     }
 
     async onLoadFile(file: TFile) {
-        this.view.dispatch({ effects: setCodeEditorMetadataEffect.of({ path: file.path }) });
+        this.view?.dispatch({ effects: setCodeEditorMetadataEffect.of({ path: file.path }) });
         await super.onLoadFile(file);
     }
 
     clear(): void {
-        this.view.destroy();
+        this.view?.destroy();
     }
 
     async onClose() {
@@ -259,7 +260,7 @@ function createEditorKeymap(parent: Scope) {
     return scope;
 }
 
-let editorKeymap: Scope = null;
+let editorKeymap: Scope | null = null;
 
 export function registerCodeEditorViews(plugin: TypingPlugin) {
     for (let ext in VIEWS) {
@@ -272,11 +273,11 @@ export function registerCodeEditorViews(plugin: TypingPlugin) {
     }
     plugin.registerEvent(
         plugin.app.workspace.on("active-leaf-change", (leaf) => {
-            if (leaf.view.getViewType() == "editor-view-otl") {
-                if (editorKeymap == null) editorKeymap = createEditorKeymap(plugin.app.scope);
+            if (leaf?.view.getViewType() == "editor-view-otl") {
+                if (editorKeymap === null) editorKeymap = createEditorKeymap(plugin.app.scope);
                 plugin.app.keymap.pushScope(editorKeymap);
             } else {
-                if (editorKeymap != null) plugin.app.keymap.popScope(editorKeymap);
+                if (editorKeymap !== null) plugin.app.keymap.popScope(editorKeymap);
             }
         })
     );

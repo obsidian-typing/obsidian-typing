@@ -50,8 +50,8 @@ export const Combobox = ({
     const [activeIndex, setActiveIndex] = useState(-1); // Index of currently active option
     const [dropdownActive, setDropdownActive] = useState(open ?? false);
     const [offset, setOffset] = useState(0);
-    const targetRef = useRef<HTMLDivElement>();
-    const panelRef = useRef<HTMLDivElement>();
+    const targetRef = useRef<HTMLDivElement>(null);
+    const panelRef = useRef<HTMLDivElement>(null);
     const pickerCtx = useContext(Contexts.PickerContext);
 
     const filterHook = () => {
@@ -59,8 +59,8 @@ export const Combobox = ({
         let filtered = query.length
             ? options
                   .map((option) => ({ option, match: fuzzy(option.label ?? option.value) }))
-                  .filter((x) => x.match != null)
-                  .sort((a, b) => b.match.score - a.match.score)
+                  .filter((x) => x.match !== null)
+                  .sort((a, b) => b.match!.score - a.match!.score)
                   .map((x) => x.option)
             : options;
 
@@ -120,7 +120,7 @@ export const Combobox = ({
                 }}
                 onBeforeBlur={(e) => {
                     if (pickerCtx?.state.isMobile) {
-                        return;
+                        return false;
                     }
 
                     if (dropdownActive && targetRef?.current?.contains(e?.relatedTarget as Node)) {
@@ -166,13 +166,13 @@ export const Combobox = ({
                                 let newValue = filteredOptions[activeIndex]?.value;
                                 if (!newValue) {
                                     if (dynamic) newValue = query;
-                                    else return;
+                                    else return false;
                                 }
                                 setQuery(newValue);
                                 if (e.metaKey || e.ctrlKey) {
-                                    onSubmitValueHandler(newValue);
+                                    onSubmitValueHandler?.(newValue);
                                 } else {
-                                    onSetValueHandler(newValue);
+                                    onSetValueHandler?.(newValue);
                                 }
                                 setDropdownActive(false);
                                 setOffset(0);
@@ -218,9 +218,9 @@ export const Combobox = ({
                                 setQuery(opt.value);
                                 setActiveIndex(0);
                                 if (e.metaKey || e.ctrlKey) {
-                                    onSubmitValueHandler(opt.value);
+                                    onSubmitValueHandler?.(opt.value);
                                 } else {
-                                    onSetValueHandler(opt.value);
+                                    onSetValueHandler?.(opt.value);
                                 }
                                 setDropdownActive(false);
                             }}
@@ -245,9 +245,9 @@ export const Combobox = ({
                                 setQuery(query);
                                 setActiveIndex(0);
                                 if (e.metaKey || e.ctrlKey) {
-                                    onSubmitValueHandler(query);
+                                    onSubmitValueHandler?.(query);
                                 } else {
-                                    onSetValueHandler(query);
+                                    onSetValueHandler?.(query);
                                 }
                                 setDropdownActive(false);
                             }}

@@ -31,6 +31,7 @@ export interface PickerState extends PickerConfig {
     modalRef?: React.RefObject<any>;
     displayRef?: React.RefObject<any>;
     isActiveControlled?: boolean;
+    value: string;
 }
 
 type PickerActionType =
@@ -88,14 +89,14 @@ export const Picker = ({ children }: ChildrenProps) => {
 };
 
 Picker.SubmitButton = <T extends ControlsRecord,>(props: { controls: ControlsResult<T> }) => {
-    let pickerCtx = useContext(PickerContext);
+    let pickerCtx = useContext(PickerContext)!;
     if (!Platform.isMobile) return null;
     return (
         <button
             ref={pickerCtx.state.submitButtonRef}
             tabIndex={-1}
             onClick={(e) => {
-                const inputTarget = pickerCtx.state.focusedControl.current;
+                const inputTarget = pickerCtx.state.focusedControl?.current;
                 try {
                     inputTarget?.focus?.();
                 } catch {}
@@ -117,9 +118,9 @@ Picker.SubmitButton = <T extends ControlsRecord,>(props: { controls: ControlsRes
 };
 
 Picker.Display = React.memo(
-    ({ children, static: static_ = false, value, ...props }: ChildrenProps & { static?: boolean; value?: string }) => {
-        let { state, dispatch } = useContext(PickerContext);
-        let promptCtx = useContext(PromptContext);
+    ({ children, static: static_ = false, value = "", ...props }: ChildrenProps & { static?: boolean; value?: string }) => {
+        let { state, dispatch } = useContext(PickerContext)!;
+        let promptCtx = useContext(PromptContext)!;
 
         const onFocus = (e: FocusEvent) => {
             if (state.isMobile) return;
@@ -152,8 +153,12 @@ Picker.Display = React.memo(
         };
 
         let field = promptCtx.state.type?.fields?.[state.fieldName];
-        let fieldType = field.type?.underlyingType;
+        let fieldType = field?.type?.underlyingType;
         let DisplayComponent = fieldType?.Display;
+
+        if (!DisplayComponent) {
+            throw new Error("No display component configured for this field type (or invalid field type).");
+        }
 
         return (
             <div
@@ -176,7 +181,7 @@ Picker.Display = React.memo(
 );
 
 Picker.Body = React.memo(({ children }: ChildrenProps) => {
-    let pickerCtx = useContext(PickerContext);
+    let pickerCtx = useContext(PickerContext)!;
     let { state, dispatch } = pickerCtx;
     const { onPickerBlur } = useBlurCallbacks();
 

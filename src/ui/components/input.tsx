@@ -27,7 +27,7 @@ export const Input = React.memo(
     (props: InputProps) => {
         const dropdownCtx = useContext(Contexts.DropdownContext);
         const pickerCtx = useContext(Contexts.PickerContext);
-        const inputRef = useRef<HTMLInputElement>();
+        const inputRef = useRef<HTMLInputElement>(null);
         const [active, setActive] = useState(false);
         const { onDropdownBlur, onPickerBlur } = useBlurCallbacks();
         const { onBeforeFocus } = useActiveControl();
@@ -55,7 +55,7 @@ export const Input = React.memo(
 
         if ((props.autofocus && !Platform.isMobile) || (props.autofocusMobile && Platform.isMobile)) {
             useEffect(() => {
-                inputRef.current.focus();
+                inputRef.current?.focus();
             }, []);
         }
 
@@ -92,7 +92,7 @@ export const Input = React.memo(
                 {!isActive && (
                     <span class={styles.inputPreview}>
                         {props.preview
-                            ? props.preview(props.value ?? props.control?.value)
+                            ? props.preview(props.value ?? props.control?.value ?? "")
                             : props.value ?? props.control?.value}
                     </span>
                 )}

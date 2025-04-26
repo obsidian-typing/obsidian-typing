@@ -1,10 +1,10 @@
-import { RefObject } from "preact";
+import { Ref, RefObject } from "preact";
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 
 type PortalContextType = {
     node: HTMLElement | null;
-    setNode: (node: HTMLElement) => void;
+    setNode: (node: HTMLElement | null) => void;
 };
 
 const PortalContext = createContext<PortalContextType | null>(null);
@@ -15,8 +15,8 @@ export const Portal = {
         return <PortalContext.Provider value={{ node, setNode }}>{children}</PortalContext.Provider>;
     },
     Receiver: ({ receiverRef }: { receiverRef?: RefObject<HTMLDivElement | null> }) => {
-        const { node, setNode } = useContext(PortalContext);
-        receiverRef = receiverRef ?? useRef<HTMLDivElement | null>(null);
+        const { node, setNode } = useContext(PortalContext)!;
+        receiverRef = receiverRef ?? useRef<HTMLDivElement>(null);
 
         useEffect(() => {
             if (receiverRef.current && !node) {
@@ -29,7 +29,7 @@ export const Portal = {
             };
         }, []);
 
-        return <div ref={receiverRef}></div>;
+        return <div ref={receiverRef as Ref<HTMLDivElement>}></div>;
     },
     Sender: React.memo(({ children }: { children: React.ReactNode }) => {
         const portalContext = useContext(PortalContext);

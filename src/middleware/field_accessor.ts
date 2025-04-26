@@ -5,10 +5,14 @@ import { Type } from "src/typing";
 
 export let regexField = /^\s*(?<field>[0-9\w\p{Letter}][-0-9\w\p{Letter}]*)\s*::\s*(?<value>.*)\s*/u;
 
-export interface FieldSearchResult {
-    success: boolean;
-    lineno?: number;
-    match?: RegExpExecArray;
+export type FieldSearchResult = {
+    success: false;
+    lineno?: undefined;
+    match?: undefined;
+} | {
+    success: true;
+    lineno: number;
+    match: RegExpExecArray & { groups: { field: string } };
 }
 
 export interface IFieldAccessor {
@@ -17,7 +21,7 @@ export interface IFieldAccessor {
 }
 
 export abstract class BaseFieldAccessor implements IFieldAccessor {
-    constructor(public type: Type) {}
+    constructor(public type: Type) { }
 
     abstract getLines(): Promise<Array<string>>;
     abstract setLine(lineNumber: number, line: string): Promise<void>;
@@ -43,7 +47,7 @@ export abstract class BaseFieldAccessor implements IFieldAccessor {
         let match;
         for (let lineno = 0; lineno < lines.length; lineno++) {
             let line = lines[lineno];
-            if ((match = regexField.exec(line)) && match.groups.field == key) {
+            if ((match = regexField.exec(line) as FieldSearchResult["match"]) && match.groups.field == key) {
                 return { success: true, lineno: lineno, match: match };
             }
         }
@@ -78,7 +82,7 @@ export abstract class BaseFieldAccessor implements IFieldAccessor {
         let currentFieldOrder = fieldOrder[key];
         for (; lineNumber < lines.length; lineNumber++) {
             let line = lines[lineNumber];
-            let match = regexField.exec(line);
+            let match = regexField.exec(line) as FieldSearchResult["match"];
             if (!match) {
                 break;
             }
@@ -151,8 +155,8 @@ class EditorFieldAccessor extends BaseFieldAccessor {
 }
 
 class FileFieldAccessor extends BaseFieldAccessor {
-    content: string;
-    lines: Array<string>;
+    content?: string;
+    lines?: Array<string>;
 
     constructor(public file: TFile, public plugin: TypingPlugin, type: Type) {
         super(type);
@@ -212,14 +216,14 @@ export class StringFieldAccessor extends BaseFieldAccessor {
     }
 }
 
-export function autoFieldAccessor(path: string, plugin: TypingPlugin): EditorFieldAccessor | FileFieldAccessor {
+export function autoFieldAccessor(path: string, plugin: TypingPlugin): EditorFieldAccessor | FileFieldAccessor | null {
     let note = gctx.api.note(path);
     let activeView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
-    if (activeView && activeView.getMode() == "source" && activeView.file.path === path) {
+    if (activeView && activeView.getMode() == "source" && activeView.file && activeView.file.path === path && note.type) {
         return new EditorFieldAccessor(activeView.editor, note.type);
     } else {
         let tfile = note.file;
-        if (!tfile) {
+        if (!tfile || !note.type) {
             return null;
         }
         return new FileFieldAccessor(tfile, plugin, note.type);

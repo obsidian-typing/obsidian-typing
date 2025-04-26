@@ -77,14 +77,14 @@ export const File = ({
     const promptCtx = useContext(Contexts.PromptContext)!;
     const pickerCtx = useContext(Contexts.PickerContext)!;
 
-    const [file, setFile] = useState<File>(null);
+    const [file, setFile] = useState<File>();
 
-    if (file == null) {
+    if (!file) {
         let filename = composeWithoutBrackets({ name: controls.name.value, extension: controls.extension.value });
         let uploadSpec = promptCtx.state?.uploads?.find((value) => {
             return (short || value.destination == controls.folder.value) && value.name == filename;
         });
-        if (uploadSpec != null) {
+        if (uploadSpec !== null && uploadSpec !== undefined) {
             setFile(uploadSpec.file);
         }
     }
@@ -143,10 +143,12 @@ export const File = ({
             type: "CANCEL_UPLOAD",
             payload: { name: oldFilename },
         });
-        promptCtx.dispatch({
-            type: "DEFER_UPLOAD",
-            payload: { name: newFilename, file, destination: folder },
-        });
+        if (file) {
+            promptCtx.dispatch({
+                type: "DEFER_UPLOAD",
+                payload: { name: newFilename, file, destination: folder },
+            });
+        }
     };
 
     const id = `file-upload-${pickerCtx.state.fieldName}`;
@@ -218,7 +220,7 @@ export const File = ({
                                 controls.name.submitValue(value);
                             }}
                             preview={(name) =>
-                                preview(
+                                preview?.(
                                     compose({
                                         name,
                                         extension: controls.extension.value,

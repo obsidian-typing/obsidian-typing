@@ -34,7 +34,7 @@ export function DateTime({ showTime }: { showTime: boolean }) {
         },
     });
 
-    let ref = useRef<HTMLDivElement>();
+    let ref = useRef<HTMLDivElement>(null);
 
     function DummyContainer({ children }: { children: ComponentChildren }) {
         return (
@@ -104,7 +104,7 @@ export function DateTime({ showTime }: { showTime: boolean }) {
                                 // dispatch({ type: "EXIT" });
                             }}
                             onChange={async (date) => {
-                                let newValue = await controls.str.setValue(toLocalISOString(date, showTime));
+                                let newValue = await controls.str.setValue(date ? toLocalISOString(date, showTime) : "");
                                 setDateQuery(newValue);
                             }}
                             calendarContainer={DummyContainer}

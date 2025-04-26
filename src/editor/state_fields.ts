@@ -6,7 +6,7 @@ interface EditorMetadata {
 
 export const setCodeEditorMetadataEffect = StateEffect.define<EditorMetadata>();
 
-export const codeEditorMetadataField = StateField.define<EditorMetadata>({
+export const codeEditorMetadataField = StateField.define<EditorMetadata | null>({
     create: () => {
         return null;
     },

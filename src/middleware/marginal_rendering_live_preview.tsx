@@ -57,7 +57,7 @@ export const marginalDecorationsField = StateField.define<DecorationSet>({
         const sourcePath = editorInfo?.file?.path;
         const markdownView = editorInfo instanceof MarkdownView ? editorInfo as MarkdownView : null;
 
-        if (!markdownView) {
+        if (!markdownView || !sourcePath) {
             return Decoration.none;
         }
 

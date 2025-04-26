@@ -1,5 +1,6 @@
 import { ComponentChildren } from "preact";
-import { createContext, RefObject, useContext, useEffect, useRef, useState } from "react";
+import { Dispatch, StateUpdater, useContext, useEffect, useRef, useState } from "preact/hooks";
+import { createContext, RefObject } from "react";
 import { usePopper } from "react-popper";
 import styles from "src/styles/prompt.scss";
 import { Contexts } from ".";
@@ -13,10 +14,10 @@ export interface DropdownContextType {
     setIsActive: (value: boolean) => void;
     panelRef: RefObject<HTMLDivElement>;
     targetRef: RefObject<HTMLDivElement>;
-    panel: HTMLDivElement;
-    target: HTMLDivElement;
-    setPanel: any;
-    setTarget: any;
+    panel: HTMLDivElement | null;
+    target: HTMLDivElement | null;
+    setPanel: Dispatch<StateUpdater<HTMLDivElement | null>>;
+    setTarget: Dispatch<StateUpdater<HTMLDivElement | null>>
     isControlled: boolean;
 }
 
@@ -33,10 +34,10 @@ const Dropdown = ({
     panelRef?: RefObject<HTMLDivElement>;
 }) => {
     let [isActive, setIsActive] = useState(active ?? false);
-    let [panel, setPanel] = useState<HTMLDivElement>();
-    let [target, setTarget] = useState<HTMLDivElement>();
-    panelRef = panelRef ?? useRef<HTMLDivElement>();
-    targetRef = targetRef ?? useRef<HTMLDivElement>();
+    let [panel, setPanel] = useState<HTMLDivElement | null>(null);
+    let [target, setTarget] = useState<HTMLDivElement | null>(null);
+    panelRef = panelRef ?? useRef<HTMLDivElement>(null);
+    targetRef = targetRef ?? useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (active !== undefined) {
@@ -72,7 +73,7 @@ const Dropdown = ({
 };
 
 Dropdown.Panel = (props: ChildrenProps & { static?: boolean }) => {
-    const dropdownCtx = useContext(DropdownContext);
+    const dropdownCtx = useContext(DropdownContext)!;
     const pickerCtx = useContext(Contexts.PickerContext);
     const { onDropdownBlur, onPickerBlur } = useBlurCallbacks();
     const isMobile = pickerCtx?.state.isMobile;
@@ -98,7 +99,7 @@ Dropdown.Panel = (props: ChildrenProps & { static?: boolean }) => {
                 }}
                 style={position.popper}
                 onBlur={(e) => {
-                    dropdownCtx.target.focus();
+                    dropdownCtx.target?.focus();
                     onPickerBlur(e);
                     setTimeout(() => {
                         onDropdownBlur(e);

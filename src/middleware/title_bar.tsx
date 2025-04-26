@@ -18,9 +18,11 @@ const ViewTitle = (props: { prefix: string | null; name: string | null; onNameCl
 };
 
 function addViewActions(view: MarkdownView) {
+    if (!view.file) return;
     let actionsEl = view.containerEl.querySelector(".view-actions") as HTMLElement;
     if (!actionsEl.querySelector(`button.view-action[aria-label="Actions"]`)) {
         view.addAction("layout-grid", "Actions", () => {
+            if (!view.file) return;
             let note = gctx.api.note(view.file.path);
             new ActionSuggestModal(gctx.app, note).open();
         });
@@ -28,6 +30,7 @@ function addViewActions(view: MarkdownView) {
 }
 
 function setViewTitle(view: MarkdownView) {
+    if (!view.file) return;
     const titleContainerEl = view.containerEl.querySelector(
         ".view-header-title-container .view-header-title"
     ) as HTMLElement;
@@ -44,10 +47,10 @@ function setViewTitle(view: MarkdownView) {
         name = note.fullname;
     }
 
-    let container;
+    let container: HTMLElement;
 
     if (titleContainerEl.classList.contains(styles.viewTitle)) {
-        container = titleContainerEl.parentElement;
+        container = titleContainerEl.parentElement!;
     } else {
         container = titleContainerEl.createEl("div");
         titleContainerEl.replaceWith(container);
@@ -58,8 +61,8 @@ function setViewTitle(view: MarkdownView) {
             prefix={prefix}
             name={name}
             onNameClick={async () => {
+                if (!view.file) return;
                 let note = gctx.api.note(view.file.path);
-
                 await note.promptState();
             }}
         ></ViewTitle>,
@@ -68,8 +71,8 @@ function setViewTitle(view: MarkdownView) {
 }
 
 export function registerTitleBarLeafHook(plugin: TypingPlugin) {
-    const processLeaf = (leaf: WorkspaceLeaf) => {
-        let view = leaf.view;
+    const processLeaf = (leaf: WorkspaceLeaf | null) => {
+        let view = leaf?.view;
         if (!(view instanceof MarkdownView)) {
             return;
         }
