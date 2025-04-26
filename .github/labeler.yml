@@ -41,13 +41,19 @@ meta/build:
     - jest*
     - tsconfig*
 
-# Add 'dependencies' to dependency-related changes
+# Add 'dependencies' label to dependency-related changes
 meta/dependencies:
 - changed-files:
   - any-glob-to-any-file:
     - .github/dependabot.yml
     - docs/package.json
     - package.json
+
+# Add 'types'  label to TypeScript typing-related changes
+meta/types:
+- changed-files:
+  - any-glob-to-any-file:
+    - '**/*.d.ts'
 
 ###########################
 # Technical Areas: Editor #
