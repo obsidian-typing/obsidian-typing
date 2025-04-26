@@ -109,8 +109,7 @@ const defaultVisitorOptions: VisitorOptions = {
 export interface VisitorArgs<
     Return extends TReturnBase,
     Children extends TChildrenBase,
-    Utils extends Record<string, (this: This, ...args: any) => any>,
-    // Utils extends { [name: string]: (this: This, ...args: any) => any },
+    Utils extends TUtilsBase,
     CacheType extends TCacheBase,
     Super extends TVisitorBase,
     This = Visitor<Return, Children, Utils, CacheType, Super>
@@ -139,7 +138,7 @@ export interface VisitorArgs<
     decorations?: (this: This, node: NodeType, view: EditorView) => Range<Decoration>[];
 
     children?: Children;
-    utils?: Utils;
+    utils?: Utils & ThisType<This>;
 
     options?: VisitorOptions;
     // cache?: () => CacheType;
