@@ -1,4 +1,5 @@
 import { TFile, TFolder, Vault } from "obsidian";
+import { Link } from "obsidian-dataview";
 import { gctx } from "src/context";
 import { Visitors } from "src/language";
 import { Script } from "src/scripting";
@@ -40,7 +41,7 @@ export class File extends FieldType<File> {
     @field()
     autorename: Script = null;
 
-    Display: FieldType["Display"] = ({ value }) => {
+    Display: FieldType["Display"] = ({ value }: { value: Link | string }) => {
         if (typeof value != "string") value = value.markdown();
         let { name, extension, display, path } = parseLinkExtended(value);
 

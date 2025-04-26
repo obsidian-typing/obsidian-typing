@@ -1,3 +1,4 @@
+import { DataArray, Link, Literal, SMarkdownPage } from "obsidian-dataview";
 import { Suspense } from "react";
 import { gctx } from "src/context";
 import { Visitors } from "src/language";
@@ -38,8 +39,8 @@ export class Note extends FieldType<Note> {
         return this._types;
     }
 
-    Display: FieldType["Display"] = ({ value }) => {
-        if (typeof value != "string") value = value.markdown();
+    Display: FieldType["Display"] = ({ value }: { value: Link | string }) => {
+        if (typeof value !== "string") value = value.markdown();
         let { path, subpath, display } = parseLink(value);
         if (!display) {
             // to not pass empty linkText to RenderLink
@@ -63,7 +64,7 @@ export class Note extends FieldType<Note> {
         const preview = (value: string) => <this.Display value={value} />;
 
         let options: IComboboxOption[] = Array.from(
-            gctx.dv.pages(this.query).map(
+            (gctx.dv.pages(this.query) as DataArray<Record<string, Literal> & SMarkdownPage>).map(
                 (p): IComboboxOption => ({
                     value: this.short ? p.file.name : p.file.path,
                     label: p.file.name,

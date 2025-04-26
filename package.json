@@ -36,7 +36,7 @@
     "esbuild-sass-plugin": "^2.12.0",
     "jest": "^29.6.2",
     "obsidian": "^1.1.1",
-    "obsidian-dataview": "^0.4.10",
+    "obsidian-dataview": "^0.5.68",
     "obsidian-plugin-cli": "^0.8.0",
     "postcss": "^8.4.27",
     "postcss-modules": "^6.0.0",

@@ -1,5 +1,5 @@
 import { TFile } from "obsidian";
-import { LiteralValue } from "obsidian-dataview";
+import { Literal } from "obsidian-dataview";
 import { useRef } from "react";
 import { gctx } from "src/context";
 import { autoFieldAccessor, IFieldAccessor } from "src/middleware/field_accessor";
@@ -57,7 +57,7 @@ export class Note {
         return this._relations;
     }
 
-    get page(): Record<string, LiteralValue> {
+    get page(): Record<string, Literal> {
         let cached = gctx.noteCache.get(this.path, "page");
         if (cached) return cached;
 
@@ -318,7 +318,7 @@ export class Note {
     }
 
     Link = ({ children, linkText, ...props }: { children?: any; linkText?: string }) => {
-        let ref = useRef();
+        let ref = useRef<HTMLAnchorElement>();
         return (
             <a
                 class="internal-link no-postprocessing"
@@ -370,15 +370,15 @@ class FieldsProxy extends DataClass {
 
     refreshAccessor(): void {
         this.accessor = autoFieldAccessor(this.note.path, gctx.plugin);
-        let proxy = this;
+        let target = this;
 
         for (let fieldName in this.note.type.fields) {
             Reflect.defineProperty(this.proxy, fieldName, {
                 get: async function () {
-                    return proxy.getValue(fieldName);
+                    return target.getValue(fieldName);
                 },
                 set: async function (value: string | Promise<string>) {
-                    return proxy.setValue(fieldName, value);
+                    return target.setValue(fieldName, value);
                 },
             });
         }
@@ -423,7 +423,7 @@ export class NoteCache {
 
     startWatch() {
         gctx.plugin.registerEvent(
-            gctx.app.metadataCache.on("dataview:metadata-change", (op, file) => {
+            gctx.app.metadataCache.on("dataview:metadata-change", (op, file, _?) => {
                 if (gctx.graph.isReady) this.invalidate(file.path);
             })
         );
