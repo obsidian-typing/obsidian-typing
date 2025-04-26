@@ -1,10 +1,10 @@
 import createEmotion, { Emotion } from "@emotion/css/create-instance";
 import { gctx } from "src/context";
-import { getFont } from "./font_manager";
+import { FontName, getFont } from "./font_manager";
 
 export class CSSManager {
     emotion: Emotion;
-    enabledFonts: Set<string>;
+    enabledFonts: Set<FontName>;
 
     constructor(key: string) {
         this.emotion = createEmotion({
@@ -23,7 +23,7 @@ export class CSSManager {
         this.enabledFonts = new Set();
     }
 
-    async enableFont(name: string) {
+    async enableFont(name: FontName) {
         let css = await getFont(name);
         if (!css) return;
 
