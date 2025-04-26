@@ -133,7 +133,7 @@ typing/field-types:
 
 # Relates to relations between notes
 typing/relations:
-- changes-files:
+- changed-files:
   - any-glob-to-any-file:
     - src/typing/field_type/note.tsx
     - src/typing/relations.ts
