@@ -639,7 +639,7 @@ export class Visitor<
         if (options?.eager) {
             fulfilledKeys = new Set();
             traversalOptions.exitCriterion = () => {
-                return fulfilledKeys.size == options?.keys.length;
+                return fulfilledKeys.size === options?.keys?.length;
             };
         }
 
@@ -849,7 +849,7 @@ export class Visitor<
         if (this.callContext.input) return this.callContext.input.slice(node.from, node.to);
         if (this.callContext.doc) return this.callContext.doc.sliceString(node.from, node.to);
         if (this.callContext.state) return this.callContext.state.sliceDoc(node.from, node.to);
-        if (this.callContext.interpreter)
+        if (this.callContext.interpreter?.activeModule)
             return this.callContext.interpreter.activeModule.file.source.slice(node.from, node.to);
         throw Error();
     }
@@ -878,8 +878,8 @@ export class Visitor<
         return undefined;
     }
 
-    cacheResult<K extends keyof VisitorOptions["cache"]>(call: K, result: CacheEntry["callCache"][K]) {
-        let shouldUseCache = this.options.cache[call];
+    cacheResult<K extends keyof NonNullable<VisitorOptions["cache"]>>(call: K, result: CacheEntry["callCache"][K]) {
+        let shouldUseCache = this.options.cache?.[call];
         if (shouldUseCache) {
             this.callCache[call] = result;
         }
@@ -953,10 +953,10 @@ export class Visitor<
 
     runFunc<K extends CallType, Args extends VisitorArgs<Return, Children, Utils, CacheType, Super>>(
         call: K,
-        args: Parameters<Args[K]>,
-        defaultReturn?: ReturnType<Args[K]>
-    ): ReturnType<Args[K]> {
-        const func = this.args[call] as (...args: Parameters<Args[K]>) => ReturnType<Args[K]>;
+        args: Parameters<NonNullable<Args[K]>>,
+        defaultReturn?: ReturnType<NonNullable<Args[K]>>
+    ): ReturnType<NonNullable<Args[K]>> | undefined {
+        const func = this.args[call] as null | undefined | ((...args: Parameters<NonNullable<Args[K]>>) => ReturnType<NonNullable<Args[K]>>);
         if (func !== null && func !== undefined) {
             try {
                 return func(...args);
