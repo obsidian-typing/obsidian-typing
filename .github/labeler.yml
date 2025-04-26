@@ -9,7 +9,7 @@
 documentation:
 - changed-files:
   - any-glob-to-any-file:
-    - docs/*
+    - docs/**
     - README.md
 
 # Add 'license' label to license changes
