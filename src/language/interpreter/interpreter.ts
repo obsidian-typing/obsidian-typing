@@ -19,6 +19,11 @@ export class Interpreter extends ModuleManagerSync {
     }
 
     public evaluateModule(file: FileSpec, mod: Module): boolean {
+        if (file.source === null || file.source === undefined) {
+            setPanelContent(`Importing ${this.activeModule?.file.path} failed...`);
+            return false;
+        }
+
         setPanelContent(`Importing ${this.activeModule?.file.path}...`);
         let tree = parser.parse(file.source);
 
