@@ -224,8 +224,8 @@ export class Visitor<
         >
     >(
         args: VisitorArgs<Return2, Children2, Utils2, CacheType2, Super, This>
-    ): Visitor<Return2, Children2, Utils2, CacheType2, Super> {
-        return Visitor.new<Visitor<Return2, Children2, Utils2, CacheType2, Super>>({
+    ): Visitor<OneOf<null, Return2>, Children2, Utils2, CacheType2, Super> {
+        return Visitor.new<Visitor<OneOf<null, Return2>, Children2, Utils2, CacheType2, Super>>({
             // Ignore the fact that `This` might be different type
             // than the one specified in the type parameter default
             args: args as any,
@@ -258,7 +258,9 @@ export class Visitor<
             OneOf<CacheType, CacheType2>,
             NewSuper
         >
-    >(args: VisitorArgs<Return2, Children2, Utils2, CacheType2, NewThis>) {
+    >(
+        args: VisitorArgs<Return2, Children2, Utils2, CacheType2, NewThis>
+    ): Visitor<Return2, Children2, Utils2, CacheType2, NewSuper> {
         let newArgs = Object.assign({}, this.originalArgs, args);
         let result = Visitor.fromArgs<Return2, Children2, Utils2, CacheType2, NewSuper>(newArgs as any);
         result.super = Visitor.fromArgs<Return, Children, Utils, CacheType, Super>(this.originalArgs as any) as NewSuper;
