@@ -1,22 +1,23 @@
+import { PluginItem, PluginObj, TransformOptions } from "@babel/core";
 import { availablePlugins, transform } from "@babel/standalone";
 import { customImportExportTransform } from "./transform";
 
 const transformReactJSX = availablePlugins["transform-react-jsx"];
 const transformModulesCommonJS = availablePlugins["transform-modules-commonjs"];
 
-interface TranspilationError {
+export interface TranspilationError {
     message: string;
     stack?: string;
 }
 
-type TranspilationResult = {
+export type TranspilationResult = {
     code?: string;
     errors?: Array<TranspilationError>;
 };
 
-const removeUseStrict = {
+const removeUseStrict: PluginObj = {
     visitor: {
-        Directive(path: any) {
+        Directive(path) {
             if (path.node.value.value === "use strict") {
                 path.remove();
             }
@@ -24,19 +25,19 @@ const removeUseStrict = {
     },
 };
 
-const DEFAULT_PLUGINS = [
+const DEFAULT_PLUGINS: PluginItem[] = [
     [transformReactJSX, { pragma: "h", pragmaFrag: "Fragment" }],
     transformModulesCommonJS,
     removeUseStrict,
 ];
 
-const DEFAULT_PARSER_OPTS = {
+const DEFAULT_PARSER_OPTS: TransformOptions["parserOpts"] = {
     allowReturnOutsideFunction: true,
     allowImportExportEverywhere: true,
     // allowAwaitOutsideFunction: true, TODO: do we need it?
 };
 
-const DEFAULT_TRANSPILE_OPTIONS = {
+const DEFAULT_TRANSPILE_OPTIONS: TransformOptions = {
     plugins: [
         customImportExportTransform({ ctxObject: "api", importFunction: "_import_explicit" }),
         ...DEFAULT_PLUGINS,
@@ -45,9 +46,9 @@ const DEFAULT_TRANSPILE_OPTIONS = {
     filename: "file.tsx",
 };
 
-const MODULE_TRANSPILE_OPTIONS = DEFAULT_TRANSPILE_OPTIONS;
+const MODULE_TRANSPILE_OPTIONS: TransformOptions = DEFAULT_TRANSPILE_OPTIONS;
 
-const FUNCTION_TRANSPILE_OPTIONS = {
+const FUNCTION_TRANSPILE_OPTIONS: TransformOptions = {
     plugins: [
         customImportExportTransform({ ctxObject: "__ctx", importFunction: "_import_explicit" }),
         ...DEFAULT_PLUGINS,
@@ -56,7 +57,7 @@ const FUNCTION_TRANSPILE_OPTIONS = {
     filename: "file.tsx",
 };
 
-export function transpile(source: string, options = DEFAULT_TRANSPILE_OPTIONS): TranspilationResult {
+export function transpile(source: string, options: TransformOptions = DEFAULT_TRANSPILE_OPTIONS): TranspilationResult {
     try {
         let result = transform(source, options);
         return { code: result.code };
@@ -114,7 +115,7 @@ export function compileFunctionWithContext(
     context: Record<string, any> = {},
     args: string[] = ["ctx", "note"],
     options: { transpile: boolean } = { transpile: true }
-): Function | TranspilationError {
+): (Function & { message?: undefined }) | TranspilationError {
     if (options.transpile) {
         let transpiled = transpileFunction(code);
         if (transpiled.errors) {

@@ -2,11 +2,19 @@ import { Plugin, TFile, Vault } from "obsidian";
 import { dirname, join, normalize } from "path-browserify";
 import { DependencyGraph } from "src/utilities/dependency_graph";
 
-export interface Module {
+export type FailedModule = {
+    error: string;
+    env?: Record<string, any>;
+    file?: FileSpec;
+};
+
+export type LoadedModule = {
+    error?: undefined;
     env: Record<string, any>;
     file: FileSpec;
-    error?: string;
-}
+};
+
+export type Module = FailedModule | LoadedModule;
 
 export interface FileSpec {
     source: string;
@@ -15,14 +23,13 @@ export interface FileSpec {
 }
 
 interface StackFrame {
-    module: Module;
+    module: Module & Required<Pick<Module, "file">>;
 }
 
 export abstract class ModuleManagerSync<ContextType = any> {
     protected modules: Record<string, Module>;
     protected files: Record<string, FileSpec>;
     protected dependencyGraph: DependencyGraph;
-    protected context: ContextType;
     protected callStack: StackFrame[] = [];
 
     public readonly extensions: string[] = [];
@@ -71,12 +78,12 @@ export abstract class ModuleManagerSync<ContextType = any> {
         }
 
         // TODO: was commented out
-        if (!forceReload && path in this.modules && source == null) {
+        if (!forceReload && path in this.modules && (source === null || source === undefined)) {
             return this.modules[path];
         }
 
         let file;
-        if (source != null) {
+        if (source !== null && source !== undefined) {
             file = { source, path };
         } else {
             file = this.getFile(path);
@@ -86,7 +93,9 @@ export abstract class ModuleManagerSync<ContextType = any> {
             return { error: `Unknown file: ${path}` };
         }
 
-        const module: Module = { env: {}, file };
+        // The expression below is used to make the TypeScript compiler
+        // "forget" the const values and fix type inference.
+        const module = ((x: StackFrame["module"]) => x)({ env: {}, file })
 
         this.enterFrame({ module });
 
@@ -154,12 +163,12 @@ export abstract class ModuleManagerSync<ContextType = any> {
 
     protected async reloadModule(path: string) {
         let file = await this.loadFile(path);
-        this.setFile({ source: file, path });
+        this.setFile({ source: file ?? "", path });
 
         // TODO: was removed to not fail when new files are created
         if (path in this.modules) {
             this.onBeforeReload(path);
-            this.importModule(path, null, true);
+            this.importModule(path, undefined, true);
             this.onModuleUpdate(path);
         }
 
@@ -176,18 +185,13 @@ export abstract class ModuleManagerSync<ContextType = any> {
         }
     }
 
-    protected abstract evaluateModule(file: FileSpec, env: Module): boolean;
+    protected abstract evaluateModule(file: FileSpec, mod: Module): mod is LoadedModule;
 
-    protected async loadFile(path: string): Promise<string> {
+    protected async loadFile(path: string): Promise<string | null> {
         let tfile = this.vault.getAbstractFileByPath(path);
-        if (tfile == null) {
-            return;
-        }
-
         if (!(tfile instanceof TFile)) {
-            return;
+            return null;
         }
-
         return await this.vault.read(tfile);
     }
 
@@ -239,10 +243,10 @@ export abstract class ModuleManagerSync<ContextType = any> {
         return this.extensions.some((ext) => path.endsWith("." + ext));
     }
 
-    protected onAfterPreload(): void {}
-    protected onModuleUpdate(path: string): void {}
-    protected onBeforeImport(path: string): void {}
-    protected onAfterImport(path: string): void {}
-    protected onBeforeReload(path: string): void {}
-    protected onAfterReload(path: string): void {}
+    protected onAfterPreload(): void { }
+    protected onModuleUpdate(path: string): void { }
+    protected onBeforeImport(path: string): void { }
+    protected onAfterImport(path: string): void { }
+    protected onBeforeReload(path: string): void { }
+    protected onAfterReload(path: string): void { }
 }

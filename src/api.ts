@@ -4,6 +4,7 @@ import { Visitors } from "src/language";
 import { Note, Type } from "src/typing";
 import * as ui from "src/ui";
 import { TypeSuggestModal } from "src/ui";
+import { Module } from "src/utilities/module_manager_sync";
 
 type PromiseType<T> = T extends Promise<infer U> ? U : never;
 
@@ -56,10 +57,10 @@ export class TypingAPI {
 
     import(path: string): Record<string, any> {
         let mod = gctx.importManager.importSmart(path);
-        if (mod == null) {
+        if (mod === null || mod === undefined) {
             throw new Error(`ImportError: Could not find module ${path}`);
         }
-        if (mod.error != null) {
+        if (mod.error !== null && mod.error !== undefined) {
             throw new Error(`ImportError: Error in module ${path}: ${mod.error}`);
         }
         return mod.env;
@@ -70,10 +71,10 @@ export class TypingAPI {
             return this.lib[path as keyof typeof this.lib]!;
         }
         let mod = gctx.importManager.importSmart(path, base);
-        if (mod == null) {
+        if (mod === null || mod === undefined) {
             throw new Error(`ImportError: Could not find module ${path}`);
         }
-        if (mod.error != null) {
+        if (mod.error !== null && mod.error !== undefined) {
             throw new Error(`ImportError: Error in module ${path}: ${mod.error}`);
         }
         for (let arg of symbols) {

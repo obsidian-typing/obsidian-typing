@@ -1,6 +1,6 @@
 import { snippetCompletion } from "@codemirror/autocomplete";
 import { gctx } from "src/context";
-import { ExprScript, FnScript } from "src/scripting";
+import { ExprScript, FnScript, TranspilationError } from "src/scripting";
 import { Values } from "src/typing";
 import { dedent } from "src/utilities/dedent";
 import * as Visitors from ".";

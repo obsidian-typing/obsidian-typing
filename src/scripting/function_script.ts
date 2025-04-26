@@ -4,7 +4,7 @@ import { Note } from "src/typing";
 import { DataClass, field } from "src/utilities";
 import { compileFunctionWithContext } from "./transpilation";
 
-interface IScriptContextBase {
+export interface IScriptContextBase {
     note?: Note;
     _import_explicit?: typeof gctx.api._import_explicit;
 }

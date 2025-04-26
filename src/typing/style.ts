@@ -14,9 +14,15 @@ export enum HideInlineFieldsValues {
     DEFINED = "defined",
 }
 
+export interface ILinkScriptContext extends IScriptContextBase {
+    container?: HTMLElement;
+    linkText?: string;
+    props?: {};
+}
+
 export class Style extends DataClass {
     @field()
-    public link?: FnScript | null = null;
+    public link?: FnScript<ILinkScriptContext> | null = null;
     @field()
     public header?: FnScript | Values.Markdown | null = null;
     @field()
