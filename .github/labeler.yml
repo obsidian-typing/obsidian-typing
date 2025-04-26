@@ -90,9 +90,10 @@ otl/editor:
 
 # Relates to the OTL language
 otl/language:
-- changed-files:
-  - any-glob-to-any-file: src/language/**
-  - all-globs-to-all-files: '!src/language/grammar/*'
+- all:
+  - changed-files:
+    - any-glob-to-any-file: src/language/**
+    - all-globs-to-all-files: '!src/language/grammar/*'
 
 # Relates to the OTL grammar
 otl/grammar:
