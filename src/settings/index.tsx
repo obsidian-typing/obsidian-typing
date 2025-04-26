@@ -170,7 +170,7 @@ export function registerSettings(plugin: TypingPlugin) {
 }
 
 function getAllDirs() {
-    let folder = app.vault.getRoot();
+    let folder = gctx.app.vault.getRoot();
     let folders: string[] = [];
     Vault.recurseChildren(folder, (tfile) => {
         if (!(tfile instanceof TFolder)) return;
@@ -182,7 +182,7 @@ function getAllDirs() {
 }
 
 function getAllOTLFiles() {
-    let folder = app.vault.getRoot();
+    let folder = gctx.app.vault.getRoot();
     let files: string[] = [];
     Vault.recurseChildren(folder, (tfile) => {
         if (!(tfile instanceof TFile)) return;
@@ -193,7 +193,13 @@ function getAllOTLFiles() {
     return files;
 }
 
-const FileSuggestionCombobox = ({ value: initialValue, paths, onSetValue }) => {
+interface FileSuggestionComboboxProps {
+    value: string;
+    paths: () => string[];
+    onSetValue: (value: string) => void;
+}
+
+const FileSuggestionCombobox = ({ value: initialValue, paths, onSetValue }: FileSuggestionComboboxProps) => {
     let [value, setValue] = useState(initialValue);
     return (
         <div
