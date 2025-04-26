@@ -28,9 +28,9 @@ export class Style extends DataClass {
     @field()
     public footer?: FnScript | Values.Markdown | null = null;
     @field()
-    public show_prefix: ShowPrefixValues = ShowPrefixValues.SMART;
+    public show_prefix: ShowPrefixValues | `${ShowPrefixValues}` = ShowPrefixValues.SMART;
     @field()
-    public hide_inline_fields: HideInlineFieldsValues | null = null;
+    public hide_inline_fields: HideInlineFieldsValues | `${HideInlineFieldsValues}` | null = null;
     @field()
     public css_classes: Array<string> | null = null;
     @field()
