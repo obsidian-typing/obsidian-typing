@@ -14,7 +14,7 @@ export const ListContext = createContext(false);
 const REMOVE_CONST = "<|REMOVE|>";
 
 export function List({ SubPicker }: { SubPicker: any }) {
-    let pickerCtx = useContext(PickerContext);
+    let pickerCtx = useContext(PickerContext)!;
     const refs = useRef<RefObject<HTMLButtonElement>[]>();
 
     let controls = useControls({

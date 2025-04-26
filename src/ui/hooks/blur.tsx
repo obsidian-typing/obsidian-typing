@@ -3,7 +3,7 @@ import { Contexts } from "..";
 
 export function useBlurCallbacks() {
     const promptCtx = useContext(Contexts.PromptContext);
-    const pickerCtx = useContext(Contexts.PickerContext);
+    const pickerCtx = useContext(Contexts.PickerContext)!;
     const dropdownCtx = useContext(Contexts.DropdownContext);
 
     const onPickerBlur = useCallback(
