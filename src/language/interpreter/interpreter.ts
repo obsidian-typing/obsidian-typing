@@ -19,6 +19,11 @@ export class Interpreter extends ModuleManagerSync {
     }
 
     public evaluateModule(file: FileSpec, mod: Module): boolean {
+        if (file.source === null || file.source === undefined) {
+            setPanelContent(`Importing ${this.activeModule?.file.path} failed...`);
+            return false;
+        }
+
         setPanelContent(`Importing ${this.activeModule?.file.path}...`);
         let tree = parser.parse(file.source);
 
@@ -50,7 +55,7 @@ export class Interpreter extends ModuleManagerSync {
     }
 
     protected onAfterPreload(): void {
-        this.importModule(gctx.plugin.settings.schemaPath, null, true);
+        this.importModule(gctx.plugin.settings.schemaPath, undefined, true);
         gctx.graph.isReady = true;
         gctx.noteCache.invalidateAll();
         gctx.app.metadataCache.trigger("typing:schema-ready");

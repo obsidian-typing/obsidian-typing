@@ -44,6 +44,7 @@ export const Identifier = (opts?: { allowString: boolean }) =>
                 eager: true,
                 traversalOptions: { visitTop: true, visitChildren: true },
             });
-            return result["identifier"] ?? result["stringIdentifier"];
+            // TODO: Review whether returning "" is safe
+            return result["identifier"] ?? result["stringIdentifier"] ?? "";
         },
     });
