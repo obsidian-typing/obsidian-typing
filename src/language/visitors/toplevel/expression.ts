@@ -17,7 +17,7 @@ export const Expression = createVisitor({
                 let children = this.runChildren();
                 for (let key in children) {
                     // return first key
-                    return children[key];
+                    return children[key as keyof typeof children];
                 }
             },
         }),
