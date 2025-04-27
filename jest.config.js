@@ -5,6 +5,9 @@ module.exports = {
     preset: "ts-jest",
     testEnvironment: "jsdom",
     moduleDirectories: ["node_modules", "src", "<rootDir>"],
+    haste: {
+        defaultPlatform: "node",
+    },
     transform: {
         "^.+\\.tsx?$": [
             "ts-jest",
