@@ -1,7 +1,14 @@
 import chokidar from "chokidar";
 import Tsm from "typed-scss-modules";
 
-// generates and regenerates scss type declarations
+/**
+ * Generates and regenerates scss type declarations
+ *
+ * @param {string}  stylesPattern Glob pattern of input SCSS files.
+ * @param {boolean} watch         Whether to automatically rebuild on changes.
+ *
+ * @returns {import('esbuild').Plugin}
+ */
 export const scssTypesPlugin = (stylesPattern, watch) => {
     const generateScssTypeDeclarations = async (pattern, options) => {
         console.log("GENERATE SCSS TYPES", pattern, options, Tsm);

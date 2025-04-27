@@ -14,7 +14,11 @@ if you want to view the source, please visit the github repository of this plugi
 
 const prod = process.argv[2] === "production";
 
-// renames `main.css(.map)` to `styles.css(.map)` in build dir
+/**
+ * Renames `main.css(.map)` to `styles.css(.map)` in build dir
+ *
+ * @type {esbuild.Plugin}
+ */
 const renameCompiledCSS = {
     name: "rename-compiled-css",
     setup(build) {
@@ -36,7 +40,11 @@ const renameCompiledCSS = {
     },
 };
 
-// copies `manifest.json` to build dir
+/**
+ * Copies `manifest.json` to build directory.
+ *
+ * @type {esbuild.Plugin}
+ */
 const copyManifest = {
     name: "copy-manifest",
     setup(build) {
@@ -52,6 +60,9 @@ const copyManifest = {
     },
 };
 
+/**
+ * @type {esbuild.BuildContext}
+ */
 const context = await esbuild.context({
     banner: {
         js: banner,
