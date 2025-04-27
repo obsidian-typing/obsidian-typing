@@ -1,3 +1,6 @@
+/**
+ * @type {import('esbuild').BuildOptions}
+ */
 module.exports = {
     sourcemap: false, //"inline",
     minify: true,
