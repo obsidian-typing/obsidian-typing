@@ -150,6 +150,23 @@ export class Note extends FieldType<Note> {
                 explicit: Visitors.Literal(Visitors.Boolean),
                 inverse: Visitors.Literal(Visitors.String),
             },
+            lint(args, kwargs) {
+                let typeNames = args.map(x => x.value);
+                let types = typeNames.map((name) => gctx.graph.get({ name })).filter((type) => type != null);
+                let inverse = kwargs.inverse?.value;
+
+                if (!inverse) {
+                    return;
+                }
+
+                let typesWithField: typeof types = [];
+                let typesWithoutField: typeof types = [];
+                types.forEach((typ) => (typ.fields[inverse] ? typesWithField : typesWithoutField).push(typ))
+
+                if (typesWithoutField.length > 0) {
+                    this.error(`Field '${inverse}' does not exist in the following types: ${typesWithoutField.map(t => t.name).join(", ")}`)
+                }
+            },
             init(args, kwargs) {
                 return Note.new({ typeNames: args, ...kwargs });
             },

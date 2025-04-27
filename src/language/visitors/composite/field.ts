@@ -1,3 +1,4 @@
+import { SyntaxNode } from "@lezer/common";
 import { gctx } from "src/context";
 import { Field as FieldObject, FieldType as FieldTypeObject, FieldTypes } from "src/typing";
 import * as Visitors from ".";
@@ -34,10 +35,12 @@ const createKwargChildren = (kwargs: Record<string, TVisitorBase>) => {
 export const ParametersVisitorFactory = <Arg extends TVisitorBase, Kwargs extends Record<string, TVisitorBase>, Ret>({
     args,
     kwargs,
+    lint,
     init,
 }: {
     args?: Arg;
     kwargs?: Kwargs;
+    lint?: (this: TVisitorBase, args: { value: RetType<Arg>, node: SyntaxNode }[], kwargs: { [K in keyof Kwargs]: { value: RetType<Kwargs[K]>, node: SyntaxNode } }) => void;
     init: (this: TVisitorBase, args: Exclude<RetType<Arg>, undefined>[], kwargs: RetTypeMap<Kwargs>) => Ret;
 }) => {
     const argChildren: Partial<{ literal: TVisitorBase<any> }> = args
@@ -84,18 +87,24 @@ export const ParametersVisitorFactory = <Arg extends TVisitorBase, Kwargs extend
             let notAccepted: (typeof node)[] = [];
             let repeatedKwargs: (typeof node)[] = [];
 
+            let argsWithNodes: { value: RetType<Arg>, node: typeof node }[] = [];
+            let kwargsWithNodes: Record<string, { value: any, node: typeof node }> = {};
+
             this.traverse(
                 (node, child) => {
-                    if (child == argVisitor && metKwarg) {
-                        argsAfterKwargs.push(node);
-                    }
-                    if (child != argVisitor) {
+                    if (child == argVisitor) {
+                        argsWithNodes.push({ value: child.run(node), node });
+                        if (metKwarg) {
+                            argsAfterKwargs.push(node);
+                        }
+                    } else {
                         metKwarg = true;
                         for (let symbol of child.symbols(node)!) {
                             if (kwargsSet.has(symbol.name)) {
                                 repeatedKwargs.push(symbol.node);
                             }
                             kwargsSet.add(symbol.name);
+                            kwargsWithNodes[symbol.name] = { value: child.run(symbol.node), node: symbol.node };
                         }
                     }
                 },
@@ -105,6 +114,8 @@ export const ParametersVisitorFactory = <Arg extends TVisitorBase, Kwargs extend
                     },
                 }
             );
+
+            lint?.call(this, argsWithNodes, kwargsWithNodes as any);
 
             argsAfterKwargs.forEach((node) => this.error("Args should go strictly before kwargs.", node));
             notAccepted.forEach((node) => this.error("Unexpected parameter.", node));
