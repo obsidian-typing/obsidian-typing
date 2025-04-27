@@ -36,13 +36,14 @@ export const File = ({
     short?: boolean;
     search?: boolean;
 }) => {
-    const composeWithoutBrackets = ({ folder, name, extension, subpath, display }: {
+    type Values = {
         folder?: string;
         name: string;
         extension?: string;
         subpath?: string;
         display?: string;
-    }) => {
+    };
+    const composeWithoutBrackets = ({ folder, name, extension, subpath, display }: Values) => {
         let result = "";
         let path;
 
@@ -62,7 +63,7 @@ export const File = ({
 
         return result;
     };
-    const compose = (options: Parameters<typeof composeWithoutBrackets>[0]) => {
+    const compose = (options: Values) => {
         let result = composeWithoutBrackets(options);
         if (result.length) {
             return `[[${result}]]`;
