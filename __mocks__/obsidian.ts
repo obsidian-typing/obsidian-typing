@@ -95,15 +95,24 @@ export class TFile extends TAbstractFile {
     name: string;
     basename: string;
     extension: string;
-    content: string | ArrayBuffer;
+    content: string | Buffer;
 
-    constructor(public vault: Vault, public path: string, public parent: TFolder | null, content: string | ArrayBuffer) {
+    constructor(public vault: Vault, public path: string, public parent: TFolder | null, content: string | ArrayBuffer | Buffer) {
         super();
         this.name = Path.basename(this.path);
         this.basename = Path.basename(this.path, Path.extname(this.path));
         this.extension = Path.extname(this.path);
-        this.content = content;
-        this.stat = { size: (content as ArrayBuffer).byteLength || (content as string).length };
+
+        if (content instanceof ArrayBuffer) {
+            this.content = Buffer.from(content);
+            this.stat = { size: content.byteLength };
+        } else if (content instanceof Buffer) {
+            this.content = content;
+            this.stat = { size: content.byteLength };
+        } else {
+            this.content = content;
+            this.stat = { size: content.length };
+        }
     }
 }
 
@@ -203,7 +212,7 @@ export class Vault extends Events {
     }
 
     async readBinary(file: TFile): Promise<ArrayBuffer> {
-        return (file as TFile).content as ArrayBuffer;
+        return ((file as TFile).content as Buffer).buffer;
     }
 
     getResourcePath(file: TFile): string {
@@ -226,7 +235,7 @@ export class Vault extends Events {
     }
 
     async modifyBinary(file: TFile, data: ArrayBuffer): Promise<void> {
-        (file as TFile).content = data;
+        (file as TFile).content = Buffer.from(data);
     }
 
     async append(file: TFile, data: string): Promise<void> {
