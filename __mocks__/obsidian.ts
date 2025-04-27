@@ -15,11 +15,11 @@ Array.prototype.contains = function (target) {
 };
 
 export class Scope {
-    register() {}
+    register() { }
 }
 
 export class Component {
-    registerEvent() {}
+    registerEvent() { }
 }
 
 export class Events extends EventEmitter {
@@ -47,7 +47,7 @@ export class MetadataCache extends Events {
 }
 
 export class FileManager {
-    constructor(public vault: Vault) {}
+    constructor(public vault: Vault) { }
     renameFile(tfile: TFile, path: string) {
         this.vault.rename(tfile, path);
     }
@@ -66,22 +66,22 @@ export class App {
     }
 }
 
-export class MarkdownView {}
-export class Platform {}
-export class Modal {}
-export class FuzzySuggestModal {}
-export class SuggestModal {}
-export class Setting {}
-export class PluginSettingTab {}
-export class MarkdownRenderChild {}
+export class MarkdownView { }
+export class Platform { }
+export class Modal { }
+export class FuzzySuggestModal { }
+export class SuggestModal { }
+export class Setting { }
+export class PluginSettingTab { }
+export class MarkdownRenderChild { }
 export class Plugin {
-    constructor(public app: App) {}
+    constructor(public app: App) { }
     loadData() {
         return {};
     }
-    registerEvent() {}
+    registerEvent() { }
 }
-export abstract class TextFileView {}
+export abstract class TextFileView { }
 
 export abstract class TAbstractFile {
     abstract vault: Vault;
