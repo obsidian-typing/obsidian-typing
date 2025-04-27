@@ -1,7 +1,7 @@
-import { parseLink } from "src/utilities";
+import { ParsedLink, parseLink } from "src/utilities";
 import { Picker } from ".";
 import { Combobox, IComboboxOption, Input } from "../components";
-import { useControls } from "../hooks";
+import { ControlSpec, useControls } from "../hooks";
 
 export const Note = ({
     options,
@@ -15,7 +15,7 @@ export const Note = ({
     preview?: (value: string) => any;
 }) => {
     let controls = useControls({
-        parse: parseLink,
+        parse: parseLink as (value: string) => ParsedLink,
         compose({ path, subpath, display }) {
             let result = "";
             if (path) result += path;
@@ -45,13 +45,13 @@ export const Note = ({
                 {controls.path.value && subpath && (
                     <>
                         #
-                        <Input control={controls.subpath} onChange={controls.subpath.setValue} placeholder="Subpath" />
+                        <Input control={controls.subpath as ControlSpec<string>} onChange={controls.subpath.setValue} placeholder="Subpath" />
                     </>
                 )}
                 {controls.path.value && display && (
                     <>
                         |
-                        <Input control={controls.display} onChange={controls.display.setValue} placeholder="Display" />
+                        <Input control={controls.display as ControlSpec<string>} onChange={controls.display.setValue} placeholder="Display" />
                     </>
                 )}
                 <Picker.SubmitButton controls={controls} />

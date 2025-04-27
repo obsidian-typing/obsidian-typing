@@ -1,6 +1,7 @@
 import { TVisitorBase } from "src/language/visitors";
 import { Pickers } from "src/ui";
 import { Bindable, DataClass } from "src/utilities";
+import { Validation, Validator } from "src/validation";
 import { Field } from "../field";
 import { Type } from "../type";
 
@@ -12,12 +13,16 @@ export interface FieldTypeBindingContext {
 
 export abstract class FieldType<InstanceType extends FieldType = any>
     extends DataClass
-    implements Bindable<FieldTypeBindingContext, InstanceType>
+    implements Bindable<FieldTypeBindingContext, InstanceType>, Validator<unknown>
 {
     context?: FieldTypeBindingContext;
 
     abstract readonly name: string;
     static requiresDataview: boolean = false;
+
+    validate(target: Validation.Target<unknown>): void | Promise<void> {
+        // No-op validation. Override in derived classes if needed.
+    }
 
     Picker: React.FunctionComponent = () => {
         return <Pickers.String />;

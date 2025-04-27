@@ -3,7 +3,11 @@ import { gctx } from "src/context";
 import { StringFieldAccessor } from "src/middleware/field_accessor";
 import { Prompt, PromptState } from "src/ui";
 import { DataClass, field, mergeDeep } from "src/utilities";
-import { Action, Field, Hook, HookContainer, HookContextType, HookNames, Method, Note, NoteState, Prefix, Style } from ".";
+import { Action, Field, FieldTypes, Hook, HookContainer, HookContextType, HookNames, Method, Note, NoteState, Prefix, Style } from ".";
+import { OnValidateHookContext } from "./hook";
+import { LinkResolutionContext, ValidationContext, ValidationResult } from "src/validation";
+import { FieldPath } from "src/validation/reporting";
+import { compositeSource, objectSource } from "src/validation/sources";
 
 export class Type extends DataClass {
     @field({ inherit: false })
@@ -87,6 +91,72 @@ export class Type extends DataClass {
 
     async runHook<T extends HookNames>(name: T, context: HookContextType<T>) {
         this.hooks.run(name, context);
+    }
+
+    async runValidation(note: Note): Promise<ValidationResult> {
+        let validationContext: ValidationContext & LinkResolutionContext = new ValidationContext();
+        let rootPath = FieldPath.new();
+        if (!note.fields) {
+            throw new Error("Internal Error: Note.fields must be set");
+        }
+        let rootData = compositeSource(objectSource(note.fields, validationContext));
+
+        // TODO: The detection of required fields is currently a hack
+        let presentFields = new Set(rootData.keys()) as Set<string>;
+        let expectedFields = new Set(Object.values(this.fields).map(field => field.name));
+        let requiredFields = new Set(Object.values(this.fields).filter(field => field.type instanceof FieldTypes.Required).map(field => field.name));
+
+        let knownFields = presentFields.intersection(expectedFields);
+        let unknownFields = presentFields.difference(expectedFields);
+        let missingFields = requiredFields.difference(presentFields);
+
+        for (let known in knownFields) {
+            let fieldTarget = rootData.field(known);
+            let fieldDefinition = this.fields[known]!;
+            fieldDefinition.type.validate(fieldTarget);
+        }
+
+        for (let unexpected of unknownFields) {
+            rootData.field(unexpected as any).report({
+                level: "error",
+                message: `Field ${unexpected} was not expected. Only known fields are allowed.`
+            })
+        }
+
+        for (let missing of missingFields) {
+            validationContext.report({
+                level: "error",
+                message: `Field ${missing} is required but not present.`,
+                // There is no concrete textual location to associate
+                // with a missing field (after all, it is missing).
+                // Report it at the end of the frontmatter instead.
+                // TODO: Report at correct location
+                location: {
+                    path: rootPath.field(missing),
+                    span: {
+                        start: 0,
+                        end: 0,
+                        length: 0,
+                        relativeTo: undefined as unknown
+                    }
+                }
+            })
+        }
+
+        let hookContext: OnValidateHookContext = {
+            note,
+            fields: rootData,
+        }
+        await this.runHook(HookNames.ON_VALIDATE, hookContext);
+
+        let validationResult = validationContext.toResult();
+        if (validationResult.ok) {
+            console.log(`[OK] Validation succeeded. ${validationResult.messages.length} messages.`, validationResult.messages);
+        } else {
+            console.log(`[ERROR] Validation failed. ${validationResult.messages.length} messages.`, validationResult.messages);
+        }
+
+        return validationResult;
     }
 
     async promptNew(initialState?: Partial<NoteState>) {

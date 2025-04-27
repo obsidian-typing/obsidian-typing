@@ -1,11 +1,12 @@
 import { Visitors } from "src/language";
 import { Pickers } from "src/ui";
 import { field } from "src/utilities";
+import { report, TypedValidator, Validation } from "src/validation";
 import { FieldType, FieldTypeBindingContext } from "./base";
 
 import styles from "src/styles/prompt.scss";
 
-export class List extends FieldType<List> {
+export class List extends FieldType<List> implements TypedValidator<unknown[]> {
     name = "List";
 
     @field()
@@ -13,6 +14,22 @@ export class List extends FieldType<List> {
 
     @field({ required: false })
     public unique: boolean = false;
+
+    validate(target: Validation.Target<unknown>): void | Promise<void> {
+        if (Array.isArray(target.value)) {
+            this.validateTyped(target.asTyped(target.value))
+        } else {
+            report(target, {
+                message: `Field ${target.path} must be a list`
+            });
+        }
+    }
+
+    async validateTyped(target: Validation.Target<(unknown | undefined | null)[]>): Promise<void> {
+        for (let key in target.value) {
+            await this.type.validate(target.field(key as any) as Validation.Target<unknown>);
+        }
+    }
 
     Display: FieldType["Display"] = ({ value }) => {
         let itemValues;

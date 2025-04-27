@@ -1,7 +1,6 @@
 import { Visitors } from "src/language/visitors";
 import { Pickers } from "src/ui";
 import { stripQuotes } from "src/utilities";
-import { FieldTypes } from ".";
 import { FieldType } from "./base";
 
 export class Text extends FieldType<Text> {

@@ -1,13 +1,15 @@
+import { Reference } from "obsidian";
 import { DataArray, Link, Literal, SMarkdownPage } from "obsidian-dataview";
 import { Suspense } from "react";
 import { gctx } from "src/context";
 import { Visitors } from "src/language";
-import { Field, Type } from "src/typing";
+import { Field, Note as NoteObject, Type } from "src/typing";
 import { IComboboxOption, Pickers } from "src/ui";
-import { field, parseLink, RenderLink } from "src/utilities";
+import { ParsedLink, field, parseLink, RenderLink } from "src/utilities";
+import { LinkResolutionContext, report, TypedValidator, Validation } from "src/validation";
 import { FieldType } from "./base";
 
-export class Note extends FieldType<Note> {
+export class Note extends FieldType<Note> implements TypedValidator<string | ParsedLink | Link | Reference> {
     name = "Note";
 
     static requiresDataview = true;
@@ -78,6 +80,68 @@ export class Note extends FieldType<Note> {
     get isExplicit() {
         // "explicit" defaults to false if "implicit=true" was set by the user
         return this.explicit || !this.implicit;
+    }
+
+    validate(target: Validation.Target<unknown>): void | Promise<void> {
+        return this.validateTyped(target as any);
+    }
+
+    validateTyped(target: Validation.Target<string | ParsedLink | Link | Reference>): void | Promise<void> {
+        if (typeof target.value === "string") {
+            let link = parseLink(target.value, false);
+            if (link) {
+                return this.validateTyped(target.asTyped(link));
+            }
+        } else if (typeof target.value === "object") {
+            if ("path" in target.value) { // ParsedLink | obsidian-dataview.Link
+                return this.validateLinkPath(target.asTyped(target.value.path));
+            } else if ("link" in target.value) { // obsidian.Reference
+                return this.validateLinkPath(target.asTyped(target.value.link));
+            }
+        }
+
+        report(target, {
+            message: `Field ${target.path} must be a link`
+        });
+    }
+
+    async validateLinkPath(target: Validation.Target<string>): Promise<void> {
+        // ParsedLink
+        var sourcePath = (target.context as LinkResolutionContext)?.sourcePath ?? "";
+        let targetNote = NoteObject.fromLink(target.value, sourcePath);
+        if (!targetNote) {
+            target.report({
+                level: "warning",
+                message: `Field ${target.path} contains a link to a non-existent note.`,
+            })
+        } else if (!targetNote.type) {
+            if (this.types.length > 0) {
+                target.report({
+                    level: "warning",
+                    message: `Field ${target.path} contains a link to an untyped note.`,
+                })
+            }
+        } else if (this.subtypes) {
+            if (!this.types.some(t => t.isAncestorOf(targetNote.type!))) {
+                target.report({
+                    level: "error",
+                    // TODO: Adapt message singular <=> plural depending on presence of FieldTypes.List
+                    message:
+                        `Field ${target.path} must only contain links to notes ` +
+                        `of the following types or their subtypes: ${this.typeNames.join(", ")}`,
+                })
+            }
+        } else {
+            if (!this.typeNames.includes(targetNote.type!.name)) {
+                target.report({
+                    level: "error",
+                    // TODO: Adapt message singular <=> plural depending on presence of FieldTypes.List
+                    message:
+                        `Field ${target.path} must only contain links to notes ` +
+                        `of the following types or their subtypes: ${this.typeNames.join(", ")}`,
+                })
+            }
+        }
     }
 
     Display: FieldType["Display"] = ({ value }: { value: Link | string }) => {

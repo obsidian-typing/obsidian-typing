@@ -2,10 +2,10 @@ import { gctx } from "src/context";
 import { Visitors } from "src/language";
 import { Pickers } from "src/ui";
 import { field, stripQuotes } from "src/utilities";
-import { FieldTypes } from ".";
+import { report, Validation, TypedValidator } from "src/validation";
 import { FieldType } from "./base";
 
-export class Tag extends FieldType<Tag> {
+export class Tag extends FieldType<Tag> implements TypedValidator<string> {
     name = "Tag";
 
     static requiresDataview = true;
@@ -18,6 +18,21 @@ export class Tag extends FieldType<Tag> {
 
     @field()
     public fuzzy: boolean = true;
+
+    validate(target: Validation.Target<unknown>): void | Promise<void> {
+        if (typeof target.value === "string") {
+            this.validateTyped(target.asTyped(target.value))
+        } else {
+            report(target, {
+                message: `Field ${target.path} must be a string`
+            });
+        }
+    }
+
+    validateTyped(target: Validation.Target<string>): void | Promise<void> {
+        // Note: this.options only contains a list of suggestions,
+        //       but all other values are also allowed => No validation necessary.
+    }
 
     Display: FieldType["Display"] = ({ value }) => {
         if (this.context?.inList) {

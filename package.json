@@ -94,6 +94,7 @@
     "react": "npm:@preact/compat@^17.0.0",
     "react-datepicker": "^4.8.0",
     "react-dom": "npm:@preact/compat@^17.0.0",
-    "react-popper": "^2.3.0"
+    "react-popper": "^2.3.0",
+    "yaml": "^2.7.1"
   }
 }

@@ -1,6 +1,5 @@
 import { Visitors } from "src/language/visitors";
 import { stripQuotes } from "src/utilities";
-import { FieldTypes } from ".";
 import { FieldType } from "./base";
 
 export class String extends FieldType<String> {

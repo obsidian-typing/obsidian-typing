@@ -4,7 +4,7 @@ import styles from "src/styles/prompt.scss";
 import { parseFileExtension, parseLinkExtended } from "src/utilities";
 import { Contexts, Picker } from ".";
 import { Combobox, IComboboxOption, Input } from "../components";
-import { useControls } from "../hooks";
+import { ControlSpec, useControls } from "../hooks";
 
 function generateFileShortcut(file: File, rename?: (file: File) => string): string {
     if (rename) return rename(file);
@@ -36,13 +36,14 @@ export const File = ({
     short?: boolean;
     search?: boolean;
 }) => {
-    const composeWithoutBrackets = ({ folder, name, extension, subpath, display }: {
+    type Values = {
         folder?: string;
         name: string;
         extension?: string;
         subpath?: string;
         display?: string;
-    }) => {
+    };
+    const composeWithoutBrackets = ({ folder, name, extension, subpath, display }: Values) => {
         let result = "";
         let path;
 
@@ -62,7 +63,7 @@ export const File = ({
 
         return result;
     };
-    const compose = (options: Parameters<typeof composeWithoutBrackets>[0]) => {
+    const compose = (options: Values) => {
         let result = composeWithoutBrackets(options);
         if (result.length) {
             return `[[${result}]]`;
@@ -234,13 +235,13 @@ export const File = ({
                 {subpath && (
                     <>
                         #
-                        <Input control={controls.subpath} onChange={controls.subpath.setValue} placeholder="Subpath" />
+                        <Input control={controls.subpath as ControlSpec<string>} onChange={controls.subpath.setValue} placeholder="Subpath" />
                     </>
                 )}
                 {display && (
                     <>
                         |
-                        <Input control={controls.display} onChange={controls.display.setValue} placeholder="Display" />
+                        <Input control={controls.display as ControlSpec<string>} onChange={controls.display.setValue} placeholder="Display" />
                     </>
                 )}
                 <Picker.SubmitButton controls={controls} />

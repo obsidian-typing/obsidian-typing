@@ -15,7 +15,7 @@
         "importHelpers": true,
         "skipLibCheck": true,
         "skipDefaultLibCheck": true,
-        "lib": ["DOM", "ES5", "ES6", "ES7", "ES2022"],
+        "lib": ["DOM", "ES5", "ES6", "ES7", "ES2022", "ESNext"],
         "esModuleInterop": true,
         "jsx": "react-jsx",
         "jsxImportSource": "preact",

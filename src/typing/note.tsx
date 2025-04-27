@@ -8,6 +8,7 @@ import { Script } from "src/scripting";
 import { Markdown, prompt, Prompt } from "src/ui";
 import { bindCollection, DataClass, field, RenderLink } from "src/utilities";
 import { HookContextType, HookNames, RelationsProxy, Style, Type } from ".";
+import { ValidationResult } from "src/validation";
 
 export interface NoteState {
     type?: Type;
@@ -126,6 +127,14 @@ export class Note {
         return note;
     }
 
+    static fromLink(linkPath: string, sourcePath: string): Note | null {
+        const target = gctx.app.metadataCache.getFirstLinkpathDest(linkPath, sourcePath);
+        if (target === null || target === undefined) {
+            return null;
+        }
+        return Note.new(target.path);
+    }
+
     // more explicit alias for note.page
     get dvpage() {
         return this.page;
@@ -240,6 +249,16 @@ export class Note {
 
     async runHook<T extends HookNames>(name: T, context: HookContextType<T>) {
         this.type?.hooks.run(name, context);
+    }
+
+    async runValidation(): Promise<ValidationResult> {
+        if (!this.type) {
+            return {
+                ok: true,
+                messages: []
+            };
+        }
+        return await this.type?.runValidation(this);
     }
 
     async rename({
