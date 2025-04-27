@@ -5,9 +5,6 @@ module.exports = {
     preset: "ts-jest",
     testEnvironment: "jsdom",
     moduleDirectories: ["node_modules", "src", "<rootDir>"],
-    haste: {
-        defaultPlatform: "node",
-    },
     transform: {
         "^.+\\.tsx?$": [
             "ts-jest",
@@ -19,7 +16,7 @@ module.exports = {
         ],
     },
     testEnvironmentOptions: {
-        customExportConditions: [""],
+        customExportConditions: ["node", ""],
     },
     moduleNameMapper: {
         "^react$": "preact/compat",
