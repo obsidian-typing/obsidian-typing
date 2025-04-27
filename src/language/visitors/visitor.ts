@@ -124,6 +124,14 @@ export type AnyVisitor<Args extends VisitorTypes = {}> = Visitor<
     OneOf<VisitorTypes["Super"], Args["Super"]>
 >;
 
+export type ExactVisitor<Args extends Required<VisitorTypes>> = Visitor<
+    Args["Return"],
+    Args["Children"],
+    Args["Utils"],
+    Args["Cache"],
+    Args["Super"]
+>;
+
 let cache: NodeWeakMap<WeakMap<AnyVisitor, CacheEntry>>;
 
 function resetCache() {
@@ -321,7 +329,13 @@ export class Visitor<
         >
     >(
         args: VisitorArgs<Return, Children, Utils, Cache, Super, This>
-    ): Visitor<Return, Children, Utils, Cache, Super> {
+    ): ExactVisitor<{
+        Return: Return,
+        Children: Children,
+        Utils: Utils,
+        Cache: Cache,
+        Super: Super
+    }> {
         return Visitor.new<Visitor<Return, Children, Utils, Cache, Super>>({
             // Ignore the fact that `This` might be different type
             // than the one specified in the type parameter default
@@ -369,7 +383,13 @@ export class Visitor<
             NewSuper,
             NewThis
         >
-    >(args: Args): Visitor<ReturnType<Exclude<Args["run"], undefined>>, NewChildren, NewUtils, NewCache, NewSuper> {
+    >(args: Args): ExactVisitor<{
+        Return: ReturnType<Exclude<Args["run"], undefined>>,
+        Children: NewChildren,
+        Utils: NewUtils,
+        Cache: NewCache,
+        Super: NewSuper
+    }> {
         let newArgs = Object.assign({}, this.originalArgs, args);
         let result = Visitor.fromArgs<ReturnType<Exclude<Args["run"], undefined>>, NewChildren, NewUtils, NewCache, NewSuper>(newArgs as any);
         result.super = Visitor.fromArgs<Return, Children, Utils, Cache, Super>(this.originalArgs as any) as NewSuper;
@@ -405,13 +425,13 @@ export class Visitor<
         >
     >(
         args: VisitorArgs<NewReturn, NewChildren, NewUtils, NewCache, NewSuper, NewThis>
-    ): Visitor<
-        OneOf<Return, NewReturn>,
-        NewChildren extends TChildrenBase ? Merge<Children, NewChildren> : Children,
-        NewUtils extends TUtilsBase ? Merge<Utils, NewUtils> : Utils,
-        Merge<Cache, NewCache>,
-        NewSuper
-    > {
+    ): ExactVisitor<{
+        Return: OneOf<Return, NewReturn>,
+        Children: NewChildren extends TChildrenBase ? Merge<Children, NewChildren> : Children,
+        Utils: NewUtils extends TUtilsBase ? Merge<Utils, NewUtils> : Utils,
+        Cache: Merge<Cache, NewCache>,
+        Super: NewSuper
+    }> {
         // let newArgs = mergeDeep(this.originalArgs, args); // BUG: could probably merge internal visitors too
         let newArgs = Object.assign({}, this.originalArgs, args);
         newArgs.children = Object.assign({}, this.originalArgs.children, args.children);
@@ -429,7 +449,7 @@ export class Visitor<
         return result;
     }
 
-    bind(to?: TVisitorBase) {
+    bind(to?: TVisitorBase): void {
         to = to ?? this;
 
         this.args.children = this.originalArgs.children ?? ({} as Children);
