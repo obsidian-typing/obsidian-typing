@@ -16,7 +16,7 @@ module.exports = {
         ],
     },
     testEnvironmentOptions: {
-        customExportConditions: [""],
+        customExportConditions: ["node", ""],
     },
     moduleNameMapper: {
         "^react$": "preact/compat",
