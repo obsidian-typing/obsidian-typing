@@ -107,10 +107,6 @@ export const Type = createVisitor({
                 return this.runChildren();
             },
             children: {
-                title: Visitors.Attribute("title", Visitors.String),
-                description: Visitors.Attribute("description", Visitors.String),
-                category: Visitors.Attribute("category", Visitors.String),
-
                 folder: Visitors.Attribute("folder", Visitors.String), // will be FolderCompletionString or String(completion=...)
                 // TODO: can be specified only in abstract types
                 // TODO: can be specified one of folder and glob
