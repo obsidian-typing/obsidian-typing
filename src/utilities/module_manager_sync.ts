@@ -42,17 +42,23 @@ export abstract class ModuleManagerSync<ContextType = any> {
         this.dependencyGraph = new DependencyGraph();
     }
 
-    public importSmart(path: FilePath, base?: FilePath) {
-        base = base ?? this.currentFrame?.module?.file.path;
-        if (base) {
-            base = dirname(base);
+    public importSmart(path: FilePath, basePath?: FilePath) {
+        // Determine the base directory for relative paths
+        basePath = basePath ?? this.currentFrame?.module?.file.path;
+        if (basePath) {
+            basePath = dirname(basePath);
         } else {
-            base = "";
+            basePath = "";
         }
+
+        // Resolve relative paths from base directory
         if (path.startsWith(".")) {
-            let newPath = normalize(join(base, path));
+            let newPath = normalize(join(basePath, path));
             path = newPath;
         }
+
+        // Attempt to find a matching file with the proper file extension
+        // if path does not already contain a file extension.
         if (!this.extensions.some((ext) => path.endsWith("." + ext))) {
             for (let ext of this.extensions) {
                 let result = this.importModule(path + "." + ext);
@@ -63,6 +69,8 @@ export abstract class ModuleManagerSync<ContextType = any> {
                 if (result !== null) return result;
             }
         }
+
+        // Try to import from the path as specified
         return this.importModule(path);
     }
 
