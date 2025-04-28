@@ -2,7 +2,7 @@ import { snippetCompletion } from "@codemirror/autocomplete";
 import { gctx } from "src/context";
 import { ExprScript, FnScript, TranspilationError } from "src/scripting";
 import { Values } from "src/typing";
-import { dedent } from "src/utilities/dedent";
+import { dedent } from "src/utilities";
 import * as Visitors from ".";
 import { createVisitor, Rules } from "../index_base";
 import { SyntaxNode } from "@lezer/common";

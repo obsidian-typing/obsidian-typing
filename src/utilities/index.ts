@@ -1,15 +1,22 @@
 // organize-imports-ignore
 export { log } from "./logger";
 
-export { Bindable, BindableCollection, bindCollection } from "./bindable";
-export { DataClass, field } from "./dataclass";
-export { parseDate } from "./date_parsing";
-export { DependencyGraph } from "./dependency_graph";
-export { mergeDeep } from "./misc";
-export { debounce, throttle, eagerDebounce } from "./rate_control";
-export { stripQuotes } from "./strings";
-export { render } from "./react";
-export { ParsedLink, parseLink, parseLinkExtended, parseFileExtension } from "./link_parsing";
-export { RenderLink } from "./link_rendering";
-export { getFont } from "./font_manager";
-export { CSSManager } from "./css_manager";
+// Miscellaneous utilities
+export { mergeDeep } from "./misc/merge_deep";
+export { debounce, eagerDebounce, throttle } from "./misc/rate_control";
+
+// Model data utilities
+export { Bindable, BindableCollection, bindCollection } from "./model/bindable";
+export { DataClass, field } from "./model/dataclass";
+
+// Parsing utilities
+export { parseDate } from "./strings/date_parsing";
+export { dedent } from "./strings/dedent";
+export { ParsedLink, parseFileExtension, parseLink, parseLinkExtended } from "./strings/link_parsing";
+export { stripQuotes } from "./strings/strip_quotes";
+
+// UI utilities
+export { CSSManager } from "./ui/css_manager";
+export { getFont } from "./ui/font_manager";
+export { RenderLink } from "./ui/link_rendering";
+export { render } from "./ui/react";

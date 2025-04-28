@@ -1,7 +1,7 @@
 import { App, Vault } from "obsidian";
 import { gctx } from "src/context";
 import TypingPlugin from "src/main";
-import { dedent } from "src/utilities/dedent";
+import { dedent } from "src/utilities";
 
 beforeAll(async () => {
     gctx.testing = true;
