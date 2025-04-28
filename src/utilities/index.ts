@@ -1,8 +1,10 @@
 // organize-imports-ignore
 export { log } from "./logger";
 
-export { Bindable, BindableCollection, bindCollection } from "./bindable";
-export { DataClass, field } from "./dataclass";
+// Model data utilities
+export { Bindable, BindableCollection, bindCollection } from "./model/bindable";
+export { DataClass, field } from "./model/dataclass";
+
 export { DependencyGraph } from "./dependency_graph";
 export { mergeDeep } from "./misc";
 export { debounce, throttle, eagerDebounce } from "./rate_control";
