@@ -1,23 +1,30 @@
 import { Fragment, h } from "preact";
 import { gctx } from "src/context";
 import { FileSpec, LoadedModule, Module, ModuleManagerSync } from "src/utilities/module_manager_sync";
-import { compileModuleWithContext } from "./transpilation";
+import { CompiledModule, compileModuleWithContext, TranspilationError } from "./transpilation";
 
-export type CompiledModule = Record<string, any>;
 
 export class ImportManager extends ModuleManagerSync<CompiledModule> {
     extensions = ["tsx", "ts", "jsx", "js"];
 
     protected evaluateModule(file: FileSpec, mod: Module<CompiledModule>): mod is LoadedModule<CompiledModule> {
+        let result;
         try {
-            mod.env = compileModuleWithContext(
+            result = compileModuleWithContext(
                 file.source,
                 { api: gctx.api, h, Fragment },
                 { transpile: true, filename: "@typing-script///" + file.path }
             );
-            return true;
         } catch (e) {
             mod.error = e.message ?? e;
+            return false;
+        }
+
+        if (result.message === undefined || result.message === null) {
+            mod.env = result as Exclude<typeof result, TranspilationError>;
+            return true;
+        } else {
+            mod.error = result.message;
             return false;
         }
     }

@@ -25,7 +25,7 @@ function evaluateOTL(source: string): Record<string, Type> {
     expect(module.env).toBeDefined();
     expect(module.env.types).toBeDefined();
     expect(module.error).toBeUndefined();
-    return module.env;
+    return module.env.types;
 }
 
 function evaluateOTLErrors(source: string): string {
