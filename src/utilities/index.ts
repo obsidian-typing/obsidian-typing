@@ -6,8 +6,8 @@ export { Bindable, BindableCollection, bindCollection } from "./model/bindable";
 export { DataClass, field } from "./model/dataclass";
 
 export { DependencyGraph } from "./dependency_graph";
-export { mergeDeep } from "./misc";
-export { debounce, throttle, eagerDebounce } from "./rate_control";
+export { mergeDeep } from "./merge_deep";
+export { debounce, eagerDebounce, throttle } from "./rate_control";
 
 // Parsing utilities
 export { parseDate } from "./strings/date_parsing";
