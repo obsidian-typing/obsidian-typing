@@ -29,7 +29,7 @@ interface StackFrame {
 export abstract class ModuleManagerSync<ContextType = any> {
     protected modules: Record<string, Module>;
     protected files: Record<string, FileSpec>;
-    protected dependencyGraph: DependencyGraph;
+    protected dependencyGraph: DependencyGraph<string>;
     protected callStack: StackFrame[] = [];
 
     public readonly extensions: string[] = [];
