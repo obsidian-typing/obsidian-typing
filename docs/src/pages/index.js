@@ -14,13 +14,16 @@ function HomepageHeader() {
         <header className={clsx("hero_syme", styles.heroBanner)}>
             <Heading as="h1">
                 <div class={styles.heroContainer}>
-                    <div>
+                    <div class={styles.heroLogo}>
                         <img src={useBaseUrl("/img/logo-filled.min.svg")} width={200} height={200} />
                     </div>
                     <div class={clsx(styles.heroText)}>
                         <h1 className="hero__title">Obsidian Typing</h1>
                         <p className={clsx("hero__subtitle", styles.heroSubtitle)}>
                             The most comprehensive tool to customize groups of notes in Obsidian
+                        </p>
+                        <p className={clsx("hero__subtitle2", styles.heroSubtitle2)}>
+                            <span class={styles.heroInfoIcon}>🛈</span> This is a <a href="https://github.com/obsidian-typing/obsidian-typing" title="github.com/obsidian-typing/obsidian-typing">fork</a> of the original <a href="https://github.com/konodyuk/obsidian-typing"><code>konodyuk/obsidian-typing</code></a> plugin.
                         </p>
                         <div class={styles.indexCtas}>
                             <Link to="/docs/installation" class="button button--secondary">
@@ -32,7 +35,7 @@ function HomepageHeader() {
                             <div className={styles.indexCtasGitHubButtonWrapper}>
                                 <iframe
                                     className={styles.indexCtasGitHubButton}
-                                    src="https://ghbtns.com/github-btn.html?user=konodyuk&amp;repo=obsidian-typing&amp;type=star&amp;count=true&amp;size=large"
+                                    src="https://ghbtns.com/github-btn.html?user=obsidian-typing&amp;repo=obsidian-typing&amp;type=star&amp;count=true&amp;size=large"
                                     width={160}
                                     height={30}
                                     title="GitHub Stars"

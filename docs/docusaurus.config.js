@@ -12,9 +12,9 @@ const config = {
     tagline: "Obsidian plugin for categorizing notes",
     favicon: "img/logo-filled.min.svg",
 
-    url: "https://konodyuk.github.io/",
+    url: "https://obsidian-typing.github.io/",
     baseUrl: "/obsidian-typing",
-    organizationName: "konodyuk", // Usually your GitHub org/user name.
+    organizationName: "obsidian-typing", // Usually your GitHub org/user name.
     projectName: "obsidian-typing", // Usually your repo name.
     trailingSlash: false,
 
@@ -35,7 +35,7 @@ const config = {
                     sidebarPath: require.resolve("./sidebars.js"),
                     // Please change this to your repo.
                     // Remove this to remove the "edit this page" links.
-                    editUrl: "https://github.com/konodyuk/obsidian-typing/tree/main/docs",
+                    editUrl: "https://github.com/obsidian-typing/obsidian-typing/tree/main/docs",
                     beforeDefaultRemarkPlugins: [otlGrammarPlugin, todoAdmonitionPlugin],
                 },
                 theme: {
@@ -83,14 +83,14 @@ const config = {
                         label: "Docs",
                     },
                     {
-                        href: "https://github.com/konodyuk/obsidian-typing",
+                        href: "https://github.com/obsidian-typing/obsidian-typing",
                         label: "GitHub",
                         position: "right",
                     },
                 ],
             },
             footer: {
-                copyright: `Copyright © ${new Date().getFullYear()} Nikita Konodyuk. Built with Docusaurus.`,
+                copyright: `Copyright © ${new Date().getFullYear()} Lukas Waslowski. Copyright © 2023 Nikita Konodyuk. Built with Docusaurus.`,
             },
             prism: {
                 theme: lightCodeTheme,

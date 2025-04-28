@@ -85,6 +85,31 @@
     }
 }
 
+.heroInfoIcon {
+    font-weight: normal;
+}
+
+.heroSubtitle2 {
+    max-width: 600px;
+    font-size: 1.0rem;
+}
+.heroSubtitle2 code {
+    vertical-align: baseline;
+}
+@media screen and (min-width: 996px) {
+    .heroSubtitle2 {
+        text-align: start;
+    }
+}
+
+.heroLogo {
+}
+@media screen and (min-width: 996px) {
+    .heroLogo {
+        align-self: flex-start;
+    }
+}
+
 .heroText {
 }
 @media screen and (min-width: 996px) {
