@@ -133,6 +133,10 @@ export function compileFunctionWithContext(
         code = transpiled.code;
     }
 
+    if (code && options.filename) {
+        code = `${code}\n//# sourceURL=${options.filename}`;
+    }
+
     const contextNames = Object.keys(context);
 
     const fn = new Function(...contextNames, ...args, code);
