@@ -1,13 +1,13 @@
 // organize-imports-ignore
 export { log } from "./logger";
 
+// Miscellaneous utilities
+export { mergeDeep } from "./misc/merge_deep";
+export { debounce, eagerDebounce, throttle } from "./misc/rate_control";
+
 // Model data utilities
 export { Bindable, BindableCollection, bindCollection } from "./model/bindable";
 export { DataClass, field } from "./model/dataclass";
-
-export { DependencyGraph } from "./dependency_graph";
-export { mergeDeep } from "./merge_deep";
-export { debounce, eagerDebounce, throttle } from "./rate_control";
 
 // Parsing utilities
 export { parseDate } from "./strings/date_parsing";
