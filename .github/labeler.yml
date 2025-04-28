@@ -111,6 +111,13 @@ otl/grammar:
 # Technical Area: Scripting #
 #############################
 
+# Relates to plugin API
+plugin-api:
+- changed-files:
+  - any-glob-to-any-file:
+    - src/api/**
+    - src/api*
+
 # Relates to scripting
 scripting:
 - changed-files:
