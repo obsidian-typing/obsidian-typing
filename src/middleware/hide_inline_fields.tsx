@@ -5,7 +5,7 @@ import { FieldSearchResult, regexField } from "./field_accessor";
 
 export function hideInlineFields(plugin: Plugin) {
     return async function (el: HTMLElement, ctx: MarkdownPostProcessorContext) {
-        if (!gctx.graph.isReady) {
+        if (!gctx.types.isReady) {
             await new Promise((resolve) => {
                 plugin.registerEvent(
                     gctx.app.metadataCache.on("typing:schema-ready", () => {

@@ -44,10 +44,10 @@ export class Interpreter extends ModuleManagerSync {
 
     protected onAfterImport(fileName: string): void {
         if (fileName === gctx.plugin.settings.schemaPath) {
-            gctx.graph.clear();
+            gctx.types.clear();
             let mainModule = this.modules[fileName];
             for (let key in mainModule.env) {
-                gctx.graph.add(mainModule.env[key]);
+                gctx.types.add(mainModule.env[key]);
             }
             gctx.noteCache.invalidateAll();
             gctx.app.metadataCache.trigger("typing:schema-change");
@@ -56,7 +56,7 @@ export class Interpreter extends ModuleManagerSync {
 
     protected onAfterPreload(): void {
         this.importModule(gctx.plugin.settings.schemaPath, undefined, true);
-        gctx.graph.isReady = true;
+        gctx.types.isReady = true;
         gctx.noteCache.invalidateAll();
         gctx.app.metadataCache.trigger("typing:schema-ready");
     }

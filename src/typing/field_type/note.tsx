@@ -49,7 +49,7 @@ export class Note extends FieldType<Note> implements TypedValidator<string | Par
 
     get types() {
         if (!this._types) {
-            this._types = this.typeNames.map((name) => gctx.graph.get({ name })).filter((type) => type != null);
+            this._types = this.typeNames.map((name) => gctx.types.get({ name })).filter((type) => type != null);
         }
         return this._types;
     }
@@ -216,7 +216,7 @@ export class Note extends FieldType<Note> implements TypedValidator<string | Par
             },
             lint(args, kwargs) {
                 let typeNames = args.map(x => x.value);
-                let types = typeNames.map((name) => gctx.graph.get({ name })).filter((type) => type != null);
+                let types = typeNames.map((name) => gctx.types.get({ name })).filter((type) => type != null);
                 let inverse = kwargs.inverse?.value;
 
                 if (!inverse) {
