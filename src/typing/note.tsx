@@ -98,7 +98,7 @@ export class Note {
             if (cached) return cached;
         }
 
-        let type = opts.type ?? gctx.graph.get({ path });
+        let type = opts.type ?? gctx.types.get({ path });
 
         if (type == null) {
             // support for type specification via frontmatter field `_type`
@@ -107,12 +107,12 @@ export class Note {
             if (file) {
                 let explicitTypeName = gctx.app.metadataCache.getFileCache(file)?.frontmatter?._type;
                 if (explicitTypeName) {
-                    type = gctx.graph.get({ name: explicitTypeName });
+                    type = gctx.types.get({ name: explicitTypeName });
                 }
             }
         }
 
-        if (type == null) type = gctx.graph.get({ name: "default" });
+        if (type == null) type = gctx.types.get({ name: "default" });
 
         let note = new Note(path, type);
 
@@ -467,7 +467,7 @@ export class NoteCache {
     startWatch() {
         gctx.plugin.registerEvent(
             gctx.app.metadataCache.on("dataview:metadata-change", (op, file, _?) => {
-                if (gctx.graph.isReady) this.invalidate(file.path);
+                if (gctx.types.isReady) this.invalidate(file.path);
             })
         );
     }

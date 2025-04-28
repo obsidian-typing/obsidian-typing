@@ -19,8 +19,7 @@ export class GlobalContext {
     testing: boolean = false;
     platform = Platform;
 
-    // TODO: rename to `types` to resolve ambiguity with relations?
-    graph!: TypeGraph;
+    types!: TypeGraph;
     relations!: RelationsManager;
 
     get settings() {
@@ -54,7 +53,7 @@ export class GlobalContext {
         gctx.app = plugin.app;
         gctx.plugin = plugin;
         gctx.importManager = new ImportManager(plugin.app.vault, plugin);
-        gctx.graph = new TypeGraph();
+        gctx.types = new TypeGraph();
         gctx.relations = new RelationsManager();
         gctx.interpreter = new Interpreter(plugin.app.vault, plugin);
         gctx.noteCache = new NoteCache();

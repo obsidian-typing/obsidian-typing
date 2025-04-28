@@ -14,14 +14,14 @@ beforeAll(async () => {
 });
 
 test("smoke graph initialization", () => {
-    expect(gctx.graph).toBeDefined();
-    let A = gctx.graph.get({ name: "A" });
+    expect(gctx.types).toBeDefined();
+    let A = gctx.types.get({ name: "A" });
     expect(A).toBeDefined();
 });
 
 test("create new", async () => {
-    expect(gctx.graph).toBeDefined();
-    let D = gctx.graph.get({ name: "D" });
+    expect(gctx.types).toBeDefined();
+    let D = gctx.types.get({ name: "D" });
     expect(D).toBeDefined();
     let note = await D.create({
         title: "New D",
@@ -49,8 +49,8 @@ test("create new", async () => {
 
 test("hooks", async () => {
     let { hookCalls } = gctx.api.import("scripts/hooks-sink");
-    expect(gctx.graph).toBeDefined();
-    let HooksType = gctx.graph.get({ name: "Hooks" });
+    expect(gctx.types).toBeDefined();
+    let HooksType = gctx.types.get({ name: "Hooks" });
     expect(HooksType).toBeDefined();
     let note = await HooksType.create({
         title: "HooksName",
@@ -73,7 +73,7 @@ test("hooks", async () => {
 });
 
 test("methods", async () => {
-    expect(gctx.graph).toBeDefined();
+    expect(gctx.types).toBeDefined();
     let note = gctx.api.note("methods/A.md");
     expect(note).toBeTruthy();
     expect(note.methods).toBeTruthy();
@@ -83,7 +83,7 @@ test("methods", async () => {
 });
 
 test("import from relative", async () => {
-    expect(gctx.graph).toBeDefined();
+    expect(gctx.types).toBeDefined();
     let note = gctx.api.note("folder/file.md");
     expect(note).toBeTruthy();
     expect(note.methods).toBeTruthy();

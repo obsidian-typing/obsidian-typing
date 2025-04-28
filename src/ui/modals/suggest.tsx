@@ -37,10 +37,10 @@ export class TypeSuggestModal extends SuggestModal<Type> {
     constructor(app: App, public callback: { (type: Type): void }, types?: string[]) {
         super(app);
 
-        let typeNames = types ?? Object.keys(gctx.graph.types);
+        let typeNames = types ?? Object.keys(gctx.types.types);
         for (let name of typeNames) {
             if (name.startsWith("_")) continue;
-            let type = gctx.graph.get({ name });
+            let type = gctx.types.get({ name });
             if (type && !type.isAbstract && type.isCreateable) {
                 this.types.push(type);
             }

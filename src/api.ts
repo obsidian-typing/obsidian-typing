@@ -18,8 +18,15 @@ export class TypingAPI {
     get dv() {
         return gctx.dv;
     }
+    get types() {
+        return gctx.types;
+    }
+    /**
+     * @deprecated Use {@link types} instead.
+     * @private
+     */
     get graph() {
-        return gctx.graph;
+        return this.types;
     }
     get relations() {
         return gctx.relations;
@@ -47,10 +54,10 @@ export class TypingAPI {
     }
     type(opt: string | { path?: string; folder?: string; name?: string }): Type | null {
         if (typeof opt === "string") {
-            return gctx.graph.get({ name: opt });
+            return gctx.types.get({ name: opt });
         }
         let { name, folder, path } = opt;
-        return gctx.graph.get({ name, folder, path });
+        return gctx.types.get({ name, folder, path });
     }
 
     lib!: PromiseType<ReturnType<typeof importModules>>;
