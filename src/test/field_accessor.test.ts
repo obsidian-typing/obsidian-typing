@@ -1,6 +1,6 @@
 import { StringFieldAccessor } from "src/middleware/field_accessor";
 import { Field, FieldTypes, Type } from "src/typing";
-import { dedent } from "src/utilities/dedent";
+import { dedent } from "src/utilities";
 
 async function testAccessor(
     type: Type,

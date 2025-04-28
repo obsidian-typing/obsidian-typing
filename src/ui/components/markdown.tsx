@@ -1,6 +1,6 @@
 import { Component, MarkdownRenderer } from "obsidian";
 import { createContext, memo, useContext, useEffect, useRef } from "react";
-import { dedent } from "src/utilities/dedent";
+import { dedent } from "src/utilities";
 
 interface MarkdownRenderingContextType {
     sourcePath: string;
