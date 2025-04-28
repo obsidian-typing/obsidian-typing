@@ -12,7 +12,7 @@ const config = {
     tagline: "Obsidian plugin for categorizing notes",
     favicon: "img/logo-filled.min.svg",
 
-    url: "https://konodyuk.github.io/",
+    url: "https://obsidian-typing.github.io/",
     baseUrl: "/obsidian-typing",
     organizationName: "konodyuk", // Usually your GitHub org/user name.
     projectName: "obsidian-typing", // Usually your repo name.
