@@ -11,7 +11,7 @@ as it hasn't been released yet, but you are welcome to participate in beta testi
 
 1. Install the [BRAT](obsidian://show-plugin?id=obsidian42-brat) plugin ([GitHub page](https://github.com/TfTHacker/obsidian42-brat)) and enable it.
 2. Open command palette and run the command **BRAT: Add a beta plugin for testing**.
-3. Enter `https://github.com/konodyuk/obsidian-typing` into the modal and press the **Add Plugin** button.
+3. Enter `https://github.com/obsidian-typing/obsidian-typing` into the modal and press the **Add Plugin** button.
 4. Return to the settings and navigate to **Community plugins** tab.
 5. Enable the **Typing** plugin.
 
