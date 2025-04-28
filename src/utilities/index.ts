@@ -7,7 +7,7 @@ export { parseDate } from "./date_parsing";
 export { DependencyGraph } from "./dependency_graph";
 export { mergeDeep } from "./misc";
 export { debounce, throttle, eagerDebounce } from "./rate_control";
-export { stripQuotes } from "./strings";
+export { stripQuotes } from "./strip_quotes";
 export { render } from "./react";
 export { ParsedLink, parseLink, parseLinkExtended, parseFileExtension } from "./link_parsing";
 export { RenderLink } from "./link_rendering";
