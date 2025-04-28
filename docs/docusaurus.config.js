@@ -90,7 +90,7 @@ const config = {
                 ],
             },
             footer: {
-                copyright: `Copyright © ${new Date().getFullYear()} Nikita Konodyuk. Built with Docusaurus.`,
+                copyright: `Copyright © ${new Date().getFullYear()} Lukas Waslowski. Copyright © 2023 Nikita Konodyuk. Built with Docusaurus.`,
             },
             prism: {
                 theme: lightCodeTheme,
