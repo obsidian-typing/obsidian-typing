@@ -37,7 +37,7 @@ export class Script<T extends IScriptContextBase = IScriptContextBase> extends D
     }
 
     call(ctx: T) {
-        ctx._import_explicit = (path: string, symbols: string[]) =>
+        ctx._import_explicit = (path: string, symbols: (string | symbol | number)[]) =>
             gctx.api._import_explicit(path, symbols, this.filePath ?? undefined);
         return this.fn(ctx, ctx.note, ctx);
     }

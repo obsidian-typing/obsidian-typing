@@ -72,7 +72,7 @@ export class TypingAPI {
         return mod.env.exports;
     }
 
-    _import_explicit(path: string, symbols: any[], base?: string): Record<string, any> {
+    _import_explicit(path: string, symbols: (string | symbol | number)[], base?: string): Record<string, any> {
         if (path in this.lib) {
             return this.lib[path as keyof typeof this.lib]!;
         }
@@ -85,7 +85,7 @@ export class TypingAPI {
         }
         for (let arg of symbols) {
             if (!(arg in mod.env.exports)) {
-                throw new Error(`ImportError: Could not find symbol ${arg} in module ${path}`);
+                throw new Error(`ImportError: Could not find symbol ${String(arg)} in module ${path}`);
             }
         }
         return mod.env.exports;
