@@ -22,12 +22,14 @@ export class Interpreter extends ModuleManagerSync<SchemaModule> {
     }
 
     public evaluateModule(file: FileSpec, mod: Module<SchemaModule>): mod is LoadedModule<SchemaModule> {
+        let path = this.activeModule?.file.path ?? file.path;
+
         if (file.source === null || file.source === undefined) {
-            setPanelContent(`Importing ${this.activeModule?.file.path} failed...`);
+            setPanelContent(`Importing ${path} failed...`);
             return false;
         }
 
-        setPanelContent(`Importing ${this.activeModule?.file.path}...`);
+        setPanelContent(`Importing ${path}...`);
         let tree = parser.parse(file.source);
 
         let lint = Visitors.File.lint(tree.topNode, { interpreter: this });
@@ -37,11 +39,11 @@ export class Interpreter extends ModuleManagerSync<SchemaModule> {
         let types = Visitors.File.run(tree.topNode, { interpreter: this });
 
         if (types === null) {
-            setPanelContent(`Importing ${this.activeModule?.file.path} failed...`);
+            setPanelContent(`Importing ${path} failed...`);
             return false;
         }
         mod.env = types;
-        setPanelContent(`Importing ${this.activeModule?.file.path} succeeded...`);
+        setPanelContent(`Importing ${path} succeeded...`);
         return true;
     }
 
