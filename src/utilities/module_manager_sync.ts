@@ -28,6 +28,8 @@ interface StackFrame {
     module: Module & Required<Pick<Module, "file">>;
 }
 
+const RELATIVE_PATH_REGEX = /^\.\.?($|\/)/;
+
 export abstract class ModuleManagerSync<ContextType = any> {
     protected modules: Record<FilePath, Module>;
     protected files: Record<FilePath, FileSpec>;
@@ -52,7 +54,7 @@ export abstract class ModuleManagerSync<ContextType = any> {
         }
 
         // Resolve relative paths from base directory
-        if (path.startsWith(".")) {
+        if (RELATIVE_PATH_REGEX.exec(path)) {
             let newPath = normalize(join(basePath, path));
             path = newPath;
         }
