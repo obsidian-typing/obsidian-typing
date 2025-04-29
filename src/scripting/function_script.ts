@@ -46,11 +46,7 @@ export class Script<T extends IScriptContextBase = IScriptContextBase> extends D
         if (!gctx.settings.enableScripting) {
             return { message: "Safe mode: JS scripting is currently disabled. Please enable it in Typing settings." };
         }
-        let result = compileFunctionWithContext(source, {});
-        if (result instanceof Function) {
-            return {};
-        }
-        return { message: result.message };
+        return compileFunctionWithContext(source, {});
     }
 }
 

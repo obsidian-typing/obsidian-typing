@@ -124,7 +124,7 @@ export function compileFunctionWithContext(
     context: Record<string, any> = {},
     args: string[] = ["ctx", "note"],
     options: { transpile: boolean, filename?: string } = { transpile: true }
-): Function | TranspilationError {
+): (Function & { message?: undefined }) | TranspilationError {
     if (options.transpile) {
         let transpiled = transpileFunction(code, { filename: options.filename ?? "file.tsx" });
         if (transpiled.errors) {
