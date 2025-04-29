@@ -54,6 +54,7 @@ meta/types:
 - changed-files:
   - any-glob-to-any-file:
     - '**/*.d.ts'
+    - src/utilities/types/**
 
 ###########################
 # Technical Areas: Editor #

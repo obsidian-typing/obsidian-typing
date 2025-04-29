@@ -7,73 +7,9 @@ import { DataClass, field, log, mergeDeep } from "src/utilities";
 import { Visitors } from ".";
 import { Rules } from "../grammar";
 import { Interpreter } from "../interpreter";
+import { Merge, OneOf } from "src/utilities/types";
 
 export type NodeType = SyntaxNode;
-
-type If<T, Y, N> = T extends true ? Y : T extends false ? N : Y | N;
-type Not<T> = If<T, false, true>;
-type IsCompiledInStrictMode = unknown extends {} ? false : true;
-
-type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
-type IsAny<T> = IfAny<T, true, never>;
-
-type IfSameType<A, B, Y, N> = A | B extends A & B ? Y : N;
-type IsSameType<A, B> = IfSameType<A, B, true, never>;
-
-type IfUnknown<T, Y, N> = IsAny<T> extends never ? unknown extends T ? keyof T extends never ? Y : N : N : N;
-type IsUnknown<T> = IfUnknown<T, true, never>;
-
-type Merge<A, B> = IsUnknown<B> extends never ? IsUnknown<A> extends never ? A & B : B : A;
-type OneOf<A, B> = IsUnknown<B> extends never ? B : A;
-
-// Static tests of IsUnknown, OneOf and Merge
-namespace StaticTests {
-    type SameType<A, B> = IfSameType<A, B, true, false>;
-
-    true satisfies SameType<true, true>;
-    true satisfies SameType<never, never>;
-    false satisfies SameType<unknown, never>;
-    false satisfies SameType<never, unknown>;
-    false satisfies SameType<true, never>;
-    false satisfies SameType<never, true>;
-
-    true satisfies SameType<string, string>;
-    true satisfies SameType<unknown, unknown>;
-    false satisfies SameType<string, number>;
-    false satisfies SameType<unknown, string>;
-    false satisfies SameType<string, unknown>;
-
-    true satisfies 0 extends (1 & any) ? true : false;
-    true satisfies IfAny<any, true, false>
-    true satisfies IsAny<any> extends never ? false : true;
-
-    false satisfies 0 extends (1 & unknown) ? true : false
-    false satisfies IfAny<unknown, true, false>;
-    false satisfies IsAny<unknown> extends never ? false : true;
-
-    true satisfies unknown extends unknown ? true : false;
-    true satisfies SameType<unknown extends Partial<{ item: string }> ? true : false, Not<IsCompiledInStrictMode>>
-
-    true satisfies keyof unknown extends never ? true : false;
-    false satisfies keyof Partial<{ item: string }> extends never ? true : false;
-
-    true satisfies SameType<IsUnknown<unknown>, true>;
-    true satisfies SameType<IsUnknown<any>, never>;
-    true satisfies SameType<IsUnknown<Partial<{ item: string }>>, never>;
-    true satisfies SameType<IsUnknown<{}>, If<IsCompiledInStrictMode, never, true>>; // Edge case
-
-    true satisfies SameType<Merge<string, number>, string & number>;
-    true satisfies SameType<Merge<number, string>, string & number>;
-    true satisfies SameType<Merge<unknown, string>, string>;
-    true satisfies SameType<Merge<string, unknown>, string>;
-    true satisfies SameType<Merge<unknown, unknown>, unknown>;
-
-    true satisfies SameType<OneOf<string, number>, number>;
-    true satisfies SameType<OneOf<number, string>, string>;
-    true satisfies SameType<OneOf<unknown, string>, string>;
-    true satisfies SameType<OneOf<string, unknown>, string>;
-    true satisfies SameType<OneOf<unknown, unknown>, unknown>;
-}
 
 interface CompletionEntry extends Completion {
     symbol?: string;
