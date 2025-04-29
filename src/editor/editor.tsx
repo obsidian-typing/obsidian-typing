@@ -15,7 +15,7 @@ import {
 import { lintGutter } from "@codemirror/lint";
 import { search, searchKeymap } from "@codemirror/search";
 import { EditorState, Extension } from "@codemirror/state";
-import { EditorView, keymap, Panel, tooltips, ViewPlugin, ViewUpdate } from "@codemirror/view";
+import { EditorView, keymap, tooltips, ViewPlugin, ViewUpdate } from "@codemirror/view";
 import { Input, parseMixed, Parser, SyntaxNodeRef } from "@lezer/common";
 import { styleTags, tags as t } from "@lezer/highlight";
 import { basicSetup } from "codemirror";
@@ -148,19 +148,6 @@ const autoSavePlugin = (textView: TextFileView) =>
             }
         }
     );
-
-let panelContainer: HTMLElement;
-export function setPanelContent(s: string) {
-    if (panelContainer) panelContainer.textContent = s;
-}
-
-function statusPanel(view: EditorView): Panel {
-    setPanelContent("default");
-    if (!panelContainer) panelContainer = document.createElement("div");
-    return {
-        dom: panelContainer,
-    };
-}
 
 class BaseEditorView extends TextFileView {
     private view?: EditorView;

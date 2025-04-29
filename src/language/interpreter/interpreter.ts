@@ -1,14 +1,28 @@
+import { Plugin, Vault } from "obsidian";
 import { gctx } from "src/context";
-import { setPanelContent } from "src/editor/editor";
 import { parser } from "src/language/grammar/otl_parser";
 import { TVisitorBase, Visitors } from "src/language/visitors";
 import { Type } from "src/typing";
-import { FileSpec, LoadedModule, Module, ModuleManagerSync } from "src/utilities/module_manager_sync";
+import { FilePath, FileSpec, LoadedModule, Module, ModuleManagerSync } from "src/utilities/module_manager_sync";
+
+export interface ImportStatusListener {
+    onImportStarted(path: FilePath): void;
+    onImportFailed(path: FilePath): void;
+    onImportCompleted(path: FilePath): void;
+}
 
 export type SchemaModule = Record<string, Type>;
 
 export class Interpreter extends ModuleManagerSync<SchemaModule> {
     extensions = ["otl"];
+
+    constructor(
+        vault: Vault,
+        plugin: Plugin,
+        public readonly statusReport?: ImportStatusListener
+    ) {
+        super(vault, plugin);
+    }
 
     public runCode(code: string, visitor: TVisitorBase) {
         let tree = parser.parse(code);
@@ -25,11 +39,11 @@ export class Interpreter extends ModuleManagerSync<SchemaModule> {
         let path = this.activeModule?.file.path ?? file.path;
 
         if (file.source === null || file.source === undefined) {
-            setPanelContent(`Importing ${path} failed...`);
+            this.statusReport?.onImportFailed(path);
             return false;
         }
 
-        setPanelContent(`Importing ${path}...`);
+        this.statusReport?.onImportStarted(path);;
         let tree = parser.parse(file.source);
 
         let lint = Visitors.File.lint(tree.topNode, { interpreter: this });
@@ -39,11 +53,11 @@ export class Interpreter extends ModuleManagerSync<SchemaModule> {
         let types = Visitors.File.run(tree.topNode, { interpreter: this });
 
         if (types === null) {
-            setPanelContent(`Importing ${path} failed...`);
+            this.statusReport?.onImportFailed(path);
             return false;
         }
         mod.env = types;
-        setPanelContent(`Importing ${path} succeeded...`);
+        this.statusReport?.onImportCompleted(path);
         return true;
     }
 
