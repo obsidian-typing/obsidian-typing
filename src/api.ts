@@ -78,14 +78,14 @@ export class TypingAPI {
         }
         let mod = gctx.importManager.importSmart(path, base);
         if (mod === null || mod === undefined) {
-            throw new Error(`ImportError: Could not find module ${path}`);
+            throw new Error(`ImportError: Could not find module '${path}'`);
         }
         if (mod.error !== null && mod.error !== undefined) {
-            throw new Error(`ImportError: Error in module ${path}: ${mod.error}`);
+            throw new Error(`ImportError: Error in module '${path}': ${mod.error}`);
         }
         for (let arg of symbols) {
             if (!(arg in mod.env.exports)) {
-                throw new Error(`ImportError: Could not find symbol ${String(arg)} in module ${path}`);
+                throw new Error(`ImportError: Could not find symbol ${String(arg)} in module '${path}'`);
             }
         }
         return mod.env.exports;
