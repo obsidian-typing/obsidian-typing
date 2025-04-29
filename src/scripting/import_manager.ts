@@ -3,10 +3,12 @@ import { gctx } from "src/context";
 import { FileSpec, LoadedModule, Module, ModuleManagerSync } from "src/utilities/module_manager_sync";
 import { compileModuleWithContext } from "./transpilation";
 
-export class ImportManager extends ModuleManagerSync {
+export type CompiledModule = Record<string, any>;
+
+export class ImportManager extends ModuleManagerSync<CompiledModule> {
     extensions = ["tsx", "ts", "jsx", "js"];
 
-    protected evaluateModule(file: FileSpec, mod: Module): mod is LoadedModule {
+    protected evaluateModule(file: FileSpec, mod: Module<CompiledModule>): mod is LoadedModule<CompiledModule> {
         try {
             mod.env = compileModuleWithContext(
                 file.source,

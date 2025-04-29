@@ -10,31 +10,31 @@ export interface FileSpec {
     // hash: string;
 }
 
-export type FailedModule = {
+export type FailedModule<T> = {
     error: string;
-    env?: Record<string, any>;
+    env?: T;
     file?: FileSpec;
 };
 
-export type LoadedModule = {
+export type LoadedModule<T> = {
     error?: undefined;
-    env: Record<string, any>;
+    env: T;
     file: FileSpec;
 };
 
-export type Module = FailedModule | LoadedModule;
+export type Module<T> = FailedModule<T> | LoadedModule<T>;
 
-interface StackFrame {
-    module: Module & Required<Pick<Module, "file">>;
+interface StackFrame<T> {
+    module: Module<T> & { file: FileSpec };
 }
 
 const RELATIVE_PATH_REGEX = /^\.\.?($|\/)/;
 
-export abstract class ModuleManagerSync<ContextType = any> {
-    protected modules: Record<FilePath, Module>;
+export abstract class ModuleManagerSync<T = any> {
+    protected modules: Record<FilePath, Module<T>>;
     protected files: Record<FilePath, FileSpec>;
     protected dependencyGraph: DependencyGraph<FilePath>;
-    protected callStack: StackFrame[] = [];
+    protected callStack: StackFrame<T>[] = [];
 
     public readonly extensions: string[] = [];
 
@@ -76,7 +76,7 @@ export abstract class ModuleManagerSync<ContextType = any> {
         return this.importModule(path);
     }
 
-    public importModule(path: FilePath, source?: string, forceReload: boolean = false): Module | null {
+    public importModule(path: FilePath, source?: string, forceReload: boolean = false): Module<T> | null {
         for (let frame of this.callStack) {
             if (frame.module.file.path == path) {
                 return { error: `Recursive import: ${path}` };
@@ -101,7 +101,7 @@ export abstract class ModuleManagerSync<ContextType = any> {
 
         // The expression below is used to make the TypeScript compiler
         // "forget" the const values and fix type inference.
-        const module = ((x: StackFrame["module"]) => x)({ env: {}, file })
+        const module = ((x: StackFrame<T>["module"]) => x)({ env: {} as T, file })
 
         this.enterFrame({ module });
 
@@ -135,7 +135,7 @@ export abstract class ModuleManagerSync<ContextType = any> {
         await this.setupFileWatcher();
     }
 
-    private enterFrame(frame: StackFrame) {
+    private enterFrame(frame: StackFrame<T>) {
         this.callStack.push(frame);
     }
 
@@ -191,7 +191,7 @@ export abstract class ModuleManagerSync<ContextType = any> {
         }
     }
 
-    protected abstract evaluateModule(file: FileSpec, mod: Module): mod is LoadedModule;
+    protected abstract evaluateModule(file: FileSpec, mod: Module<T>): mod is LoadedModule<T>;
 
     protected async loadFile(path: FilePath): Promise<string | null> {
         let tfile = this.vault.getAbstractFileByPath(path);

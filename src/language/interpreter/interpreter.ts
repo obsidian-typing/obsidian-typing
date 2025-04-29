@@ -2,9 +2,12 @@ import { gctx } from "src/context";
 import { setPanelContent } from "src/editor/editor";
 import { parser } from "src/language/grammar/otl_parser";
 import { TVisitorBase, Visitors } from "src/language/visitors";
+import { Type } from "src/typing";
 import { FileSpec, LoadedModule, Module, ModuleManagerSync } from "src/utilities/module_manager_sync";
 
-export class Interpreter extends ModuleManagerSync {
+export type SchemaModule = Record<string, Type>;
+
+export class Interpreter extends ModuleManagerSync<SchemaModule> {
     extensions = ["otl"];
 
     public runCode(code: string, visitor: TVisitorBase) {
@@ -18,7 +21,7 @@ export class Interpreter extends ModuleManagerSync {
         return visitor.run(node, { interpreter: this, input: code });
     }
 
-    public evaluateModule(file: FileSpec, mod: Module): mod is LoadedModule {
+    public evaluateModule(file: FileSpec, mod: Module<SchemaModule>): mod is LoadedModule<SchemaModule> {
         if (file.source === null || file.source === undefined) {
             setPanelContent(`Importing ${this.activeModule?.file.path} failed...`);
             return false;

@@ -72,7 +72,7 @@ export const Import = () =>
                     continue;
                 }
                 let importedType = module!.env![symbol!.symbol!];
-                importedType.name = symbol.alias;
+                importedType.name = symbol.alias!;
                 result.push(importedType);
             }
             return result;
