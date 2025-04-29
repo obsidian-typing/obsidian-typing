@@ -1,28 +1,13 @@
-import { Plugin, Vault } from "obsidian";
 import { gctx } from "src/context";
 import { parser } from "src/language/grammar/otl_parser";
 import { TVisitorBase, Visitors } from "src/language/visitors";
 import { Type } from "src/typing";
-import { FilePath, FileSpec, LoadedModule, Module, ModuleManagerSync } from "src/utilities/module_manager_sync";
-
-export interface ImportStatusListener {
-    onImportStarted(path: FilePath): void;
-    onImportFailed(path: FilePath): void;
-    onImportCompleted(path: FilePath): void;
-}
+import { FileSpec, LoadedModule, Module, ModuleManagerSync } from "src/utilities/module_manager_sync";
 
 export type SchemaModule = Record<string, Type>;
 
 export class Interpreter extends ModuleManagerSync<SchemaModule> {
     extensions = ["otl"];
-
-    constructor(
-        vault: Vault,
-        plugin: Plugin,
-        public readonly statusReport?: ImportStatusListener
-    ) {
-        super(vault, plugin);
-    }
 
     public runCode(code: string, visitor: TVisitorBase) {
         let tree = parser.parse(code);
@@ -36,14 +21,9 @@ export class Interpreter extends ModuleManagerSync<SchemaModule> {
     }
 
     public evaluateModule(file: FileSpec, mod: Module<SchemaModule>): mod is LoadedModule<SchemaModule> {
-        let path = this.activeModule?.file.path ?? file.path;
-
         if (file.source === null || file.source === undefined) {
-            this.statusReport?.onImportFailed(path);
             return false;
         }
-
-        this.statusReport?.onImportStarted(path);;
         let tree = parser.parse(file.source);
 
         let lint = Visitors.File.lint(tree.topNode, { interpreter: this });
@@ -53,11 +33,9 @@ export class Interpreter extends ModuleManagerSync<SchemaModule> {
         let types = Visitors.File.run(tree.topNode, { interpreter: this });
 
         if (types === null) {
-            this.statusReport?.onImportFailed(path);
             return false;
         }
         mod.env = types;
-        this.statusReport?.onImportCompleted(path);
         return true;
     }
 

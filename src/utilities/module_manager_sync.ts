@@ -28,6 +28,12 @@ interface StackFrame<T> {
     module: Module<T> & { file: FileSpec };
 }
 
+export interface ImportStatusListener {
+    onImportStarted(path: FilePath): void;
+    onImportFailed(path: FilePath): void;
+    onImportCompleted(path: FilePath): void;
+}
+
 const RELATIVE_PATH_REGEX = /^\.\.?($|\/)/;
 
 export abstract class ModuleManagerSync<T = any> {
@@ -38,7 +44,7 @@ export abstract class ModuleManagerSync<T = any> {
 
     public readonly extensions: string[] = [];
 
-    constructor(private vault: Vault, private plugin: Plugin) {
+    constructor(private vault: Vault, private plugin: Plugin, private statusReport?: ImportStatusListener) {
         this.modules = {};
         this.files = {};
         this.dependencyGraph = new DependencyGraph();
@@ -110,7 +116,15 @@ export abstract class ModuleManagerSync<T = any> {
         let success = false;
 
         try {
+            this.statusReport?.onImportStarted(path);
+
             success = this.evaluateModule(file, module);
+
+            if (!success) {
+                this.statusReport?.onImportFailed(path);
+            } else {
+                this.statusReport?.onImportCompleted(path);
+            }
         } catch (e) {
             this.exitFrame();
             return { error: `Unexpected error: ${e}`};

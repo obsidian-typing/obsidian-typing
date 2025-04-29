@@ -1,6 +1,5 @@
 import { EditorView, Panel } from "@codemirror/view";
-import { ImportStatusListener } from "src/language/interpreter/interpreter";
-import { FilePath } from "src/utilities/module_manager_sync";
+import { FilePath, ImportStatusListener } from "src/utilities/module_manager_sync";
 
 let panelContainer: HTMLElement;
 export function setPanelContent(s: string) {
