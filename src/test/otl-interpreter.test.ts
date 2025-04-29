@@ -23,6 +23,7 @@ function evaluateOTL(source: string): Record<string, Type> {
     let module = gctx.interpreter.importModule("test.otl", source);
     expect(module).toBeDefined();
     expect(module.env).toBeDefined();
+    expect(module.env.types).toBeDefined();
     expect(module.error).toBeUndefined();
     return module.env;
 }
