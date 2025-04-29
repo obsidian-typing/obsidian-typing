@@ -84,13 +84,7 @@ export abstract class ModuleManagerSync<ContextType = any> {
             return this.modules[path];
         }
 
-        let file;
-        if (source !== null && source !== undefined) {
-            file = { source, path };
-        } else {
-            file = this.getFile(path);
-        }
-
+        let file = source === null || source === undefined ? this.getFile(path) : { source, path };
         if (!file) {
             return null;
         }
