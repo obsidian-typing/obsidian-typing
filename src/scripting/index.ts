@@ -1,3 +1,13 @@
-export { ExprScript, FnScript, Script, IScriptContextBase } from "./function_script";
+export { ExprScript, FnScript, IScriptContextBase, Script } from "./function_script";
 export { ImportManager } from "./import_manager";
-export { compileFunctionWithContext, compileModuleWithContext, TranspilationError, TranspilationResult } from "./transpilation";
+export {
+    DEFAULT_TRANSPILATION_MODE,
+    TRANSPILATION_MODES,
+    TRANSPILATION_TARGETS,
+    TranspilationError,
+    TranspilationMode,
+    TranspilationResult,
+    TranspilationTarget,
+    compileFunctionWithContext,
+    compileModuleWithContext
+} from "./transpilation";
