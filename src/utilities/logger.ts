@@ -7,12 +7,13 @@ enum LogLevel {
     HIGHEST = 6,
 }
 
-const COLOR_MAP = {
+const COLOR_MAP: Record<LogLevel, string> = {
     [LogLevel.DEBUG]: "green",
     [LogLevel.INFO]: "#9999ff",
     [LogLevel.WARN]: "yellow",
     [LogLevel.ERROR]: "red",
     [LogLevel.CRITICAL]: "black",
+    [LogLevel.HIGHEST]: "black",
 };
 
 const MIN_LEVEL = LogLevel.ERROR;
@@ -120,7 +121,6 @@ function shouldLog(level: LogLevel) {
 function getLogLine(level: LogLevel, message: string) {
     return [
         `${getIndent()}%c[${level}]%c ${PREFIX.join(" ")} ${message}`,
-        // @ts-expect-error
         `color: ${COLOR_MAP[level]}`,
         "color: inherit",
     ];
