@@ -85,15 +85,19 @@ export function transpileFunction(source: string, options: { filename?: string }
     return transpile(source, { ...FUNCTION_TRANSPILE_OPTIONS, ...options });
 }
 
+export type CompiledModule = {
+    exports: Record<string, any>;
+}
+
 export function compileModuleWithContext(
     code: string,
     context: Record<string, any> = {},
     options: { transpile: boolean; filename?: string } = { transpile: true }
-): Record<string, any> {
+): CompiledModule & { message?: undefined } | TranspilationError {
     if (options.transpile) {
         let transpiled = transpileModule(code, { filename: options.filename ?? "file.tsx" });
         if (transpiled.errors != null) {
-            throw transpiled.errors[0];
+            return transpiled.errors[0];
         }
         code = transpiled.code;
     }
@@ -114,9 +118,7 @@ export function compileModuleWithContext(
     // Run the function to populate the exports object
     createModule(exports, module, ...contextNames.map((name) => context[name]));
 
-    const result = { ...exports, ...module.exports };
-
-    return result;
+    return { exports: { ...exports, ...module.exports } };
 }
 
 export function compileFunctionWithContext(
@@ -124,13 +126,17 @@ export function compileFunctionWithContext(
     context: Record<string, any> = {},
     args: string[] = ["ctx", "note"],
     options: { transpile: boolean, filename?: string } = { transpile: true }
-): (Function & { message?: undefined }) | TranspilationError {
+): Function & { message?: undefined } | TranspilationError {
     if (options.transpile) {
         let transpiled = transpileFunction(code, { filename: options.filename ?? "file.tsx" });
         if (transpiled.errors) {
             return transpiled.errors[0];
         }
         code = transpiled.code;
+    }
+
+    if (code && options.filename) {
+        code = `${code}\n//# sourceURL=${options.filename}`;
     }
 
     const contextNames = Object.keys(context);

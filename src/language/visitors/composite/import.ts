@@ -56,7 +56,7 @@ export const Import = () =>
             }
             // TODO: Review handling of null/undefined
             for (let symbol of symbols!) {
-                if (!(symbol!.symbol! in module!.env!)) {
+                if (!(symbol!.symbol! in module!.env!.types)) {
                     this.error("Unknown symbol", symbol.node);
                 }
             }
@@ -67,12 +67,12 @@ export const Import = () =>
             let module = this.callContext.interpreter.importSmart(path, this.callContext.path);
             // TODO: Review handling of null/undefined
             for (let symbol of symbols!) {
-                if (!(symbol.symbol! in module!.env!)) {
+                if (!(symbol.symbol! in module!.env!.types)) {
                     // TODO: handle: throw error or continue
                     continue;
                 }
-                let importedType = module!.env![symbol!.symbol!];
-                importedType.name = symbol.alias;
+                let importedType = module!.env!.types[symbol!.symbol!];
+                importedType.name = symbol.alias!;
                 result.push(importedType);
             }
             return result;

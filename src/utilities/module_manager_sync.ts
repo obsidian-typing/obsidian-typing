@@ -2,55 +2,71 @@ import { Plugin, TFile, Vault } from "obsidian";
 import { dirname, join, normalize } from "path-browserify";
 import { DependencyGraph } from "src/utilities/dependency_graph";
 
-export type FailedModule = {
-    error: string;
-    env?: Record<string, any>;
-    file?: FileSpec;
-};
-
-export type LoadedModule = {
-    error?: undefined;
-    env: Record<string, any>;
-    file: FileSpec;
-};
-
-export type Module = FailedModule | LoadedModule;
+export type FilePath = string;
 
 export interface FileSpec {
     source: string;
-    path: string;
+    path: FilePath;
     // hash: string;
 }
 
-interface StackFrame {
-    module: Module & Required<Pick<Module, "file">>;
+export type FailedModule<T> = {
+    error: string;
+    env?: T;
+    file?: FileSpec;
+};
+
+export type LoadedModule<T> = {
+    error?: undefined;
+    env: T;
+    file: FileSpec;
+};
+
+export type Module<T> = FailedModule<T> | LoadedModule<T>;
+
+interface StackFrame<T> {
+    module: Module<T> & { file: FileSpec };
 }
 
-export abstract class ModuleManagerSync<ContextType = any> {
-    protected modules: Record<string, Module>;
-    protected files: Record<string, FileSpec>;
-    protected dependencyGraph: DependencyGraph;
-    protected callStack: StackFrame[] = [];
+export interface ImportStatusListener {
+    onImportStarted(path: FilePath): void;
+    onImportFailed(path: FilePath): void;
+    onImportCompleted(path: FilePath): void;
+}
+
+const RELATIVE_PATH_REGEX = /^\.\.?($|\/)/;
+
+export abstract class ModuleManagerSync<T = any> {
+    protected modules: Record<FilePath, Module<T>>;
+    protected files: Record<FilePath, FileSpec>;
+    protected dependencyGraph: DependencyGraph<FilePath>;
+    protected callStack: StackFrame<T>[] = [];
 
     public readonly extensions: string[] = [];
 
-    constructor(private vault: Vault, private plugin: Plugin) {
+    constructor(private vault: Vault, private plugin: Plugin, private statusReport?: ImportStatusListener) {
         this.modules = {};
         this.files = {};
         this.dependencyGraph = new DependencyGraph();
     }
 
-    public importSmart(path: string, base?: string) {
-        base = base ?? this.currentFrame?.module?.file.path;
-        if (base) {
-            base = dirname(base);
+    public importSmart(path: FilePath, basePath?: FilePath) {
+        // Determine the base directory for relative paths
+        basePath = basePath ?? this.currentFrame?.module?.file.path;
+        if (basePath) {
+            basePath = dirname(basePath);
         } else {
-            base = "";
+            basePath = "";
         }
-        if (path.startsWith(".")) {
-            let newPath = normalize(join(base, path));
+
+        // Resolve relative paths from base directory
+        if (RELATIVE_PATH_REGEX.exec(path)) {
+            let newPath = normalize(join(basePath, path));
             path = newPath;
         }
+
+        // Attempt to find a matching file with the proper file extension
+        // if path does not already contain a file extension.
         if (!this.extensions.some((ext) => path.endsWith("." + ext))) {
             for (let ext of this.extensions) {
                 let result = this.importModule(path + "." + ext);
@@ -61,10 +77,12 @@ export abstract class ModuleManagerSync<ContextType = any> {
                 if (result !== null) return result;
             }
         }
+
+        // Try to import from the path as specified
         return this.importModule(path);
     }
 
-    public importModule(path: string, source?: string, forceReload: boolean = false): Module | null {
+    public importModule(path: FilePath, source?: string, forceReload: boolean = false): Module<T> | null {
         for (let frame of this.callStack) {
             if (frame.module.file.path == path) {
                 return { error: `Recursive import: ${path}` };
@@ -82,20 +100,14 @@ export abstract class ModuleManagerSync<ContextType = any> {
             return this.modules[path];
         }
 
-        let file;
-        if (source !== null && source !== undefined) {
-            file = { source, path };
-        } else {
-            file = this.getFile(path);
-        }
-
+        let file = source === null || source === undefined ? this.getFile(path) : { source, path };
         if (!file) {
             return null;
         }
 
         // The expression below is used to make the TypeScript compiler
         // "forget" the const values and fix type inference.
-        const module = ((x: StackFrame["module"]) => x)({ env: {}, file })
+        const module = ((x: StackFrame<T>["module"]) => x)({ env: {} as T, file })
 
         this.enterFrame({ module });
 
@@ -104,7 +116,15 @@ export abstract class ModuleManagerSync<ContextType = any> {
         let success = false;
 
         try {
+            this.statusReport?.onImportStarted(path);
+
             success = this.evaluateModule(file, module);
+
+            if (!success) {
+                this.statusReport?.onImportFailed(path);
+            } else {
+                this.statusReport?.onImportCompleted(path);
+            }
         } catch (e) {
             this.exitFrame();
             return { error: `Unexpected error: ${e}`};
@@ -129,7 +149,7 @@ export abstract class ModuleManagerSync<ContextType = any> {
         await this.setupFileWatcher();
     }
 
-    private enterFrame(frame: StackFrame) {
+    private enterFrame(frame: StackFrame<T>) {
         this.callStack.push(frame);
     }
 
@@ -145,7 +165,7 @@ export abstract class ModuleManagerSync<ContextType = any> {
         return this.currentFrame?.module;
     }
 
-    private getFile(path: string): FileSpec {
+    private getFile(path: FilePath): FileSpec {
         return this.files[path];
     }
 
@@ -153,7 +173,7 @@ export abstract class ModuleManagerSync<ContextType = any> {
         this.files[path] = { source, path };
     }
 
-    protected async unloadModule(path: string) {
+    protected async unloadModule(path: FilePath) {
         delete this.files[path];
         delete this.modules[path];
         this.onModuleUpdate(path);
@@ -161,7 +181,7 @@ export abstract class ModuleManagerSync<ContextType = any> {
         this.onAfterReload(path);
     }
 
-    protected async reloadModule(path: string) {
+    protected async reloadModule(path: FilePath) {
         let file = await this.loadFile(path);
         this.setFile({ source: file ?? "", path });
 
@@ -176,7 +196,7 @@ export abstract class ModuleManagerSync<ContextType = any> {
         this.onAfterReload(path);
     }
 
-    protected reloadDependents(path: string): void {
+    protected reloadDependents(path: FilePath): void {
         const dependents = this.dependencyGraph.getDependents(path);
         if (dependents) {
             for (const dependent of dependents) {
@@ -185,9 +205,9 @@ export abstract class ModuleManagerSync<ContextType = any> {
         }
     }
 
-    protected abstract evaluateModule(file: FileSpec, mod: Module): mod is LoadedModule;
+    protected abstract evaluateModule(file: FileSpec, mod: Module<T>): mod is LoadedModule<T>;
 
-    protected async loadFile(path: string): Promise<string | null> {
+    protected async loadFile(path: FilePath): Promise<string | null> {
         let tfile = this.vault.getAbstractFileByPath(path);
         if (!(tfile instanceof TFile)) {
             return null;
@@ -239,14 +259,14 @@ export abstract class ModuleManagerSync<ContextType = any> {
         );
     }
 
-    protected shouldRead(path: string): boolean {
+    protected shouldRead(path: FilePath): boolean {
         return this.extensions.some((ext) => path.endsWith("." + ext));
     }
 
     protected onAfterPreload(): void { }
-    protected onModuleUpdate(path: string): void { }
-    protected onBeforeImport(path: string): void { }
-    protected onAfterImport(path: string): void { }
-    protected onBeforeReload(path: string): void { }
-    protected onAfterReload(path: string): void { }
+    protected onModuleUpdate(path: FilePath): void { }
+    protected onBeforeImport(path: FilePath): void { }
+    protected onAfterImport(path: FilePath): void { }
+    protected onBeforeReload(path: FilePath): void { }
+    protected onAfterReload(path: FilePath): void { }
 }

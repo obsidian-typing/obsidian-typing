@@ -4,7 +4,6 @@ import { Visitors } from "src/language";
 import { Note, Type } from "src/typing";
 import * as ui from "src/ui";
 import { TypeSuggestModal } from "src/ui";
-import { Module } from "src/utilities/module_manager_sync";
 
 type PromiseType<T> = T extends Promise<infer U> ? U : never;
 
@@ -70,25 +69,25 @@ export class TypingAPI {
         if (mod.error !== null && mod.error !== undefined) {
             throw new Error(`ImportError: Error in module ${path}: ${mod.error}`);
         }
-        return mod.env;
+        return mod.env.exports;
     }
 
-    _import_explicit(path: string, symbols: any[], base?: string): Record<string, any> {
+    _import_explicit(path: string, symbols: (string | symbol | number)[], base?: string): Record<string, any> {
         if (path in this.lib) {
             return this.lib[path as keyof typeof this.lib]!;
         }
         let mod = gctx.importManager.importSmart(path, base);
         if (mod === null || mod === undefined) {
-            throw new Error(`ImportError: Could not find module ${path}`);
+            throw new Error(`ImportError: Could not find module '${path}'`);
         }
         if (mod.error !== null && mod.error !== undefined) {
-            throw new Error(`ImportError: Error in module ${path}: ${mod.error}`);
+            throw new Error(`ImportError: Error in module '${path}': ${mod.error}`);
         }
         for (let arg of symbols) {
-            if (!(arg in mod.env)) {
-                throw new Error(`ImportError: Could not find symbol ${arg} in module ${path}`);
+            if (!(arg in mod.env.exports)) {
+                throw new Error(`ImportError: Could not find symbol ${String(arg)} in module '${path}'`);
             }
         }
-        return mod.env;
+        return mod.env.exports;
     }
 }

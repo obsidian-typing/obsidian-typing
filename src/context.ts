@@ -6,6 +6,7 @@ import { ImportManager } from "src/scripting";
 import { Note, NoteCache, RelationsManager, TypeGraph } from "src/typing";
 import { TypingAPI } from "./api";
 import { CSSManager } from "./utilities";
+import { EditorStatusPanel } from "./editor/status";
 
 export class GlobalContext {
     app!: App;
@@ -55,7 +56,7 @@ export class GlobalContext {
         gctx.importManager = new ImportManager(plugin.app.vault, plugin);
         gctx.types = new TypeGraph();
         gctx.relations = new RelationsManager();
-        gctx.interpreter = new Interpreter(plugin.app.vault, plugin);
+        gctx.interpreter = new Interpreter(plugin.app.vault, plugin, new EditorStatusPanel.ImportListener());
         gctx.noteCache = new NoteCache();
 
         if (gctx.testing) return;

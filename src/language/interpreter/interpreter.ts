@@ -1,10 +1,14 @@
 import { gctx } from "src/context";
-import { setPanelContent } from "src/editor/editor";
 import { parser } from "src/language/grammar/otl_parser";
 import { TVisitorBase, Visitors } from "src/language/visitors";
-import { FileSpec, LoadedModule, Module, ModuleManagerSync } from "src/utilities/module_manager_sync";
+import { Type } from "src/typing";
+import { FilePath, FileSpec, LoadedModule, Module, ModuleManagerSync } from "src/utilities/module_manager_sync";
 
-export class Interpreter extends ModuleManagerSync {
+export type SchemaModule = {
+    types: Record<string, Type>;
+}
+
+export class Interpreter extends ModuleManagerSync<SchemaModule> {
     extensions = ["otl"];
 
     public runCode(code: string, visitor: TVisitorBase) {
@@ -18,36 +22,37 @@ export class Interpreter extends ModuleManagerSync {
         return visitor.run(node, { interpreter: this, input: code });
     }
 
-    public evaluateModule(file: FileSpec, mod: Module): mod is LoadedModule {
+    public evaluateModule(file: FileSpec, mod: Module<SchemaModule>): mod is LoadedModule<SchemaModule> {
         if (file.source === null || file.source === undefined) {
-            setPanelContent(`Importing ${this.activeModule?.file.path} failed...`);
             return false;
         }
 
-        setPanelContent(`Importing ${this.activeModule?.file.path}...`);
+        // Parse text into AST
         let tree = parser.parse(file.source);
 
+        // Check for lint errors
         let lint = Visitors.File.lint(tree.topNode, { interpreter: this });
         if (lint.hasErrors) {
             mod.error = lint.diagnostics.map((d) => `${file.path}:${d.from}-${d.to}: ${d.message}`).join("\n");
         }
-        let types = Visitors.File.run(tree.topNode, { interpreter: this });
 
+        // Convert AST into our object model
+        let types = Visitors.File.run(tree.topNode, { interpreter: this });
         if (types === null) {
-            setPanelContent(`Importing ${this.activeModule?.file.path} failed...`);
             return false;
         }
-        mod.env = types;
-        setPanelContent(`Importing ${this.activeModule?.file.path} succeeded...`);
+
+        mod.env = { types };
         return true;
     }
 
-    protected onAfterImport(fileName: string): void {
-        if (fileName === gctx.plugin.settings.schemaPath) {
+    protected onAfterImport(path: FilePath): void {
+        if (path === gctx.plugin.settings.schemaPath) {
             gctx.types.clear();
-            let mainModule = this.modules[fileName];
-            for (let key in mainModule.env) {
-                gctx.types.add(mainModule.env[key]);
+            let newModule = this.modules[path];
+            let newTypes = newModule.env?.types;
+            for (let key in newTypes) {
+                gctx.types.add(newTypes[key]);
             }
             gctx.noteCache.invalidateAll();
             gctx.app.metadataCache.trigger("typing:schema-change");
