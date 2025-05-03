@@ -120,10 +120,20 @@ export function transpile(source: string, options: TransformOptions): Transpilat
     }
 }
 
+export function getTranspilationModeFromFileName(filename?: string): TranspilationMode | null {
+    switch (filename ? extname(filename) : null) {
+        case ".js": return "js";
+        case ".ts": return "ts";
+        case ".jsx": return "jsx";
+        case ".tsx": return "tsx";
+        default: return null;
+    }
+}
+
 export function transpileModule(source: string, options: { mode?: TranspilationMode, filename?: string } = {}) {
     let baseOptions = getTranspileOptions(
         "module",
-        options.mode ??  DEFAULT_TRANSPILATION_MODE
+        options.mode ?? getTranspilationModeFromFileName(options.filename) ?? DEFAULT_TRANSPILATION_MODE
     );
     return transpile(source, {
         ...baseOptions,
@@ -134,7 +144,7 @@ export function transpileModule(source: string, options: { mode?: TranspilationM
 export function transpileFunction(source: string, options: { mode?: TranspilationMode, filename?: string } = {}) {
     let baseOptions = getTranspileOptions(
         "function",
-        options.mode ??  DEFAULT_TRANSPILATION_MODE
+        options.mode ?? getTranspilationModeFromFileName(options.filename) ?? DEFAULT_TRANSPILATION_MODE
     );
     return transpile(source, {
         ...baseOptions,
