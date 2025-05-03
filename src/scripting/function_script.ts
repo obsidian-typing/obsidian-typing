@@ -2,7 +2,7 @@ import { Fragment, h } from "preact";
 import { gctx } from "src/context";
 import { Note } from "src/typing";
 import { DataClass, field } from "src/utilities";
-import { compileFunctionWithContext } from "./transpilation";
+import { compileFunctionWithContext, TranspilationMode } from "./transpilation";
 
 export interface IScriptContextBase {
     note?: Note;
@@ -16,7 +16,10 @@ export class Script<T extends IScriptContextBase = IScriptContextBase> extends D
     fn!: Function;
 
     @field()
-    filePath: string | null = null;
+    mode?: string | null;
+
+    @field()
+    filePath?: string | null;
 
     onAfterCreate() {
         this.source = this.transformSource(this.source);
@@ -42,11 +45,12 @@ export class Script<T extends IScriptContextBase = IScriptContextBase> extends D
         return this.fn(ctx, ctx.note, ctx);
     }
 
-    static validate(source: string) {
+    static validate(mode: TranspilationMode, source: string) {
         if (!gctx.settings.enableScripting) {
             return { message: "Safe mode: JS scripting is currently disabled. Please enable it in Typing settings." };
         }
-        let result = compileFunctionWithContext(source, {});
+        let transformedSource = this.prototype.transformSource(source);
+        let result = compileFunctionWithContext(transformedSource, {}, undefined, { transpile: mode ?? true });
         if (result instanceof Function) {
             return {};
         }
