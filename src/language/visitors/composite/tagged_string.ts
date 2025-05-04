@@ -6,16 +6,20 @@ import { dedent, ifInArray } from "src/utilities";
 import * as Visitors from ".";
 import { createVisitor, Rules } from "../index_base";
 
-const FN_SCRIPT_TAGS = [
+export const FN_SCRIPT_TAGS = [
     ...["fn", "function"],
     ...TRANSPILATION_MODES,
     ...TRANSPILATION_MODES.flatMap(mode => ["fn", "function"].map(kind => `${kind}.${mode}`)),
 ];
 
-const EXPR_SCRIPT_TAGS = [
+export const FN_SCRIPT_MODES = Object.fromEntries(FN_SCRIPT_TAGS.map(tag => [tag, getModeFromTag(tag)]));
+
+export const EXPR_SCRIPT_TAGS = [
     ...["expr", "expression"],
     ...TRANSPILATION_MODES.flatMap(mode => ["expr", "expression"].map(kind => `${kind}.${mode}`)),
 ];
+
+export const EXPR_SCRIPT_MODES = Object.fromEntries(FN_SCRIPT_TAGS.map(tag => [tag, getModeFromTag(tag)]));
 
 function getModeFromTag(tag: string | undefined | null): TranspilationMode {
     if (tag === undefined || tag === null) {
