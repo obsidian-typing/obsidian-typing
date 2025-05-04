@@ -1,7 +1,7 @@
 // organize-imports-ignore
 
 export * from "../pure";
-export { MarkdownString, TaggedString, FnScriptString, ExprScriptString } from "./tagged_string";
+export { MarkdownString, Tag, TaggedString, FnScriptString, ExprScriptString } from "./tagged_string";
 export { Attribute, NamedAttribute } from "./attribute";
 export { List } from "./list";
 export { StructuredObject } from "./object";
