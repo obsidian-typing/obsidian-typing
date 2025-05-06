@@ -1,6 +1,8 @@
 import { gctx } from "src/context";
 import TypingPlugin from "src/main";
 import { ActionSuggestModal } from "src/ui";
+import { BaseEditorView } from "./editor/editor";
+import { autoIndentDocument, autoIndentRange } from "./editor/formatting/commands";
 
 const COMMANDS = [
     {
@@ -55,6 +57,28 @@ const COMMANDS = [
             if (gctx.app.vault.getAbstractFileByPath(schemaPath) == null) {
                 let tfile = await gctx.app.vault.create(schemaPath, "");
                 gctx.app.workspace.getLeaf(false).openFile(tfile);
+            }
+        },
+    },
+
+    {
+        id: "indent-document",
+        name: "Auto-Format Document (Indentation only)",
+        callback: async () => {
+            let editorView = gctx.plugin.app.workspace.getActiveViewOfType(BaseEditorView)?.view;
+            if (editorView) {
+                autoIndentDocument(editorView);
+            }
+        },
+    },
+
+    {
+        id: "indent-selection",
+        name: "Auto-Format Selection (Indentation only)",
+        callback: async () => {
+            let editorView = gctx.plugin.app.workspace.getActiveViewOfType(BaseEditorView)?.view;
+            if (editorView) {
+                autoIndentRange(editorView);
             }
         },
     },

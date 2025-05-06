@@ -151,8 +151,8 @@ const autoSavePlugin = (textView: TextFileView) =>
         }
     );
 
-class BaseEditorView extends TextFileView {
-    private view?: EditorView;
+export class BaseEditorView extends TextFileView {
+    public view?: EditorView;
     navigation = true;
 
     constructor(leaf: WorkspaceLeaf, private viewType: string, private extensions: Extension[]) {
