@@ -1,5 +1,5 @@
 import { ChangeSpec, EditorState, Text } from "@codemirror/state";
-import { SyntaxNode } from "@lezer/common";
+import { IterMode, SyntaxNode } from "@lezer/common";
 import { Spacing, SpacingRules } from "./spacing";
 import { WhiteSpace } from "./whitespace";
 
@@ -35,7 +35,7 @@ export function formatTree(state: EditorState, node: SyntaxNode, rules: SpacingR
     }
 
     let doc: Text = state.doc;
-    let cursor = node.cursor();
+    let cursor = node.cursor(IterMode.IgnoreMounts | IterMode.IgnoreOverlays);
 
     let parent = cursor.node;
     let parentRange = { from: parent.from, to: parent.to };
