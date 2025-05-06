@@ -29,7 +29,7 @@ export function formatTree(state: EditorState, node: SyntaxNode, rules: SpacingR
             throw new Error("At least one of after and before must not be null");
         }
         let parentRange = { from: parent.from, to: parent.to };
-        let whiteSpace = WhiteSpace.between(doc, after, before)!;
+        let whiteSpace = WhiteSpace.between(doc, parent, after, before)!;
         let spacing = rules.getSpacing(parentRange, parent, after, before);
         applySpacing(whiteSpace, spacing);
     }

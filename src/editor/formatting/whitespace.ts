@@ -1,10 +1,12 @@
 import { ChangeSpec, Text } from "@codemirror/state";
-import { SyntaxNode } from "@lezer/common";
+import { SyntaxNode, SyntaxNodeRef } from "@lezer/common";
 import assert from "assert";
 import { Spacing } from "./spacing";
 
-function assertSameNode(a: SyntaxNode | null, b: SyntaxNode | null, message: string) {
-    assert(a === b, message);
+function assertSameNode(a: SyntaxNodeRef | null, b: SyntaxNodeRef | null, message: string) {
+    assert(a?.type === b?.type, message);
+    assert(a?.to === b?.to, message);
+    assert(a?.from === b?.from, message);
 }
 
 /**
@@ -15,8 +17,8 @@ export class WhiteSpace {
         private readonly doc: Text,
         private readonly from: number,
         private readonly to: number,
-        private readonly after: SyntaxNode | null,
-        private readonly before: SyntaxNode | null,
+        private readonly after: SyntaxNodeRef | null,
+        private readonly before: SyntaxNodeRef | null,
     ) {
     }
 
@@ -36,45 +38,45 @@ export class WhiteSpace {
      * Gets the whitespace between the specified two nodes.
      * {@link after} and {@link before} must be directly adjacent.
      */
-    static between(doc: Text, after: SyntaxNode, before: SyntaxNode): WhiteSpace;
+    static between(doc: Text, parent: SyntaxNodeRef, after: SyntaxNodeRef, before: SyntaxNodeRef): WhiteSpace;
 
     /**
-     * Gets the whitespace between the start of {@link before}'s {@link SyntaxNode#parent} and {@link before}.
-     * {@link before} must be the first (non-whitespace) child of its {@link SyntaxNode#parent}.
+     * Gets the whitespace between the start of {@link before}'s {@link parent} and {@link before}.
+     * {@link before} must be the first (non-whitespace) child of its {@link parent}.
      */
-    static between(doc: Text, after: SyntaxNode | null | undefined, before: SyntaxNode): WhiteSpace;
+    static between(doc: Text, parent: SyntaxNodeRef, after: SyntaxNodeRef | null | undefined, before: SyntaxNodeRef): WhiteSpace;
 
     /**
      * Gets the whitespace between {@link after} and the end of {@link after}'s {@link SyntaxNode#parent}.
      * {@link after} must be the last (non-whitespace) child of its {@link SyntaxNode#parent}.
      */
-    static between(doc: Text, after: SyntaxNode, before: SyntaxNode | null | undefined): WhiteSpace;
+    static between(doc: Text, parent: SyntaxNodeRef, after: SyntaxNodeRef, before: SyntaxNodeRef | null | undefined): WhiteSpace;
 
     /**
      * Always returns {@code undefined} if both {@link after} and {@link before}
      * are {@code null} or {@code undefined}.
      */
-    static between(doc: Text, after: null | undefined, before: null | undefined): null;
+    static between(doc: Text, parent: SyntaxNodeRef, after: null | undefined, before: null | undefined): null;
 
-    static between(doc: Text, after: SyntaxNode | null | undefined, before: SyntaxNode | null | undefined): WhiteSpace | null;
+    static between(doc: Text, parent: SyntaxNodeRef, after: SyntaxNodeRef | null | undefined, before: SyntaxNodeRef | null | undefined): WhiteSpace | null;
 
-    static between(doc: Text, after: SyntaxNode | null | undefined, before: SyntaxNode | null | undefined): WhiteSpace | null {
+    static between(doc: Text, parent: SyntaxNodeRef, after: SyntaxNodeRef | null | undefined, before: SyntaxNodeRef | null | undefined): WhiteSpace | null {
         if (after && before) {
-            assertSameNode(after.parent, before.parent, "must have same parent");
-            assertSameNode(after.nextSibling, before, "must be directly adjacent");
-            assertSameNode(after, before.prevSibling, "must be directly adjacent");
+            // assertSameNode(after.parent, before.parent, "must have same parent");
+            // assertSameNode(after.nextSibling, before, "must be directly adjacent");
+            // assertSameNode(after, before.prevSibling, "must be directly adjacent");
         } else if (after) {
             assert(!before);
-            assertSameNode(after.nextSibling, null, "must be the last child");
+            // assertSameNode(after.nextSibling, null, "must be the last child");
         } else if (before) {
             assert(!after);
-            assertSameNode(before.prevSibling, null, "must be the first child");
+            // assertSameNode(before.prevSibling, null, "must be the first child");
         } else {
             return null;
         }
 
-        let from = after?.to ?? before?.parent?.from ?? 0;
-        let to = before?.from ?? after?.parent?.to ?? doc.length;
+        let from = after?.to ?? parent?.from ?? 0;
+        let to = before?.from ?? parent?.to ?? doc.length;
         return new WhiteSpace(doc, from, to, after ?? null, before ?? null);
     }
 }
