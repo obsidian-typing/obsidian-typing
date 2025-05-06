@@ -5,7 +5,7 @@ import { html } from "@codemirror/lang-html";
 import { javascript } from "@codemirror/lang-javascript";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import {
-    continuedIndent,
+    delimitedIndent,
     foldNodeProp,
     indentNodeProp,
     indentUnit,
@@ -65,9 +65,11 @@ const TAGGED_STRING_ISLAND_GRAMMARS: Record<string, Parser> = {
 let parserWithMetadata = parser.configure({
     props: [
         indentNodeProp.add({
-            SectionDeclaration: continuedIndent(),
-            TypeDeclaration: continuedIndent(),
-            Object: continuedIndent(),
+            AssignmentType: delimitedIndent({ closing: "}", align: false }),
+            ImportStatement: delimitedIndent({ closing: "}", align: false }),
+            SectionDeclaration: delimitedIndent({ closing: "}", align: false }),
+            TypeDeclaration: delimitedIndent({ closing: "}", align: false }),
+            Object: delimitedIndent({ closing: "}", align: false }),
         }),
         foldNodeProp.add({
             [[Rules.TypeBody, Rules.SectionBody, Rules.Object, Rules.List].join(" ")](tree) {
