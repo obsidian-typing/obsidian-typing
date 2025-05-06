@@ -2,7 +2,7 @@ import { gctx } from "src/context";
 import TypingPlugin from "src/main";
 import { ActionSuggestModal } from "src/ui";
 import { BaseEditorView } from "./editor/editor";
-import { autoIndentDocument, autoIndentRange } from "./editor/formatting/commands";
+import { autoFormatDocument, autoFormatRange, autoIndentDocument, autoIndentRange } from "./editor/formatting/commands";
 
 const COMMANDS = [
     {
@@ -79,6 +79,28 @@ const COMMANDS = [
             let editorView = gctx.plugin.app.workspace.getActiveViewOfType(BaseEditorView)?.view;
             if (editorView) {
                 autoIndentRange(editorView);
+            }
+        },
+    },
+
+    {
+        id: "format-document",
+        name: "Auto-Format Document (Indentation & Spacing)",
+        callback: async () => {
+            let editorView = gctx.plugin.app.workspace.getActiveViewOfType(BaseEditorView)?.view;
+            if (editorView) {
+                autoFormatDocument(editorView);
+            }
+        },
+    },
+
+    {
+        id: "format-selection",
+        name: "Auto-format Selection (Indentation & Spacing)",
+        callback: async () => {
+            let editorView = gctx.plugin.app.workspace.getActiveViewOfType(BaseEditorView)?.view;
+            if (editorView) {
+                autoFormatRange(editorView);
             }
         },
     },
