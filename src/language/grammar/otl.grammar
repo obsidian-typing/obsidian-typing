@@ -179,10 +179,28 @@ String {
     !["\\] | "\\" _
   }
 
-    space { ($[ \t\f])+ }
-    newline {
-      "\n" | "\r" | "\r\n"
-    }
+  // Tokens marked as "Delimiter" will be automatically skipped by our tree visitors,
+  // unless a specific visitor explicitly requests to visit them.
+  "("[closedBy=")", group="Delimiter"]
+  ")"[openedBy="(", group="Delimiter"]
+
+  "["[closedBy="]", group="Delimiter"]
+  "]"[openedBy="[", group="Delimiter"]
+
+  "{"[closedBy="}", group="Delimiter"]
+  "}"[openedBy="{", group="Delimiter"]
+
+  "="[group="Delimiter"]
+  ","[group="Delimiter"]
+  "`"[group="Delimiter"]
+
+  space {
+    ($[ \t\f])+
+  }
+
+  newline {
+    "\n" | "\r" | "\r\n"
+  }
 
   LineComment {
     "//" ![\n]*
