@@ -179,16 +179,20 @@ String {
     !["\\] | "\\" _
   }
 
-  "("[closedBy=")"]
-  ")"[openedBy="("]
+  // Tokens marked as "Delimiter" will be automatically skipped by our tree visitors,
+  // unless a specific visitor explicitly requests to visit them.
+  "("[closedBy=")", group="Delimiter"]
+  ")"[openedBy="(", group="Delimiter"]
 
-  "["[closedBy="]"]
-  "]"[openedBy="["]
+  "["[closedBy="]", group="Delimiter"]
+  "]"[openedBy="[", group="Delimiter"]
 
-  "{"[closedBy="}"]
-  "}"[openedBy="}"]
+  "{"[closedBy="}", group="Delimiter"]
+  "}"[openedBy="{", group="Delimiter"]
 
-  "=" "," "`"
+  "="[group="Delimiter"]
+  ","[group="Delimiter"]
+  "`"[group="Delimiter"]
 
   space {
     ($[ \t\f])+

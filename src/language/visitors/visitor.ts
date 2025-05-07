@@ -106,6 +106,8 @@ interface TraversalOptions<Key> {
     visitTop?: boolean;
     visitChildren?: boolean;
     exitCriterion?: () => boolean;
+    skipAlways?: string[],
+    skipUnmatched?: string[],
     nodeFilter?: (node: SyntaxNode) => boolean;
     selectChildren?: Key[];
     callbackNotAccepted?: (node: SyntaxNode) => void;
@@ -129,6 +131,7 @@ const defaultVisitorOptions: VisitorOptions = {
     traversal: {
         visitTop: false,
         visitChildren: true,
+        skipUnmatched: ["Delimiter"],
     },
 };
 
@@ -809,8 +812,10 @@ export class Visitor<
             if (cursor.firstChild()) {
                 do {
                     if (options.exitCriterion && options.exitCriterion()) break;
+                    if (options.skipAlways && options.skipAlways.some(skippedType => cursor.type.is(skippedType))) continue;
                     if (options.nodeFilter && !options.nodeFilter(cursor.node)) continue;
                     let success = this.visit(cursor.node, callback, activeChildren);
+                    if (!success && options.skipUnmatched && options.skipUnmatched.some(skippedType => cursor.type.is(skippedType))) continue;
                     if (!success && options.callbackNotAccepted) {
                         try {
                             options.callbackNotAccepted(cursor.node);
