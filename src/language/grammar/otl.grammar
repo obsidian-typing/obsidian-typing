@@ -179,7 +179,14 @@ String {
     !["\\] | "\\" _
   }
 
-  "(" ")" "[" "]" "{" "}"
+  "("[closedBy=")"]
+  ")"[openedBy="("]
+
+  "["[closedBy="]"]
+  "]"[openedBy="["]
+
+  "{"[closedBy="}"]
+  "}"[openedBy="}"]
 
   "=" "," "`"
 
