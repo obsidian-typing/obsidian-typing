@@ -171,14 +171,7 @@ export const Type = createVisitor({
                         ),
                         css: Visitors.Attribute(
                             "css",
-                            Visitors.TaggedString({ tags: ["css"] }).override({
-                                children: {
-                                    content: Visitors.String,
-                                },
-                                run(node) {
-                                    return this.runChild("content");
-                                },
-                            })
+                            Visitors.CSSString()
                         ),
                         css_classes: Visitors.Attribute("css_classes", Visitors.List(Visitors.String)),
                         show_prefix: Visitors.Attribute(
