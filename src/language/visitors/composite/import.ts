@@ -36,12 +36,12 @@ export const Import = () =>
                     return result;
                 },
             }),
-            path: Visitors.String.extend({
+            path: Visitors.String.extend(base => ({
                 complete(node) {
                     // TODO: complete paths
                     return [];
                 },
-            }),
+            })),
         },
         lint(node) {
             let { symbols, path } = this.runChildren();

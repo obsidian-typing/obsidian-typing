@@ -30,4 +30,4 @@ export const File = createVisitor({
         });
         return module;
     },
-}).extend(Wrappers.ScopeWrapper({ shouldComplete: true }));
+}).extend(base => Wrappers.ScopeWrapper(base, { shouldComplete: true }));

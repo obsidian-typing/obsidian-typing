@@ -100,7 +100,7 @@ export const TaggedString = ({ tags, strict = false }: { tags: string[]; strict?
     });
 
 export const FnScriptString = (content = "\n\t${}\n", tags = FN_SCRIPT_TAGS) =>
-    TaggedString({ tags, strict: true }).override({
+    TaggedString({ tags, strict: true }).override(base => ({
         run(node) {
             if (!gctx.settings.enableScripting) return undefined;
             let { tag, code } = this.utils.run();
@@ -111,7 +111,7 @@ export const FnScriptString = (content = "\n\t${}\n", tags = FN_SCRIPT_TAGS) =>
             });
         },
         lint(node) {
-            let { tag, code } = this.runChildren();
+            let { tag, code } = this.utils.run();
             let result = FnScript.validate(getModeFromTag(tag), code ?? "");
             if (!gctx.settings.enableScripting) {
                 this.warning(
@@ -135,11 +135,11 @@ export const FnScriptString = (content = "\n\t${}\n", tags = FN_SCRIPT_TAGS) =>
                 ),
             ];
         },
-    });
+    }));
 
 
 export const ExprScriptString = (content = "\n\t${}\n", tags = EXPR_SCRIPT_TAGS) =>
-    TaggedString({ tags, strict: true }).override({
+    TaggedString({ tags, strict: true }).override(base => ({
         run(node) {
             if (!gctx.settings.enableScripting) return undefined;
             let { tag, code } = this.utils.run();
@@ -174,10 +174,10 @@ export const ExprScriptString = (content = "\n\t${}\n", tags = EXPR_SCRIPT_TAGS)
                 ),
             ];
         },
-    });
+    }));
 
 export const MarkdownString = (tags = ["md", "markdown"]) =>
-    TaggedString({ tags, strict: true }).override({
+    TaggedString({ tags, strict: true }).override(base => ({
         run(node) {
             let { code } = this.utils.run();
             return new Values.Markdown(code);
@@ -193,10 +193,10 @@ export const MarkdownString = (tags = ["md", "markdown"]) =>
                 ),
             ];
         },
-    });
+    }));
 
 export const CSSString = (tags = ["css"]) =>
-    TaggedString({ tags, strict: true }).override({
+    TaggedString({ tags, strict: true }).override(base => ({
         run(node) {
             return this.utils.run().code;
         },
@@ -211,4 +211,4 @@ export const CSSString = (tags = ["css"]) =>
                 ),
             ];
         },
-    });
+    }));

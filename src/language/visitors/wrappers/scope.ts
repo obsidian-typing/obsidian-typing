@@ -1,13 +1,8 @@
 import { AnyVisitor, NodeType, Rules, Symbol, VisitorArgs } from "..";
 
-export const ScopeWrapper = <Super, This extends AnyVisitor>({ shouldComplete = true }: { shouldComplete: boolean }): VisitorArgs<
-    unknown,
-    unknown,
-    unknown,
-    unknown,
-    Super,
-    This
-> => {
+export const ScopeWrapper = <Super extends AnyVisitor = any, This extends AnyVisitor = any>(
+    base: Super, { shouldComplete = true }: { shouldComplete: boolean }
+): VisitorArgs<unknown, unknown, unknown, unknown, This> => {
     return {
         tags: ["scope"],
         symbols() {
@@ -39,7 +34,7 @@ export const ScopeWrapper = <Super, This extends AnyVisitor>({ shouldComplete = 
                 set.add(symbol.name);
             }
 
-            let diagnostics = this.super?.lint(node);
+            let diagnostics = base.lint(node);
             if (diagnostics) {
                 this.joinDiagnostics(diagnostics.diagnostics);
             }

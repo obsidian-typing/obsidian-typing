@@ -44,7 +44,7 @@ export const NamedAttribute = <V extends AnyVisitor>(valueType: V) =>
     });
 
 export const Attribute = <N extends string, V extends AnyVisitor>(name: N, valueType: V, info?: string) =>
-    NamedAttribute(valueType).extend({
+    NamedAttribute(valueType).extend(base => ({
         accept(node) {
             if (name == null) return true;
             let nameNode = node.getChild(Rules.AssignmentName);
@@ -69,4 +69,4 @@ export const Attribute = <N extends string, V extends AnyVisitor>(name: N, value
                 },
             ];
         },
-    });
+    })).hideInnerTypes();

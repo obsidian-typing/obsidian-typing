@@ -43,37 +43,32 @@ export type VisitorTypes<
     Children = any,
     Utils = any,
     Cache = any,
-    Super = any
 > = {
     Return?: Return,
     Children?: Children,
     Utils?: Utils,
     Cache?: Cache,
-    Super?: Super
 };
 
 export type AnyVisitor<Args extends VisitorTypes = {}> = Visitor<
     OverrideObject<VisitorTypes, Args>["Return"],
     OverrideObject<VisitorTypes, Args>["Children"],
     OverrideObject<VisitorTypes, Args>["Utils"],
-    OverrideObject<VisitorTypes, Args>["Cache"],
-    OverrideObject<VisitorTypes, Args>["Super"]
+    OverrideObject<VisitorTypes, Args>["Cache"]
 >;
 
 export type UnknownVisitor<Args extends VisitorTypes = {}> = Visitor<
     Args["Return"],
     Args["Children"],
     Args["Utils"],
-    Args["Cache"],
-    Args["Super"]
+    Args["Cache"]
 >;
 
 export type ExactVisitor<Args extends Required<VisitorTypes>> = Visitor<
     Args["Return"],
     Args["Children"],
     Args["Utils"],
-    Args["Cache"],
-    Args["Super"]
+    Args["Cache"]
 >;
 
 let cache: NodeWeakMap<WeakMap<AnyVisitor, CacheEntry>>;
@@ -144,12 +139,12 @@ const defaultVisitorOptions: VisitorOptions = {
 };
 
 export type VisitorArgs_Infer<
-    Return, Children, Utils, Cache, Super,
-    This extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<Return, Children, Utils, Cache, Super>
-> = VisitorArgs<Return, Children, Utils, Cache, Super, This>;
+    Return, Children, Utils, Cache,
+    This extends Visitor<Return, Children, Utils, Cache> = Visitor<Return, Children, Utils, Cache>
+> = VisitorArgs<Return, Children, Utils, Cache, This>;
 
 // TODO: add Symbol as template arg to support custom symbols (ext Symbol)
-export interface VisitorArgs<Return, Children, Utils, Cache, Super, This> {
+export interface VisitorArgs<Return, Children, Utils, Cache, This> {
     // TODO: probably should rename to `node`(s) or `nodetype`(s) or `nodeType`(s), `Rules` -> `NodeType`
     rules?: Rules | Rules[];
     tags?: string[];
@@ -196,15 +191,14 @@ type VisitorReturn<Key extends keyof Children, Children> =
 
 export type Visitor_<Return> = UnknownVisitor<{ Return: Return }>;
 
-export class Visitor<Return, Children, Utils, Cache, Super> extends DataClass {
+export class Visitor<Return, Children, Utils, Cache> extends DataClass {
     @field()
-    args!: VisitorArgs<Return, Children, Utils, Cache, Super, any>;
+    args!: VisitorArgs<Return, Children, Utils, Cache, any>;
 
-    super: Super = null as any;
     derived?: AnyVisitor;
     isInitialized: boolean = false;
 
-    originalArgs!: VisitorArgs<Return, Children, Utils, Cache, Super, any>;
+    originalArgs!: VisitorArgs<Return, Children, Utils, Cache, any>;
     hasDecorations: boolean = false;
     childrenWithDecorations: (keyof Children)[] = [];
     hasHover: boolean = false;
@@ -233,47 +227,15 @@ export class Visitor<Return, Children, Utils, Cache, Super> extends DataClass {
         return this as Visitor_<Return>;
     }
 
-    static fromArgs<
-        Return,
-        Children,
-        Utils,
-        Cache,
-        Super extends AnyVisitor,
-        This extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<
-            Return,
-            Children,
-            Utils,
-            Cache,
-            Super
-        >
-    >(
-        args: VisitorArgs<Return, Children, Utils, Cache, Super, This>
+    static fromArgs<Return, Children, Utils, Cache, This extends Visitor<Return, Children, Utils, Cache> = Visitor<Return, Children, Utils, Cache>>(
+        args: VisitorArgs<Return, Children, Utils, Cache, This>
     ): ExactVisitor<{
         Return: Return,
         Children: Children,
         Utils: Utils,
         Cache: Cache,
-        Super: Super
     }> {
-        return Visitor.new<Visitor<Return, Children, Utils, Cache, Super>>({
-            args: args,
-        });
-    }
-
-    static fromArgs2<Return, Children, Utils, Cache, Super, This extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<Return, Children, Utils, Cache, Super>>(
-        args: VisitorArgs<Return, Children, Utils, Cache, Super, This>
-    ): ExactVisitor<{
-        Return: Return,
-        Children: Children,
-        Utils: Utils,
-        Cache: Cache,
-        Super: Super
-    }> {
-        return Visitor.new<Visitor<Return, Children, Utils, Cache, Super>>({
-            // Ignore the fact that `This` might be different type
-            // than the one specified in the type parameter default
-            args: args as any,
-        });
+        return Visitor.new<Visitor<Return, Children, Utils, Cache>>({ args });
     }
 
     override<
@@ -281,34 +243,30 @@ export class Visitor<Return, Children, Utils, Cache, Super> extends DataClass {
         NewChildren = unknown,
         NewUtils = unknown,
         NewCache = unknown,
-        NewSuper extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<Return, Children, Utils, Cache, Super>,
         NewThis extends Visitor<
             OneOf<Return, NewReturn>,
             OneOf<Children, NewChildren>,
             OneOf<Utils, NewUtils>,
-            OneOf<Cache, NewCache>,
-            NewSuper
-        > = Visitor<OneOf<Return, NewReturn>, OneOf<Children, NewChildren>, OneOf<Utils, NewUtils>, OneOf<Cache, NewCache>, NewSuper>,
+            OneOf<Cache, NewCache>
+        > = Visitor<OneOf<Return, NewReturn>, OneOf<Children, NewChildren>, OneOf<Utils, NewUtils>, OneOf<Cache, NewCache>>,
         Args extends VisitorArgs<
             NewReturn,
             NewChildren,
             NewUtils,
             NewCache,
-            NewSuper,
             NewThis
-        > = VisitorArgs<NewReturn, NewChildren, NewUtils, NewCache, NewSuper, NewThis>
-    >(args: Args): ExactVisitor<{
+        > = VisitorArgs<NewReturn, NewChildren, NewUtils, NewCache, NewThis>
+    >(args: Args | ((super_: this) => Args)): ExactVisitor<{
         Return: ReturnType<Exclude<Args["run"], undefined>>,
         Children: OneOf<Children, NewChildren>,
         Utils: OneOf<Utils, NewUtils>,
-        Cache: OneOf<Cache, NewCache>,
-        Super: NewSuper,
+        Cache: OneOf<Cache, NewCache>
     }> {
         let newArgs = Object.assign({}, this.originalArgs, args);
-        let result = Visitor.fromArgs2<ReturnType<Exclude<Args["run"], undefined>>, OneOf<Children, NewChildren>, OneOf<Utils, NewUtils>, OneOf<Cache, NewCache>, NewSuper>(newArgs as any);
-        result.super = Visitor.fromArgs2<Return, Children, Utils, Cache, Super>(this.originalArgs as any) as NewSuper;
-        result.super.derived = result;
-        result.super.bind(result);
+        let baseVisitor = Visitor.fromArgs<Return, Children, Utils, Cache>(this.originalArgs);
+        let result = Visitor.fromArgs<ReturnType<Exclude<Args["run"], undefined>>, OneOf<Children, NewChildren>, OneOf<Utils, NewUtils>, OneOf<Cache, NewCache>>(newArgs as any);
+        baseVisitor.derived = result;
+        baseVisitor.bind(result);
         return result;
     }
 
@@ -317,49 +275,38 @@ export class Visitor<Return, Children, Utils, Cache, Super> extends DataClass {
         NewChildren = unknown,
         NewUtils = unknown,
         NewCache = unknown,
-        NewSuper extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<
-            Return,
-            Children,
-            Utils,
-            Cache,
-            Super
-        >,
         NewThis extends Visitor<
             OneOf<Return, NewReturn>,
-            NewChildren extends TChildrenBase ? Merge<Children, NewChildren> : Children,
-            NewUtils extends TUtilsBase ? Merge<Utils, NewUtils> : Utils,
-            Merge<Cache, NewCache>,
-            NewSuper
+            Merge<Children, NewChildren>,
+            Merge<Utils, NewUtils>,
+            Merge<Cache, NewCache>
         > = Visitor<
             OneOf<Return, NewReturn>,
-            NewChildren extends TChildrenBase ? Merge<Children, NewChildren> : Children,
-            NewUtils extends TUtilsBase ? Merge<Utils, NewUtils> : Utils,
-            Merge<Cache, NewCache>,
-            NewSuper
+            Merge<Children, NewChildren>,
+            Merge<Utils, NewUtils>,
+            Merge<Cache, NewCache>
         >
     >(
-        args: VisitorArgs<NewReturn, NewChildren, NewUtils, NewCache, NewSuper, NewThis>
+        argsFactory: VisitorArgs<NewReturn, NewChildren, NewUtils, NewCache, NewThis> | ((base: this) => VisitorArgs<NewReturn, NewChildren, NewUtils, NewCache, NewThis>)
     ): ExactVisitor<{
         Return: OneOf<Return, NewReturn>,
-        Children: NewChildren extends TChildrenBase ? Merge<Children, NewChildren> : Children,
-        Utils: NewUtils extends TUtilsBase ? Merge<Utils, NewUtils> : Utils,
-        Cache: Merge<Cache, NewCache>,
-        Super: NewSuper
+        Children: Merge<Children, NewChildren>,
+        Utils: Merge<Utils, NewUtils>,
+        Cache: Merge<Cache, NewCache>
     }> {
+        let base = Visitor.fromArgs<Return, Children, Utils, Cache>(this.originalArgs) as this;
+        let args = argsFactory instanceof Function ? argsFactory(base) : argsFactory;
+
         // let newArgs = mergeDeep(this.originalArgs, args); // BUG: could probably merge internal visitors too
         let newArgs = Object.assign({}, this.originalArgs, args);
         newArgs.children = Object.assign({}, this.originalArgs.children, args.children);
         newArgs.utils = Object.assign({}, this.originalArgs.utils, args.utils);
-        let result = Visitor.fromArgs2<
+        let result = Visitor.fromArgs(newArgs as VisitorArgs_Infer<
             OneOf<Return, NewReturn>,
-            NewChildren extends TChildrenBase ? Merge<Children, NewChildren> : Children,
-            NewUtils extends TUtilsBase ? Merge<Utils, NewUtils> : Utils,
-            Merge<Cache, NewCache>,
-            NewSuper
-        >(newArgs as any);
-        result.super = Visitor.fromArgs2<Return, Children, Utils, Cache, Super>(this.originalArgs as any) as NewSuper;
-        result.super.derived = result;
-        result.super.bind(result);
+            Merge<Children, NewChildren>,
+            Merge<Utils, NewUtils>,
+            Merge<Cache, NewCache>
+        >);
         return result;
     }
 
@@ -367,7 +314,7 @@ export class Visitor<Return, Children, Utils, Cache, Super> extends DataClass {
         to = to ?? this;
 
         this.args.children = this.originalArgs.children ?? ({} as Children);
-        this.args.utils = this.originalArgs.utils ?? ({} as Utils & ThisType<any>);
+        this.args.utils = { ...(this.originalArgs.utils ?? ({} as Utils & ThisType<any>)) };
 
         this.args.accept = this.originalArgs.accept?.bind(this);
         this.args.run = this.originalArgs.run?.bind(this);
@@ -379,9 +326,9 @@ export class Visitor<Return, Children, Utils, Cache, Super> extends DataClass {
         this.args.hover = this.originalArgs.hover?.bind(this);
         this.args.decorations = this.originalArgs.decorations?.bind(this);
 
-        if (this.args.utils) {
-            for (let key in this.args.utils) {
-                if (this.args.utils[key] != null) {
+        if (this.originalArgs.utils) {
+            for (let key in this.originalArgs.utils) {
+                if (this.originalArgs.utils[key] != null) {
                     try {
                         this.args.utils[key] = (this.args.utils[key] as any as Function).bind(this);
                     } catch { }
@@ -1002,31 +949,31 @@ export class Visitor<Return, Children, Utils, Cache, Super> extends DataClass {
         return null;
     }
 
-    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn: ReturnType<NonNullable<Args[K]>>
     ): ReturnType<NonNullable<Args[K]>>;
 
-    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn: null
     ): ReturnType<NonNullable<Args[K]>> | null;
 
-    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn: undefined
     ): ReturnType<NonNullable<Args[K]>> | undefined;
 
-    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn?: ReturnType<NonNullable<Args[K]>>
     ): ReturnType<NonNullable<Args[K]>> | undefined;
 
-    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn?: ReturnType<NonNullable<Args[K]>>

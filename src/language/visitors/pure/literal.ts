@@ -42,9 +42,9 @@ export const Boolean = createVisitor({
 });
 
 export const LiteralString = <const A extends T[], const T extends string = A extends (infer TT)[] ? TT : never>(values: A) =>
-    String.override({
+    String.override(base => ({
         run(node) {
-            return this.super.run(node) as T;
+            return base.run(node) as T;
         },
         lint(node) {
             if (!values.contains(stripQuotes(this.getNodeText(node)) as T)) {
@@ -54,7 +54,7 @@ export const LiteralString = <const A extends T[], const T extends string = A ex
         snippets() {
             return values.map((value) => ({ label: `"${value}"`, info: "string", detail: "string" }));
         },
-    });
+    }));
 
 export const Literal = <V extends AnyVisitor>(type: V) =>
     createVisitor({

@@ -24,7 +24,7 @@ export const Section = <V extends AnyVisitor>(name: string, member: V, info?: st
                     });
                     return result;
                 },
-            }).extend(Wrappers.ScopeWrapper({ shouldComplete: false })),
+            }).extend(base => Wrappers.ScopeWrapper(base, { shouldComplete: false })),
         },
         snippets() {
             return [
@@ -69,7 +69,7 @@ export const StructuredSection = <Children extends TChildrenBase>(name: string, 
                 run(node) {
                     return this.runChildren();
                 },
-            }).extend(Wrappers.ScopeWrapper({ shouldComplete: true })),
+            }).extend(base => Wrappers.ScopeWrapper(base, { shouldComplete: true })),
         },
         snippets() {
             return [
