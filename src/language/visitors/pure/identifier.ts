@@ -47,4 +47,4 @@ export const Identifier = (opts?: { allowString: boolean }) =>
             // TODO: Review whether returning "" is safe
             return result["identifier"] ?? result["stringIdentifier"] ?? "";
         },
-    });
+    }).hideInnerTypes();
