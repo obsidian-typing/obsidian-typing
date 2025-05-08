@@ -182,7 +182,7 @@ export interface VisitorArgs<Return, Children, Utils, Cache, Super, This> {
 
 export type TReturnBase = any;
 export type TUtilsBase = Record<string, any>;
-export type TChildrenBase = Record<string, TVisitorBase>;
+export type TChildrenBase = Record<string, AnyVisitor>;
 export type TCacheBase = any;
 
 export type TVisitorArgsBase<
@@ -190,16 +190,8 @@ export type TVisitorArgsBase<
     Children extends TChildrenBase = any,
     Utils extends TUtilsBase = any,
     Cache extends TCacheBase = any
-> = VisitorArgs<Return, Children, Utils, Cache, TNoVisitor, TVisitorBase>;
+> = VisitorArgs<Return, Children, Utils, Cache, TNoVisitor, AnyVisitor>;
 
-export type TVisitorBase<
-    Return extends TReturnBase = any,
-    Children extends TChildrenBase = any,
-    Utils extends TUtilsBase = any,
-    Cache extends TCacheBase = any
-> = Visitor<Return, Children, Utils, Cache, TOptionalVisitorBase>;
-
-type TOptionalVisitorBase = TVisitorBase;
 type TNoVisitor = any;
 
 type Children_<Children> = Children & Record<string, Pick<UnknownVisitor,
@@ -243,11 +235,11 @@ export class Visitor<Return, Children, Utils, Cache, Super> extends DataClass {
     }
 
     static fromArgs<
-        Return extends TReturnBase,
+        Return,
         Children extends TChildrenBase,
         Utils extends TUtilsBase,
-        Cache extends TCacheBase,
-        Super extends TVisitorBase,
+        Cache,
+        Super extends AnyVisitor,
         This extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<
             Return,
             Children,
@@ -316,8 +308,8 @@ export class Visitor<Return, Children, Utils, Cache, Super> extends DataClass {
         let newArgs = Object.assign({}, this.originalArgs, args);
         let result = Visitor.fromArgs2<ReturnType<Exclude<Args["run"], undefined>>, OneOf<Children, NewChildren>, OneOf<Utils, NewUtils>, OneOf<Cache, NewCache>, NewSuper>(newArgs as any);
         result.super = Visitor.fromArgs2<Return, Children, Utils, Cache, Super>(this.originalArgs as any) as NewSuper;
-        result.super.derived = result as TVisitorBase;
-        result.super.bind(result as TVisitorBase);
+        result.super.derived = result;
+        result.super.bind(result);
         return result;
     }
 
@@ -373,7 +365,7 @@ export class Visitor<Return, Children, Utils, Cache, Super> extends DataClass {
     }
 
     bind(to?: AnyVisitor): void {
-        to = to ?? this as TVisitorBase;
+        to = to ?? this;
 
         this.args.children = this.originalArgs.children ?? ({} as Children);
         this.args.utils = this.originalArgs.utils ?? ({} as Utils & ThisType<any>);
@@ -529,7 +521,7 @@ export class Visitor<Return, Children, Utils, Cache, Super> extends DataClass {
     }
 
     lintChildren(traversalOptions?: TraversalOptions<keyof Children>) {
-        let result: ReturnType<TVisitorBase["lint"]> = { diagnostics: [], hasErrors: false };
+        let result: ReturnType<AnyVisitor["lint"]> = { diagnostics: [], hasErrors: false };
 
         if (!this.childrenWithLint.length) return result;
 
@@ -954,7 +946,7 @@ export class Visitor<Return, Children, Utils, Cache, Super> extends DataClass {
         node = node ?? ref.node;
         let visitorCache = cache.get(node);
         if (visitorCache == null) {
-            visitorCache = new WeakMap<TVisitorBase, CacheEntry>();
+            visitorCache = new WeakMap<AnyVisitor, CacheEntry>();
             cache.set(node, visitorCache);
         }
         let container = visitorCache.get(ref);
@@ -989,7 +981,7 @@ export class Visitor<Return, Children, Utils, Cache, Super> extends DataClass {
 
     // } CACHE
 
-    getParent<R extends Rules>({ tags, rules }: { tags?: string[]; rules?: R }): TVisitorBase | null {
+    getParent<R extends Rules>({ tags, rules }: { tags?: string[]; rules?: R }): AnyVisitor | null {
         for (let i = this.globalContext.callStack.length - 1; i >= 0; i--) {
             let visitor = this.globalContext.callStack[i].visitor;
             if (tags && visitor.tags) {
