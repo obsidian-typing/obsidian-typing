@@ -33,6 +33,7 @@ export const TypeParentsClause = createVisitor({
     rules: Rules.ExtendsClause,
     children: { parent: Visitors.Identifier({ allowString: true }) },
     lint(node) {
+        // @ts-ignore
         let globalTypes = this.utils.globalSymbols(node);
         this.traverse((node, child) => {
             let name = child.run(node);
@@ -56,6 +57,7 @@ export const TypeParentsClause = createVisitor({
     complete(node) {
         let currentParents = this.symbols(node)!.map((x) => x.name);
         return this.utils
+             // @ts-ignore
             .globalSymbols()
             .filter((x: Symbol) => x.node.to < node.from)
             .filter((x: Symbol) => !currentParents.contains(x.name))
