@@ -185,13 +185,6 @@ export type TUtilsBase = Record<string, any>;
 export type TChildrenBase = Record<string, AnyVisitor>;
 export type TCacheBase = any;
 
-export type TVisitorArgsBase<
-    Return extends TReturnBase = any,
-    Children extends TChildrenBase = any,
-    Utils extends TUtilsBase = any,
-    Cache extends TCacheBase = any
-> = VisitorArgs<Return, Children, Utils, Cache, TNoVisitor, AnyVisitor>;
-
 type TNoVisitor = any;
 
 type Children_<Children> = Children & Record<string, Pick<UnknownVisitor,
