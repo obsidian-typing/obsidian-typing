@@ -7,7 +7,7 @@ import { DataClass, field, log, mergeDeep } from "src/utilities";
 import { Visitors } from ".";
 import { Rules } from "../grammar";
 import { Interpreter } from "../interpreter";
-import { Merge, OneOf } from "src/utilities/types";
+import { Merge, OneOf, OverrideObject } from "src/utilities/types";
 
 export type NodeType = SyntaxNode;
 
@@ -53,11 +53,11 @@ export type VisitorTypes<
 };
 
 export type AnyVisitor<Args extends VisitorTypes = {}> = Visitor<
-    OneOf<VisitorTypes["Return"], Args["Return"]>,
-    OneOf<VisitorTypes["Children"], Args["Children"]>,
-    OneOf<VisitorTypes["Utils"], Args["Utils"]>,
-    OneOf<VisitorTypes["Cache"], Args["Cache"]>,
-    OneOf<VisitorTypes["Super"], Args["Super"]>
+    OverrideObject<VisitorTypes, Args>["Return"],
+    OverrideObject<VisitorTypes, Args>["Children"],
+    OverrideObject<VisitorTypes, Args>["Utils"],
+    OverrideObject<VisitorTypes, Args>["Cache"],
+    OverrideObject<VisitorTypes, Args>["Super"]
 >;
 
 export type ExactVisitor<Args extends Required<VisitorTypes>> = Visitor<
