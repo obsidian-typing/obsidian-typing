@@ -1,9 +1,9 @@
 import { snippet, startCompletion } from "@codemirror/autocomplete";
 import { SyntaxNode } from "@lezer/common";
 import * as Visitors from ".";
-import { createVisitor, Rules, TVisitorBase } from "../index_base";
+import { AnyVisitor, createVisitor, Rules } from "../index_base";
 
-export const List = <V extends TVisitorBase>(valueType: V, opts?: { info?: string }) =>
+export const List = <V extends AnyVisitor>(valueType: V, opts?: { info?: string }) =>
     createVisitor({
         rules: Rules.List,
         children: {

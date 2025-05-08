@@ -1,7 +1,10 @@
-import { createVisitor, Rules, TUtilsBase, TVisitorBase, Visitor } from "../index_base";
+import { AnyVisitor, createVisitor, Rules } from "../index_base";
 
-export const Proxy = <V extends TVisitorBase>(proxyRules: Rules | Rules[], visitor: V):
-    Visitor<ReturnType<V["run"]>, { visitor: V; }, TUtilsBase, unknown, TVisitorBase<any, any, any, any>> =>
+export const Proxy = <V extends AnyVisitor>(proxyRules: Rules | Rules[], visitor: V):
+    AnyVisitor<{
+        Return: ReturnType<V["run"]>,
+        Children: { visitor: V; }
+    }> =>
     createVisitor({
         rules: proxyRules,
         children: { visitor },

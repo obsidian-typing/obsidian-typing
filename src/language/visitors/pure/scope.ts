@@ -1,9 +1,9 @@
-import { createVisitor, NodeType, Rules, Symbol, TChildrenBase, TVisitorBase } from "../index_base";
+import { AnyVisitor, createVisitor, NodeType, Rules, Symbol, TChildrenBase } from "../index_base";
 
-export const Scope = <R, C extends TChildrenBase>(
-    visitor: TVisitorBase<R, C>,
+export const Scope = <R, C extends TChildrenBase, V extends AnyVisitor<{ Return: R, Children: C }>>(
+    visitor: V,
     opts?: { shouldComplete: boolean }
-): TVisitorBase<R> => {
+): AnyVisitor<{ Return: R | null, Children: { visitor: V } }> => {
     let options: typeof opts = opts ?? { shouldComplete: true };
     // TODO: Review whether we can remove the type assertion;
     return createVisitor({
@@ -24,7 +24,7 @@ export const Scope = <R, C extends TChildrenBase>(
         lint(node) {
             let unexpectedNodes: NodeType[] = [];
             this.traverse((_, visitor) => {
-                visitor.traverse(() => {}, {
+                visitor.traverse(() => { }, {
                     callbackNotAccepted(node) {
                         if (node.name == Rules.LineComment) return;
                         unexpectedNodes.push(node);
@@ -57,8 +57,8 @@ export const Scope = <R, C extends TChildrenBase>(
             }
             return result;
         },
-        run() {
-            return this.runChildren({ keys: ["visitor"] })["visitor"];
+        run(): R | null {
+            return this.runChildren({ keys: ["visitor"] })["visitor"] ?? null;
         },
         snippets() {
             return this.children.visitor.snippets();
@@ -68,5 +68,5 @@ export const Scope = <R, C extends TChildrenBase>(
             // TODO: fix back
             cache: { lint: false, run: false, complete: false },
         },
-    }) as TVisitorBase<R>;
+    });
 };

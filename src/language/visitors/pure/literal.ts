@@ -1,6 +1,6 @@
 import { snippetCompletion } from "@codemirror/autocomplete";
 import { stripQuotes } from "src/utilities";
-import { createVisitor, Rules, TVisitorBase } from "../index_base";
+import { AnyVisitor, createVisitor, Rules } from "../index_base";
 
 export const String = createVisitor({
     rules: Rules.String,
@@ -56,7 +56,7 @@ export const LiteralString = <const A extends T[], const T extends string = A ex
         },
     });
 
-export const Literal = <V extends TVisitorBase>(type: V) =>
+export const Literal = <V extends AnyVisitor>(type: V) =>
     createVisitor({
         rules: Rules.Literal,
         children: { type },

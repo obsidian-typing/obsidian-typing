@@ -1,6 +1,6 @@
-import { NodeType, Rules, Symbol, TVisitorBase, VisitorArgs } from "..";
+import { AnyVisitor, NodeType, Rules, Symbol, VisitorArgs } from "..";
 
-export const ScopeWrapper = <Super, This extends TVisitorBase>({ shouldComplete = true }: { shouldComplete: boolean }): VisitorArgs<
+export const ScopeWrapper = <Super, This extends AnyVisitor>({ shouldComplete = true }: { shouldComplete: boolean }): VisitorArgs<
     unknown,
     unknown,
     unknown,

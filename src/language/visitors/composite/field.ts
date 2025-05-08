@@ -2,13 +2,13 @@ import { SyntaxNode } from "@lezer/common";
 import { gctx } from "src/context";
 import { Field as FieldObject, FieldType as FieldTypeObject, FieldTypes } from "src/typing";
 import * as Visitors from ".";
-import { createVisitor, Rules, TVisitorBase } from "../index_base";
+import { AnyVisitor, createVisitor, Rules } from "../index_base";
 
-type RetType<V extends TVisitorBase> = V extends TVisitorBase<infer R> ? R : never;
-type RetTypeMap<M extends Record<string, TVisitorBase>> = { [K in keyof M]: RetType<M[K]> };
+type RetType<V extends AnyVisitor> = V extends AnyVisitor<{ Return: infer R }> ? R : never;
+type RetTypeMap<M extends Record<string, AnyVisitor>> = { [K in keyof M]: RetType<M[K]> };
 
-const createKwargChildren = (kwargs: Record<string, TVisitorBase>) => {
-    const kwargChildren: Record<string, TVisitorBase<any>> = {};
+const createKwargChildren = (kwargs: Record<string, AnyVisitor>) => {
+    const kwargChildren: Record<string, AnyVisitor> = {};
 
     for (let key in kwargs) {
         kwargChildren[key] = createVisitor({
@@ -32,7 +32,7 @@ const createKwargChildren = (kwargs: Record<string, TVisitorBase>) => {
     return kwargChildren;
 };
 
-export const ParametersVisitorFactory = <Arg extends TVisitorBase, Kwargs extends Record<string, TVisitorBase>, Ret>({
+export const ParametersVisitorFactory = <Arg extends AnyVisitor, Kwargs extends Record<string, AnyVisitor>, Ret>({
     args,
     kwargs,
     lint,
@@ -40,10 +40,10 @@ export const ParametersVisitorFactory = <Arg extends TVisitorBase, Kwargs extend
 }: {
     args?: Arg;
     kwargs?: Kwargs;
-    lint?: (this: TVisitorBase, args: { value: RetType<Arg>, node: SyntaxNode }[], kwargs: { [K in keyof Kwargs]: { value: RetType<Kwargs[K]>, node: SyntaxNode } }) => void;
-    init: (this: TVisitorBase, args: Exclude<RetType<Arg>, undefined>[], kwargs: RetTypeMap<Kwargs>) => Ret;
+    lint?: (this: AnyVisitor, args: { value: RetType<Arg>, node: SyntaxNode }[], kwargs: { [K in keyof Kwargs]: { value: RetType<Kwargs[K]>, node: SyntaxNode } }) => void;
+    init: (this: AnyVisitor, args: Exclude<RetType<Arg>, undefined>[], kwargs: RetTypeMap<Kwargs>) => Ret;
 }) => {
-    const argChildren: Partial<{ literal: TVisitorBase<any> }> = args
+    const argChildren: Partial<{ literal: AnyVisitor<any> }> = args
         ? { literal: Visitors.Proxy(Rules.ParameterValue, args) }
         : {};
     const kwargChildren = kwargs ? createKwargChildren(kwargs) : {};

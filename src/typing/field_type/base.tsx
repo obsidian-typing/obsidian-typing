@@ -1,4 +1,4 @@
-import { TVisitorBase } from "src/language/visitors";
+import { AnyVisitor } from "src/language/visitors";
 import { Pickers } from "src/ui";
 import { Bindable, DataClass } from "src/utilities";
 import { Validation, Validator } from "src/validation";
@@ -46,7 +46,7 @@ export abstract class FieldType<InstanceType extends FieldType = any>
         return instance;
     }
 
-    static ParametersVisitor: () => TVisitorBase<any>;
+    static ParametersVisitor: () => AnyVisitor;
 
     get isRelation(): boolean {
         return false;

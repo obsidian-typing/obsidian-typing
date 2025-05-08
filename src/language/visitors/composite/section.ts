@@ -1,9 +1,9 @@
 import { snippet, startCompletion } from "@codemirror/autocomplete";
 import * as Visitors from ".";
-import { createVisitor, Rules, TChildrenBase, TVisitorBase } from "../index_base";
+import { createVisitor, Rules, TChildrenBase, AnyVisitor } from "../index_base";
 import * as Wrappers from "../wrappers";
 
-export const Section = <V extends TVisitorBase>(name: string, member: V, info?: string) =>
+export const Section = <V extends AnyVisitor>(name: string, member: V, info?: string) =>
     createVisitor({
         rules: Rules.SectionDeclaration,
         accept(node) {
@@ -17,7 +17,7 @@ export const Section = <V extends TVisitorBase>(name: string, member: V, info?: 
                 rules: Rules.SectionBody,
                 children: { member },
                 run(node) {
-                    type R = V extends TVisitorBase<infer X> ? X : never;
+                    type R = V extends AnyVisitor<{ Return: infer X }> ? X : never;
                     let result: R[] = [];
                     this.traverse((node, child) => {
                         result.push(child.run(node));
