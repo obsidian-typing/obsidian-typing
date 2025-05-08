@@ -265,7 +265,8 @@ export const Type = createVisitor({
                 fields: Visitors.Section("fields", Visitors.Field()).extend({
                     run(): Record<string, Field> {
                         let result: Record<string, Field> = {};
-                        for (let field of this.super.runChildren()["body"]) {
+                        // TODO: Review handling of null/undefined
+                        for (let field of this.runChildren()["body"]!) {
                             result[field.name] = field;
                         }
                         return result;
