@@ -1,8 +1,8 @@
 import { snippet, startCompletion } from "@codemirror/autocomplete";
 import * as Visitors from ".";
-import { createVisitor, Rules, TVisitorBase } from "../index_base";
+import { AnyVisitor, createVisitor, Rules } from "../index_base";
 
-export const NamedAttribute = <V extends TVisitorBase>(valueType: V) =>
+export const NamedAttribute = <V extends AnyVisitor>(valueType: V) =>
     createVisitor({
         rules: Rules.Assignment,
         children: {
@@ -43,8 +43,8 @@ export const NamedAttribute = <V extends TVisitorBase>(valueType: V) =>
         },
     });
 
-export const Attribute = <N extends string, V extends TVisitorBase>(name: N, valueType: V, info?: string) =>
-    NamedAttribute(valueType).extend({
+export const Attribute = <N extends string, V extends AnyVisitor>(name: N, valueType: V, info?: string) =>
+    NamedAttribute(valueType).extend(base => ({
         accept(node) {
             if (name == null) return true;
             let nameNode = node.getChild(Rules.AssignmentName);
@@ -69,4 +69,4 @@ export const Attribute = <N extends string, V extends TVisitorBase>(name: N, val
                 },
             ];
         },
-    });
+    })).hideInnerTypes();

@@ -1,10 +1,29 @@
 import { PluginItem, PluginObj, TransformOptions } from "@babel/core";
 import { availablePlugins, availablePresets, transform } from "@babel/standalone";
 import { customImportExportTransform } from "./transform";
+import { extname } from "path-browserify";
 
 const presetTypeScript = availablePresets["typescript"];
 const transformReactJSX = availablePlugins["transform-react-jsx"];
 const transformModulesCommonJS = availablePlugins["transform-modules-commonjs"];
+
+const transpilationModes = ["js", "jsx", "ts", "tsx"] as const
+const transpilationTargets = ["module", "function"] as const
+
+export type TranspilationMode = (typeof transpilationModes)[number]
+export type TranspilationTarget = (typeof transpilationTargets)[number]
+
+export const DEFAULT_TRANSPILATION_MODE: TranspilationMode = "tsx";
+export const TRANSPILATION_MODES: readonly TranspilationMode[] = transpilationModes
+export const TRANSPILATION_TARGETS: readonly TranspilationTarget[] = transpilationTargets
+
+function supportsTypeScript(mode: TranspilationMode): boolean {
+    return mode === "ts" || mode === "tsx"
+}
+
+function supportsReactJSX(mode: TranspilationMode): boolean {
+    return mode === "jsx" || mode === "tsx"
+}
 
 export interface TranspilationError {
     message: string;
@@ -29,41 +48,65 @@ const removeUseStrict: PluginObj = {
     },
 };
 
-const DEFAULT_PLUGINS: PluginItem[] = [
-    [transformReactJSX, { pragma: "h", pragmaFrag: "Fragment" }],
-    transformModulesCommonJS,
-    removeUseStrict,
-];
+const moduleImportExportTransform: PluginObj = customImportExportTransform({ ctxObject: "api", importFunction: "_import_explicit" });
 
-const DEFAULT_PARSER_OPTS: TransformOptions["parserOpts"] = {
-    allowReturnOutsideFunction: true,
-    allowImportExportEverywhere: true,
-    // allowAwaitOutsideFunction: true, TODO: do we need it?
-};
+const functionImportExportTransform: PluginObj = customImportExportTransform({ ctxObject: "__ctx", importFunction: "_import_explicit" });
 
-const DEFAULT_TRANSPILE_OPTIONS: TransformOptions = {
-    presets: [presetTypeScript],
-    plugins: [
-        customImportExportTransform({ ctxObject: "api", importFunction: "_import_explicit" }),
-        ...DEFAULT_PLUGINS,
-    ],
-    parserOpts: DEFAULT_PARSER_OPTS,
-    filename: "file.tsx",
-};
+function getTranspileOptions(target: TranspilationTarget, mode: TranspilationMode): TransformOptions {
+    const presets: PluginItem[] = [];
 
-const MODULE_TRANSPILE_OPTIONS: TransformOptions = DEFAULT_TRANSPILE_OPTIONS;
+    // TypeScript syntax is only supported in .ts and .tsx files
+    if (supportsTypeScript(mode)) {
+        presets.push(presetTypeScript);
+    }
 
-const FUNCTION_TRANSPILE_OPTIONS: TransformOptions = {
-    presets: [presetTypeScript],
-    plugins: [
-        customImportExportTransform({ ctxObject: "__ctx", importFunction: "_import_explicit" }),
-        ...DEFAULT_PLUGINS,
-    ],
-    parserOpts: DEFAULT_PARSER_OPTS,
-    filename: "file.tsx",
-};
+    const plugins: PluginItem[] = []
 
-export function transpile(source: string, options: TransformOptions = DEFAULT_TRANSPILE_OPTIONS): TranspilationResult {
+    // The context available to script modules and inline functions is different
+    if (target === "module") {
+        plugins.push(moduleImportExportTransform);
+    } else if (target == "function") {
+        plugins.push(functionImportExportTransform);
+    }
+
+    // JSX syntax is only supported in .jsx and .tsx files
+    if (supportsReactJSX(mode)) {
+        plugins.push([transformReactJSX, { pragma: "h", pragmaFrag: "Fragment" }]);
+    }
+
+    plugins.push(transformModulesCommonJS);
+
+    // TODO: Do we still need to remove "use strict"?
+    plugins.push(removeUseStrict);
+
+    return {
+        presets,
+        plugins,
+        parserOpts: {
+            allowReturnOutsideFunction: true,
+            allowImportExportEverywhere: true,
+            // allowAwaitOutsideFunction: true, TODO: do we need it?
+        },
+        filename: `file.${mode}`,
+    };
+}
+
+const TRANSPILE_OPTIONS: Record<TranspilationTarget, Record<TranspilationMode, TransformOptions>> = {
+    module: {
+        js: getTranspileOptions("module", "js"),
+        jsx: getTranspileOptions("module", "jsx"),
+        ts: getTranspileOptions("module", "ts"),
+        tsx: getTranspileOptions("module", "tsx"),
+    },
+    function: {
+        js: getTranspileOptions("function", "js"),
+        jsx: getTranspileOptions("function", "jsx"),
+        ts: getTranspileOptions("function", "ts"),
+        tsx: getTranspileOptions("function", "tsx"),
+    }
+}
+
+export function transpile(source: string, options: TransformOptions): TranspilationResult {
     try {
         let result = transform(source, options);
         if (result.code === null || result.code === undefined) {
@@ -77,12 +120,36 @@ export function transpile(source: string, options: TransformOptions = DEFAULT_TR
     }
 }
 
-export function transpileModule(source: string, options: { filename?: string } = {}) {
-    return transpile(source, { ...MODULE_TRANSPILE_OPTIONS, ...options });
+export function getTranspilationModeFromFileName(filename?: string): TranspilationMode | null {
+    switch (filename ? extname(filename) : null) {
+        case ".js": return "js";
+        case ".ts": return "ts";
+        case ".jsx": return "jsx";
+        case ".tsx": return "tsx";
+        default: return null;
+    }
 }
 
-export function transpileFunction(source: string, options: { filename?: string } = {}) {
-    return transpile(source, { ...FUNCTION_TRANSPILE_OPTIONS, ...options });
+export function transpileModule(source: string, options: { mode?: TranspilationMode, filename?: string } = {}) {
+    let baseOptions = getTranspileOptions(
+        "module",
+        options.mode ?? getTranspilationModeFromFileName(options.filename) ?? DEFAULT_TRANSPILATION_MODE
+    );
+    return transpile(source, {
+        ...baseOptions,
+        filename: options.filename ?? baseOptions.filename,
+    });
+}
+
+export function transpileFunction(source: string, options: { mode?: TranspilationMode, filename?: string } = {}) {
+    let baseOptions = getTranspileOptions(
+        "function",
+        options.mode ?? getTranspilationModeFromFileName(options.filename) ?? DEFAULT_TRANSPILATION_MODE
+    );
+    return transpile(source, {
+        ...baseOptions,
+        filename: options.filename ?? baseOptions.filename,
+    });
 }
 
 export type CompiledModule = {
@@ -92,10 +159,11 @@ export type CompiledModule = {
 export function compileModuleWithContext(
     code: string,
     context: Record<string, any> = {},
-    options: { transpile: boolean; filename?: string } = { transpile: true }
+    options: { transpile: boolean | TranspilationMode; filename?: string } = { transpile: true }
 ): CompiledModule & { message?: undefined } | TranspilationError {
     if (options.transpile) {
-        let transpiled = transpileModule(code, { filename: options.filename ?? "file.tsx" });
+        let mode = typeof options.transpile === "boolean" ? undefined : options.transpile;
+        let transpiled = transpileModule(code, { mode, filename: options.filename });
         if (transpiled.errors != null) {
             return transpiled.errors[0];
         }
@@ -125,10 +193,11 @@ export function compileFunctionWithContext(
     code: string,
     context: Record<string, any> = {},
     args: string[] = ["ctx", "note"],
-    options: { transpile: boolean, filename?: string } = { transpile: true }
+    options: { transpile: boolean | TranspilationMode, filename?: string } = { transpile: true }
 ): Function & { message?: undefined } | TranspilationError {
     if (options.transpile) {
-        let transpiled = transpileFunction(code, { filename: options.filename ?? "file.tsx" });
+        let mode = typeof options.transpile === "boolean" ? undefined : options.transpile;
+        let transpiled = transpileFunction(code, { mode, filename: options.filename });
         if (transpiled.errors) {
             return transpiled.errors[0];
         }

@@ -23,4 +23,4 @@ export const StructuredObject = <Children extends TChildrenBase>(members: Childr
                 },
             ];
         },
-    }).extend(Wrappers.ScopeWrapper({ shouldComplete: true }));
+    }).extend(base => Wrappers.ScopeWrapper(base, { shouldComplete: true }));

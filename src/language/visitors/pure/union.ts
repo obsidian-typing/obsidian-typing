@@ -1,8 +1,8 @@
-import { createVisitor, Visitor } from "../index_base";
+import { AnyVisitor, createVisitor } from "../index_base";
 
 export const Union = <
-    Vs extends Visitor<any, any, any, any, any>[],
-    R = Vs extends Visitor<infer RR, any, any, any, any>[] ? RR : never
+    Vs extends AnyVisitor[],
+    R = ReturnType<Vs[number]["run"]>
 >(
     ...valueTypes: Vs
 ) => {

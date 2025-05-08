@@ -84,7 +84,7 @@ TaggedString {
 }
 
 Tag {
-  Identifier
+  Identifier (Dot Identifier)*
 }
 
 Object {
@@ -137,6 +137,10 @@ String {
 }
 
 @tokens {
+  Dot {
+    "."
+  }
+
   Identifier {
     (@asciiLetter | "_")+ (@asciiLetter | @digit | "_")*
   }

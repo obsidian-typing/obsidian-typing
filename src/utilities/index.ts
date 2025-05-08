@@ -2,6 +2,7 @@
 export { log } from "./logger";
 
 // Miscellaneous utilities
+export { ifInArray } from "./misc/if_in_array";
 export { mergeDeep } from "./misc/merge_deep";
 export { debounce, eagerDebounce, throttle } from "./misc/rate_control";
 

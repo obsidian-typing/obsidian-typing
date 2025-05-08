@@ -1,17 +1,67 @@
 import { snippetCompletion } from "@codemirror/autocomplete";
 import { gctx } from "src/context";
-import { ExprScript, FnScript, TranspilationError } from "src/scripting";
+import { DEFAULT_TRANSPILATION_MODE, ExprScript, FnScript, TRANSPILATION_MODES, TranspilationMode } from "src/scripting";
 import { Values } from "src/typing";
-import { dedent } from "src/utilities";
+import { dedent, ifInArray } from "src/utilities";
 import * as Visitors from ".";
 import { createVisitor, Rules } from "../index_base";
-import { SyntaxNode } from "@lezer/common";
 
-// TODO: reimplement with `tag` as an Identifier() child
+export const FN_SCRIPT_TAGS = [
+    ...["fn", "function"],
+    ...TRANSPILATION_MODES,
+    ...TRANSPILATION_MODES.flatMap(mode => ["fn", "function"].map(kind => `${kind}.${mode}`)),
+];
+
+export const FN_SCRIPT_MODES = Object.fromEntries(FN_SCRIPT_TAGS.map(tag => [tag, getModeFromTag(tag)]));
+
+export const EXPR_SCRIPT_TAGS = [
+    ...["expr", "expression"],
+    ...TRANSPILATION_MODES.flatMap(mode => ["expr", "expression"].map(kind => `${kind}.${mode}`)),
+];
+
+export const EXPR_SCRIPT_MODES = Object.fromEntries(FN_SCRIPT_TAGS.map(tag => [tag, getModeFromTag(tag)]));
+
+function getModeFromTag(tag: string | undefined | null): TranspilationMode {
+    if (tag === undefined || tag === null) {
+        return DEFAULT_TRANSPILATION_MODE;
+    }
+    return ifInArray(tag.split(".", 2)[1], TRANSPILATION_MODES) ?? DEFAULT_TRANSPILATION_MODE;
+}
+
+export const Tag = () => createVisitor({
+    rules: Rules.Tag,
+    run(node) {
+        let text = "";
+        let cursor = node.cursor();
+        if (cursor.firstChild()) {
+            do {
+                if (cursor.node.name === Rules.Identifier || cursor.node.name === Rules.Dot) {
+                    text += this.getNodeText(cursor.node);
+                }
+            } while (cursor.nextSibling());
+        }
+        return text;
+    },
+});
+
 export const TaggedString = ({ tags, strict = false }: { tags: string[]; strict?: boolean }) =>
     createVisitor({
         rules: Rules.TaggedString,
-        run: undefined as ((node: SyntaxNode) => null) | undefined,
+        children: {
+            tag: Visitors.Tag(),
+            code: Visitors.String,
+        },
+        utils: {
+            run() {
+                let { tag, code } = this.runChildren();
+                tag = tag ?? "";
+                code = dedent(code ?? "");
+                return { tag, code };
+            },
+        },
+        run(node) {
+            return this.utils.run();
+        },
         accept(node) {
             if (!strict) return true;
             let nodeTag = node.getChild(Rules.Tag);
@@ -49,20 +99,20 @@ export const TaggedString = ({ tags, strict = false }: { tags: string[]; strict?
         },
     });
 
-export const FnScriptString = (content = "\n\t${}\n", tags = ["fn", "function"]) =>
-    TaggedString({ tags, strict: true }).override({
-        children: {
-            code: Visitors.String,
-        },
+export const FnScriptString = (content = "\n\t${}\n", tags = FN_SCRIPT_TAGS) =>
+    TaggedString({ tags, strict: true }).override(base => ({
         run(node) {
             if (!gctx.settings.enableScripting) return undefined;
+            let { tag, code } = this.utils.run();
             return FnScript.new({
-                source: dedent(this.runChild("code") ?? ""),
+                mode: getModeFromTag(tag),
+                source: code,
                 filePath: this.globalContext?.callContext?.interpreter?.activeModule?.file?.path,
             });
         },
         lint(node) {
-            let result = FnScript.validate(this.runChild("code") ?? "");
+            let { tag, code } = this.utils.run();
+            let result = FnScript.validate(getModeFromTag(tag), code ?? "");
             if (!gctx.settings.enableScripting) {
                 this.warning(
                     "Safe mode: JS scripting is currently disabled. Until you enable it in the plugin settings, this expression will be ignored.",
@@ -85,22 +135,23 @@ export const FnScriptString = (content = "\n\t${}\n", tags = ["fn", "function"])
                 ),
             ];
         },
-    });
+    }));
 
-export const ExprScriptString = (content = "\n\t${}\n", tags = ["expr", "expression"]) =>
-    TaggedString({ tags, strict: true }).override({
-        children: {
-            code: Visitors.String,
-        },
+
+export const ExprScriptString = (content = "\n\t${}\n", tags = EXPR_SCRIPT_TAGS) =>
+    TaggedString({ tags, strict: true }).override(base => ({
         run(node) {
             if (!gctx.settings.enableScripting) return undefined;
+            let { tag, code } = this.utils.run();
             return ExprScript.new({
-                source: dedent(this.runChild("code") ?? ""),
+                mode: getModeFromTag(tag),
+                source: code,
                 filePath: this.globalContext?.callContext?.interpreter?.activeModule?.file?.path,
             });
         },
         lint(node) {
-            let result = ExprScript.validate(this.runChild("code") ?? "");
+            let { tag, code } = this.utils.run();
+            let result = ExprScript.validate(getModeFromTag(tag), code ?? "");
             if (!gctx.settings.enableScripting) {
                 this.warning(
                     "Safe mode: JS scripting is currently disabled. Until you enable it in the plugin settings, this expression will be ignored.",
@@ -123,15 +174,13 @@ export const ExprScriptString = (content = "\n\t${}\n", tags = ["expr", "express
                 ),
             ];
         },
-    });
+    }));
 
 export const MarkdownString = (tags = ["md", "markdown"]) =>
-    TaggedString({ tags, strict: true }).override({
-        children: {
-            code: Visitors.String,
-        },
+    TaggedString({ tags, strict: true }).override(base => ({
         run(node) {
-            return new Values.Markdown(dedent(this.runChild("code") ?? ""));
+            let { code } = this.utils.run();
+            return new Values.Markdown(code);
         },
         snippets() {
             return [
@@ -144,14 +193,12 @@ export const MarkdownString = (tags = ["md", "markdown"]) =>
                 ),
             ];
         },
-    });
+    }));
 
 export const CSSString = (tags = ["css"]) =>
-    TaggedString({ tags, strict: true }).override({
-        children: {
-            code: createVisitor({
-                rules: Rules.String,
-            }),
+    TaggedString({ tags, strict: true }).override(base => ({
+        run(node) {
+            return this.utils.run().code;
         },
         snippets() {
             return [
@@ -164,4 +211,4 @@ export const CSSString = (tags = ["css"]) =>
                 ),
             ];
         },
-    });
+    }));

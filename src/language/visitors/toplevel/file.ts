@@ -8,8 +8,8 @@ export const File = createVisitor({
     rules: Rules.File,
     tags: ["file"],
     children: {
-        type: Type,
-        import: Visitors.Import(),
+        type: Type.hideInnerTypes(),
+        import: Visitors.Import().hideInnerTypes(),
     },
     run(node) {
         let module: Record<string, TypeObject> = {};
@@ -30,4 +30,4 @@ export const File = createVisitor({
         });
         return module;
     },
-}).extend(Wrappers.ScopeWrapper({ shouldComplete: true }));
+}).extend(base => Wrappers.ScopeWrapper(base, { shouldComplete: true }));

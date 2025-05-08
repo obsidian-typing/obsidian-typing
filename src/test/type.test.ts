@@ -51,15 +51,15 @@ test("hooks", async () => {
     let { hookCalls } = gctx.api.import("scripts/hooks-sink");
     expect(gctx.types).toBeDefined();
     let HooksType = gctx.types.get({ name: "Hooks" });
-    expect(HooksType).toBeDefined();
+    expect(HooksType).toBeTruthy();
     let note = await HooksType.create({
         title: "HooksName",
     });
-    expect(note).toBeDefined();
+    expect(note).toBeTruthy();
     expect(note.title).toBe("HooksName");
-    expect(note.file).toBeDefined();
+    expect(note.file).toBeTruthy();
     expect(note.file.path).toBe("hooks/HooksName.md");
-    expect(hookCalls).toBeDefined();
+    expect(hookCalls).toBeTruthy();
     expect(hookCalls).toHaveLength(1);
     expect(hookCalls[0].hookName).toEqual("on_create");
     expect(hookCalls[0].ctx.note.path).toEqual("hooks/HooksName.md");
@@ -80,6 +80,19 @@ test("methods", async () => {
     expect(note.methods.one).toBeTruthy();
     expect(note.methods.inc).toBeTruthy();
     expect(note.methods.inc(100)).toEqual(101);
+});
+
+test("compilation modes", async () => {
+    expect(gctx.types).toBeDefined();
+    let note = gctx.api.note("methods/A.md");
+    expect(note).toBeTruthy();
+    let methods  = note.type.methods;
+    expect(methods.one.function.mode).toBe("tsx");
+    expect(methods.inc.function.mode).toBe("ts");
+    expect(methods.js_test.function.mode).toBe("js");
+    expect(methods.ts_test.function.mode).toBe("ts");
+    expect(methods.jsx_test.function.mode).toBe("jsx");
+    expect(methods.tsx_test.function.mode).toBe("tsx");
 });
 
 test("import from relative", async () => {

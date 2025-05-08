@@ -198,10 +198,10 @@ export class Note extends FieldType<Note> implements TypedValidator<string | Par
     static ParametersVisitor = () =>
         Visitors.ParametersVisitorFactory({
             args: Visitors.Literal(
-                Visitors.String.extend({
+                Visitors.String.extend(base => ({
                     // TODO: check all types are valid and have folders
                     // TODO: autocomplete
-                })
+                }))
             ),
             kwargs: {
                 dv: Visitors.Literal(Visitors.String),

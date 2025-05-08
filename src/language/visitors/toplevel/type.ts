@@ -32,6 +32,17 @@ class IconWidget extends WidgetType {
 export const TypeParentsClause = createVisitor({
     rules: Rules.ExtendsClause,
     children: { parent: Visitors.Identifier({ allowString: true }) },
+    utils: {
+        globalSymbols(node?: SyntaxNode) {
+            // TODO: Respect the `node` parameter
+            let globalScope = this.getParent({ tags: ["scope"] });
+            if (!globalScope) throw new Error("Failed to get global symbols: Not within a scope");
+            let globalScopeNode: SyntaxNode | null = this.node;
+            while (globalScopeNode && globalScopeNode.name != Rules.File) globalScopeNode = globalScopeNode.parent;
+            if (!globalScopeNode) throw new Error("Failed to get global symbols: Not within a scope");;
+            return globalScope.symbols(globalScopeNode) ?? [];
+        },
+    },
     lint(node) {
         let globalTypes = this.utils.globalSymbols(node);
         this.traverse((node, child) => {
@@ -82,16 +93,6 @@ export const TypeParentsClause = createVisitor({
         });
         return res;
     },
-    utils: {
-        globalSymbols() {
-            let globalScope = this.getParent({ tags: ["scope"] });
-            if (!globalScope) throw new Error("Failed to get global symbols: Not within a scope");
-            let globalScopeNode: SyntaxNode | null = this.node;
-            while (globalScopeNode && globalScopeNode.name != Rules.File) globalScopeNode = globalScopeNode.parent;
-            if (!globalScopeNode) throw new Error("Failed to get global symbols: Not within a scope");;
-            return globalScope.symbols(globalScopeNode) ?? [];
-        },
-    },
 });
 
 export const Type = createVisitor({
@@ -114,12 +115,12 @@ export const Type = createVisitor({
 
                 // TODO: store current prefixes in `data.json`, on prefix change
                 // rename all the notes in folder sorted by `cdate`, this way the order on {serial} will be preserved
-                prefix: Visitors.Attribute("prefix", Visitors.String).override({
+                prefix: Visitors.Attribute("prefix", Visitors.String).override(base => ({
                     run(node) {
-                        return Prefix.new({ template: this.super.run(node) });
+                        return Prefix.new({ template: base.run(node) });
                     },
-                }),
-                icon: Visitors.Attribute("icon", Visitors.String).override({
+                })),
+                icon: Visitors.Attribute("icon", Visitors.String).override(base => ({
                     decorations(node) {
                         let valueNode = node.getChild(Rules.AssignmentValue);
                         if (!valueNode) return [];
@@ -131,7 +132,7 @@ export const Type = createVisitor({
                             }).range(valueNode.to),
                         ];
                     },
-                }),
+                })),
                 display: Visitors.StructuredSection(
                     "display",
                     {
@@ -140,12 +141,11 @@ export const Type = createVisitor({
                         category: Visitors.Attribute("category", Visitors.String)
                     },
                     "Display section"
-                ).override({
+                ).override(base => ({
                     run(node) {
-                        let opts = this.runChild("body");
-                        return opts;
+                        return this.runChild("body");
                     },
-                }),
+                })),
                 style: Visitors.StructuredSection(
                     "style",
                     {
@@ -171,14 +171,7 @@ export const Type = createVisitor({
                         ),
                         css: Visitors.Attribute(
                             "css",
-                            Visitors.TaggedString({ tags: ["css"] }).override({
-                                children: {
-                                    content: Visitors.String,
-                                },
-                                run(node) {
-                                    return this.runChild("content");
-                                },
-                            })
+                            Visitors.CSSString()
                         ),
                         css_classes: Visitors.Attribute("css_classes", Visitors.List(Visitors.String)),
                         show_prefix: Visitors.Attribute(
@@ -191,18 +184,18 @@ export const Type = createVisitor({
                         ),
                     },
                     "Style section"
-                ).override({
+                ).override(base => ({
                     run(node) {
                         let opts = this.runChild("body");
                         return Style.new(opts);
                     },
-                }),
+                })),
                 actions: Visitors.Section(
                     "actions",
                     Visitors.NamedAttribute(
                         Visitors.StructuredObject({
                             name: Visitors.Attribute("name", Visitors.String),
-                            icon: Visitors.Attribute("icon", Visitors.String).override({
+                            icon: Visitors.Attribute("icon", Visitors.String).override(base => ({
                                 decorations(node) {
                                     let valueNode = node.getChild(Rules.AssignmentValue);
                                     if (!valueNode) return [];
@@ -214,17 +207,17 @@ export const Type = createVisitor({
                                         }).range(valueNode.to),
                                     ];
                                 },
-                            }),
+                            })),
                             script: Visitors.Attribute("script", Visitors.FnScriptString()),
                             shortcut: Visitors.Attribute("shortcut", Visitors.String),
                         })
-                    ).extend({
+                    ).extend(base => ({
                         run(): Action {
                             let { name: id, value } = this.runChildren();
                             return Action.new({ id, ...value });
                         },
-                    })
-                ).extend({
+                    }))
+                ).extend(base => ({
                     run(): Record<string, Action> {
                         let result: Record<string, Action> = {};
                         for (let action of this.runChild("body") ?? []) {
@@ -232,7 +225,7 @@ export const Type = createVisitor({
                         }
                         return result;
                     },
-                }),
+                })),
                 hooks: Visitors.StructuredSection(
                     "hooks",
                     {
@@ -245,7 +238,7 @@ export const Type = createVisitor({
                         on_validate: Visitors.Attribute("on_validate", Visitors.FnScriptString()),
                     },
                     "Hooks"
-                ).extend({
+                ).extend(base => ({
                     run(node) {
                         let hooksList = this.runChild("body");
                         let hooks: Partial<Pick<HookContainer, HookNames>> = {};
@@ -254,11 +247,11 @@ export const Type = createVisitor({
                         }
                         return HookContainer.new(hooks);
                     },
-                }),
+                })),
                 methods: Visitors.Section(
                     "methods",
                     Visitors.NamedAttribute(Visitors.ExprScriptString("(${params}) => {\n\t${}\n}"))
-                ).extend({
+                ).extend(base => ({
                     run(node) {
                         let methodsList = this.runChild("body") ?? [];
                         let methods: Record<string, Method> = {};
@@ -268,18 +261,19 @@ export const Type = createVisitor({
                         }
                         return methods;
                     },
-                }),
-                fields: Visitors.Section("fields", Visitors.Field()).extend({
+                })),
+                fields: Visitors.Section("fields", Visitors.Field()).extend(base => ({
                     run(): Record<string, Field> {
                         let result: Record<string, Field> = {};
-                        for (let field of this.super.runChildren()["body"]) {
+                        // TODO: Review handling of null/undefined
+                        for (let field of this.runChildren()["body"]!) {
                             result[field.name] = field;
                         }
                         return result;
                     },
-                }),
+                })),
             },
-        }).extend(Wrappers.ScopeWrapper({ shouldComplete: true })),
+        }).extend(base => Wrappers.ScopeWrapper(base, { shouldComplete: true })),
     },
     run() {
         let { isAbstract, name, parentNames, body } = this.runChildren({ keys: ["isAbstract", "name", "parentNames", "body"] });

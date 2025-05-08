@@ -25,7 +25,7 @@ type Hooks {
             import {appendHookCall} from "scripts/hooks-sink.tsx"
             appendHookCall("on_create", ctx)
         """
-        on_rename = fn"""
+        on_rename = fn.tsx"""
             import {appendHookCall} from "scripts/hooks-sink.tsx"
             appendHookCall("on_rename", ctx)
         """
@@ -42,8 +42,20 @@ type Methods {
         one = expr"""()=>{
             return 1
         }"""
-        inc = expr"""(x)=>{
+        inc = expr.ts"""(x)=>{
             return x + note.methods.one()
+        }"""
+        js_test = expr.js"""()=>{
+            return 2
+        }"""
+        ts_test = expr.ts"""()=>{
+            return 2
+        }"""
+        jsx_test = expr.jsx"""()=>{
+            return 1
+        }"""
+        tsx_test = expr.tsx"""()=>{
+            return 4
         }"""
     }
 }

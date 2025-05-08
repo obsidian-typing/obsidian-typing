@@ -1,6 +1,6 @@
 import { gctx } from "src/context";
 import { parser } from "src/language/grammar/otl_parser";
-import { TVisitorBase, Visitors } from "src/language/visitors";
+import { AnyVisitor, Visitors } from "src/language/visitors";
 import { Type } from "src/typing";
 import { FilePath, FileSpec, LoadedModule, Module, ModuleManagerSync } from "src/utilities/module_manager_sync";
 
@@ -11,7 +11,7 @@ export type SchemaModule = {
 export class Interpreter extends ModuleManagerSync<SchemaModule> {
     extensions = ["otl"];
 
-    public runCode(code: string, visitor: TVisitorBase) {
+    public runCode<Return>(code: string, visitor: AnyVisitor<{ Return: Return }>): NonNullable<Return> | null {
         let tree = parser.parse(code);
         let node = tree.topNode;
         if (!node) return null;
@@ -19,7 +19,7 @@ export class Interpreter extends ModuleManagerSync<SchemaModule> {
         let lint = visitor.lint(node, { interpreter: this, input: code });
         if (lint.hasErrors) return null;
 
-        return visitor.run(node, { interpreter: this, input: code });
+        return visitor.run(node, { interpreter: this, input: code }) ?? null;
     }
 
     public evaluateModule(file: FileSpec, mod: Module<SchemaModule>): mod is LoadedModule<SchemaModule> {

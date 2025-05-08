@@ -4,10 +4,10 @@ import { EditorState, Range, Text } from "@codemirror/state";
 import { Decoration, EditorView, Tooltip } from "@codemirror/view";
 import { NodeWeakMap, SyntaxNode } from "@lezer/common";
 import { DataClass, field, log, mergeDeep } from "src/utilities";
+import { Merge, OneOf, OverrideObject } from "src/utilities/types";
 import { Visitors } from ".";
 import { Rules } from "../grammar";
 import { Interpreter } from "../interpreter";
-import { Merge, OneOf } from "src/utilities/types";
 
 export type NodeType = SyntaxNode;
 
@@ -43,30 +43,153 @@ export type VisitorTypes<
     Children = any,
     Utils = any,
     Cache = any,
-    Super = any
 > = {
     Return?: Return,
     Children?: Children,
     Utils?: Utils,
     Cache?: Cache,
-    Super?: Super
 };
 
+export type MergeTypes<Base extends Required<VisitorTypes>, Overrides extends VisitorTypes> = {
+    Return: OneOf<Base["Return"], Overrides["Return"]>,
+    Children: Merge<Base["Children"], Overrides["Children"]>,
+    Utils: Merge<Base["Utils"], Overrides["Utils"]>,
+    Cache: Merge<Base["Cache"], Overrides["Cache"]>,
+};
+
+export type OverrideTypes<Base extends Required<VisitorTypes>, Overrides extends VisitorTypes> = {
+    Return: OneOf<Base["Return"], Overrides["Return"]>,
+    Children: OneOf<Base["Children"], Overrides["Children"]>,
+    Utils: OneOf<Base["Utils"], Overrides["Utils"]>,
+    Cache: OneOf<Base["Cache"], Overrides["Cache"]>,
+};
+
+namespace VisitorDefinitions {
+    type VT = VisitorTypes;
+    type VTR = Required<VisitorTypes>;
+    type V<T extends VTR> = ExactVisitor<T>;
+    type A<T extends VTR> = ExactVisitorArgs<T>;
+    type I<T extends VT, NewThis> = VisitorArgs<
+        T["Return"],
+        T["Children"],
+        T["Utils"],
+        T["Cache"],
+        NewThis
+    >;
+    ;
+
+    export abstract class Definition<Merged extends VTR> {
+        abstract createArgs(): A<Merged>;
+
+        create(deferBind = true): V<Merged> {
+            return Visitor.new<V<Merged>>({
+                args: this.createArgs(),
+                definition: this as any,
+                deferBind,
+            });
+        }
+
+        override<Overrides extends VT, NewThis>(subClass: (base: V<Merged>) => I<Overrides, NewThis>): Override<Merged, Overrides> {
+            return new Override(this, subClass as any);
+        }
+
+        extend<Overrides extends VT, NewThis extends V<MergeTypes<Merged, Overrides>>>(subClass: (base: V<Merged>) => I<Overrides, NewThis>): Extend<Merged, Overrides> {
+            return new Extend(this, subClass as any);
+        }
+    };
+
+    export class Root<Merged extends VTR> extends Definition<Merged> {
+        constructor(public readonly factory: A<Merged> | (() => A<Merged>)) {
+            super();
+        }
+
+        createArgs(): A<Merged> {
+            return this.factory instanceof Function ? this.factory() : this.factory;
+        }
+    }
+
+    export abstract class Derived<Base extends VTR, Overrides extends VT, Merged extends VTR> extends Definition<Merged> {
+        constructor(
+            public readonly base: Definition<Base>,
+            public readonly factory: (base: V<Base>) => I<Overrides, V<Merged>>
+        ) {
+            super();
+        }
+
+        abstract createArgsFromBase(base: V<Base>): A<Merged>;
+
+        create(deferBind = false): V<Merged> {
+            let base = this.base.create(true);
+            return Visitor.new<V<Merged>>({
+                args: this.createArgsFromBase(base),
+                definition: this as any,
+                super: base,
+                deferBind,
+            });
+        }
+
+        createArgs(): A<Merged> {
+            let base = this.base.create();
+            let newArgs = this.createArgsFromBase(base);
+            return newArgs;
+        }
+    }
+
+    export class Override<Base extends VTR, Overrides extends VT> extends Derived<Base, Overrides, OverrideTypes<Base, Overrides>> {
+        createArgsFromBase(base: V<Base>): A<OverrideTypes<Base, Overrides>> {
+            let args = this.factory(base);
+            let newArgs = Object.assign({}, base.originalArgs, args);
+            newArgs.children = Object.assign({}, base.originalArgs.children, args.children);
+            newArgs.utils = Object.assign({}, base.originalArgs.utils, args.utils);
+            return newArgs;
+        }
+    }
+
+    export class Extend<Base extends VTR, Overrides extends VT> extends Derived<Base, Overrides, MergeTypes<Base, Overrides>> {
+        createArgsFromBase(base: V<Base>): A<MergeTypes<Base, Overrides>> {
+            let args = this.factory(base);
+            let newArgs = Object.assign({}, base.originalArgs, args);
+            return newArgs;
+        }
+
+    }
+}
+
 export type AnyVisitor<Args extends VisitorTypes = {}> = Visitor<
-    OneOf<VisitorTypes["Return"], Args["Return"]>,
-    OneOf<VisitorTypes["Children"], Args["Children"]>,
-    OneOf<VisitorTypes["Utils"], Args["Utils"]>,
-    OneOf<VisitorTypes["Cache"], Args["Cache"]>,
-    OneOf<VisitorTypes["Super"], Args["Super"]>
+    OverrideObject<VisitorTypes, Args>["Return"],
+    OverrideObject<VisitorTypes, Args>["Children"],
+    OverrideObject<VisitorTypes, Args>["Utils"],
+    OverrideObject<VisitorTypes, Args>["Cache"]
+>;
+
+export type UnknownVisitor<Args extends VisitorTypes = {}> = Visitor<
+    Args["Return"],
+    Args["Children"],
+    Args["Utils"],
+    Args["Cache"]
 >;
 
 export type ExactVisitor<Args extends Required<VisitorTypes>> = Visitor<
     Args["Return"],
     Args["Children"],
     Args["Utils"],
-    Args["Cache"],
-    Args["Super"]
+    Args["Cache"]
 >;
+
+export type UnknownVisitorArgs<Args extends VisitorTypes = {}> = VisitorArgs_Infer<
+    Args["Return"],
+    Args["Children"],
+    Args["Utils"],
+    Args["Cache"]
+>;
+
+export type ExactVisitorArgs<Args extends Required<VisitorTypes>> = VisitorArgs_Infer<
+    Args["Return"],
+    Args["Children"],
+    Args["Utils"],
+    Args["Cache"]
+>;
+
 
 let cache: NodeWeakMap<WeakMap<AnyVisitor, CacheEntry>>;
 
@@ -136,29 +259,12 @@ const defaultVisitorOptions: VisitorOptions = {
 };
 
 export type VisitorArgs_Infer<
-    Return extends TReturnBase,
-    Children extends TChildrenBase,
-    Utils extends TUtilsBase,
-    Cache extends TCacheBase,
-    Super extends TVisitorBase,
-    This extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<
-        Return,
-        Children,
-        Utils,
-        Cache,
-        Super
-    >
-> = VisitorArgs<Return, Children, Utils, Cache, Super, This>;
+    Return, Children, Utils, Cache,
+    This extends Visitor<Return, Children, Utils, Cache> = Visitor<Return, Children, Utils, Cache>
+> = VisitorArgs<Return, Children, Utils, Cache, This>;
 
 // TODO: add Symbol as template arg to support custom symbols (ext Symbol)
-export interface VisitorArgs<
-    Return,
-    Children,
-    Utils,
-    Cache,
-    Super,
-    This
-> {
+export interface VisitorArgs<Return, Children, Utils, Cache, This> {
     // TODO: probably should rename to `node`(s) or `nodetype`(s) or `nodeType`(s), `Rules` -> `NodeType`
     rules?: Rules | Rules[];
     tags?: string[];
@@ -191,44 +297,35 @@ export interface VisitorArgs<
 
 export type TReturnBase = any;
 export type TUtilsBase = Record<string, any>;
-export type TChildrenBase = Record<string, TVisitorBase>;
+export type TChildrenBase = Record<string, AnyVisitor>;
 export type TCacheBase = any;
 
-export type TVisitorArgsBase<
-    Return extends TReturnBase = any,
-    Children extends TChildrenBase = any,
-    Utils extends TUtilsBase = any,
-    Cache extends TCacheBase = any
-> = VisitorArgs<Return, Children, Utils, Cache, TNoVisitor, TVisitorBase>;
+type Children_<Children> = Children & Record<string, Pick<UnknownVisitor,
+    "run" | "enter" | "exit" | "hasDecorations" | "hasHover" | "hasLint" | "decorations" | "hover" | "lint" | "complete"
+>>;
 
-export type TVisitorBase<
-    Return extends TReturnBase = any,
-    Children extends TChildrenBase = any,
-    Utils extends TUtilsBase = any,
-    Cache extends TCacheBase = any
-> = Visitor<Return, Children, Utils, Cache, TOptionalVisitorBase>;
+type VisitorReturn<Key extends keyof Children, Children> =
+    Partial<{ [K in Key]: ReturnType<Children_<Children>[K]["run"]> }>;
 
-type TOptionalVisitorBase = TVisitorBase;
-type TNoVisitor = any;
+export type Visitor_<Return> = UnknownVisitor<{ Return: Return }>;
 
-type VisitorReturn<Key extends keyof Children, Children extends TChildrenBase> =
-    Partial<{ [K in Key]: ReturnType<Children[K]["run"]> }>;
-
-export class Visitor<
-    Return extends TReturnBase,
-    Children extends TChildrenBase,
-    Utils extends TUtilsBase,
-    Cache extends TCacheBase,
-    Super extends TOptionalVisitorBase
-> extends DataClass {
+export class Visitor<Return, Children, Utils, Cache, Super = unknown> extends DataClass {
     @field()
-    args!: VisitorArgs<Return, Children, Utils, Cache, Super, any>;
+    args!: VisitorArgs<Return, Children, Utils, Cache, any>;
 
-    super: Super = null as any;
-    derived?: TVisitorBase;
+    @field()
+    definition!: VisitorDefinitions.Definition<Required<VisitorTypes<Return, Children, Utils, Cache>>>;
+
+    @field()
+    super?: AnyVisitor;
+
+    @field()
+    deferBind?: boolean = false;
+
+    derived?: AnyVisitor;
     isInitialized: boolean = false;
 
-    originalArgs!: VisitorArgs<Return, Children, Utils, Cache, Super, any>;
+    originalArgs!: VisitorArgs<Return, Children, Utils, Cache, any>;
     hasDecorations: boolean = false;
     childrenWithDecorations: (keyof Children)[] = [];
     hasHover: boolean = false;
@@ -242,8 +339,8 @@ export class Visitor<
     get tags() {
         return this.args.tags;
     }
-    get children() {
-        return this.args.children!;
+    get children(): Children_<Children> {
+        return this.args.children! as Children_<Children>;
     }
     get utils() {
         return this.args.utils!;
@@ -253,146 +350,113 @@ export class Visitor<
         return this.args.options!;
     }
 
-    static fromArgs<
-        Return extends TReturnBase,
-        Children extends TChildrenBase,
-        Utils extends TUtilsBase,
-        Cache extends TCacheBase,
-        Super extends TVisitorBase,
-        This extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<
-            Return,
-            Children,
-            Utils,
-            Cache,
-            Super
-        >
-    >(
-        args: VisitorArgs<Return, Children, Utils, Cache, Super, This>
+    hideInnerTypes(): Visitor_<Return> {
+        return this as Visitor_<Return>;
+    }
+
+    static fromArgs<Return, Children, Utils, Cache, This extends Visitor<Return, Children, Utils, Cache> = Visitor<Return, Children, Utils, Cache>>(
+        args: VisitorArgs<Return, Children, Utils, Cache, This>
     ): ExactVisitor<{
         Return: Return,
         Children: Children,
         Utils: Utils,
         Cache: Cache,
-        Super: Super
     }> {
-        return Visitor.new<Visitor<Return, Children, Utils, Cache, Super>>({
-            // Ignore the fact that `This` might be different type
-            // than the one specified in the type parameter default
-            args: args as any,
-        });
+        let definition = new VisitorDefinitions.Root(args as any)
+        return Visitor.new<Visitor<Return, Children, Utils, Cache>>({ args, definition });
     }
 
     override<
-        NewReturn extends TReturnBase,
-        NewChildren extends TChildrenBase,
-        NewUtils extends TUtilsBase,
-        NewCache extends TCacheBase,
-        NewSuper extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<
-            Return,
-            Children,
-            Utils,
-            Cache,
-            Super
-        >,
+        NewReturn = unknown,
+        NewChildren = unknown,
+        NewUtils = unknown,
+        NewCache = unknown,
         NewThis extends Visitor<
             OneOf<Return, NewReturn>,
             OneOf<Children, NewChildren>,
             OneOf<Utils, NewUtils>,
             OneOf<Cache, NewCache>,
-            NewSuper
-        > = Visitor<
-            OneOf<Return, NewReturn>,
-            OneOf<Children, NewChildren>,
-            OneOf<Utils, NewUtils>,
-            OneOf<Cache, NewCache>,
-            NewSuper
-        >,
+            Visitor<Return, Children, Utils, Cache, Super>
+        > = Visitor<OneOf<Return, NewReturn>, OneOf<Children, NewChildren>, OneOf<Utils, NewUtils>, OneOf<Cache, NewCache>, Visitor<Return, Children, Utils, Cache, Super>>,
         Args extends VisitorArgs<
             NewReturn,
             NewChildren,
             NewUtils,
             NewCache,
-            NewSuper,
             NewThis
-        > = VisitorArgs<
-            NewReturn,
-            NewChildren,
-            NewUtils,
-            NewCache,
-            NewSuper,
-            NewThis
-        >
-    >(args: Args): ExactVisitor<{
+        > = VisitorArgs<NewReturn, NewChildren, NewUtils, NewCache, NewThis>
+    >(argsFactory: ((super_: this) => Args)): ExactVisitor<{
         Return: ReturnType<Exclude<Args["run"], undefined>>,
-        Children: NewChildren,
-        Utils: NewUtils,
-        Cache: NewCache,
-        Super: NewSuper
+        Children: OneOf<Children, NewChildren>,
+        Utils: OneOf<Utils, NewUtils>,
+        Cache: OneOf<Cache, NewCache>
     }> {
-        let newArgs = Object.assign({}, this.originalArgs, args);
-        let result = Visitor.fromArgs<ReturnType<Exclude<Args["run"], undefined>>, NewChildren, NewUtils, NewCache, NewSuper>(newArgs as any);
-        result.super = Visitor.fromArgs<Return, Children, Utils, Cache, Super>(this.originalArgs as any) as NewSuper;
-        result.super.derived = result;
-        result.super.bind(result);
-        return result;
+        type Overrides = {
+            Return: NewReturn,
+            Children: NewChildren,
+            Utils: NewUtils,
+            Cache: NewCache,
+        };
+
+        let definition = this.definition.override<Overrides, NewThis>(base => argsFactory(base as this));
+        let result = definition.create();
+        result.bind(result);
+
+        for (let base = result.super; base; base = base.super) {
+            base.derived = result;
+            base.bind(result);
+        }
+
+        return result as any;
     }
 
     extend<
-        NewReturn,
-        NewChildren,
-        NewUtils,
-        NewCache,
-        NewSuper extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<
-            Return,
-            Children,
-            Utils,
-            Cache,
-            Super
-        >,
+        NewReturn = unknown,
+        NewChildren = unknown,
+        NewUtils = unknown,
+        NewCache = unknown,
         NewThis extends Visitor<
             OneOf<Return, NewReturn>,
-            NewChildren extends TChildrenBase ? Merge<Children, NewChildren> : Children,
-            NewUtils extends TUtilsBase ? Merge<Utils, NewUtils> : Utils,
+            Merge<Children, NewChildren>,
+            Merge<Utils, NewUtils>,
             Merge<Cache, NewCache>,
-            NewSuper
+            Visitor<Return, Children, Utils, Cache, Super>
         > = Visitor<
             OneOf<Return, NewReturn>,
-            NewChildren extends TChildrenBase ? Merge<Children, NewChildren> : Children,
-            NewUtils extends TUtilsBase ? Merge<Utils, NewUtils> : Utils,
+            Merge<Children, NewChildren>,
+            Merge<Utils, NewUtils>,
             Merge<Cache, NewCache>,
-            NewSuper
+            Visitor<Return, Children, Utils, Cache, Super>
         >
-    >(
-        args: VisitorArgs<NewReturn, NewChildren, NewUtils, NewCache, NewSuper, NewThis>
-    ): ExactVisitor<{
+    >(argsFactory: ((base: this) => VisitorArgs<NewReturn, NewChildren, NewUtils, NewCache, NewThis>)): ExactVisitor<{
         Return: OneOf<Return, NewReturn>,
-        Children: NewChildren extends TChildrenBase ? Merge<Children, NewChildren> : Children,
-        Utils: NewUtils extends TUtilsBase ? Merge<Utils, NewUtils> : Utils,
-        Cache: Merge<Cache, NewCache>,
-        Super: NewSuper
+        Children: Merge<Children, NewChildren>,
+        Utils: Merge<Utils, NewUtils>,
+        Cache: Merge<Cache, NewCache>
     }> {
-        // let newArgs = mergeDeep(this.originalArgs, args); // BUG: could probably merge internal visitors too
-        let newArgs = Object.assign({}, this.originalArgs, args);
-        newArgs.children = Object.assign({}, this.originalArgs.children, args.children);
-        newArgs.utils = Object.assign({}, this.originalArgs.utils, args.utils);
-        let result = Visitor.fromArgs<
-            OneOf<Return, NewReturn>,
-            NewChildren extends TChildrenBase ? Merge<Children, NewChildren> : Children,
-            NewUtils extends TUtilsBase ? Merge<Utils, NewUtils> : Utils,
-            Merge<Cache, NewCache>,
-            NewSuper
-        >(newArgs as any);
-        result.super = Visitor.fromArgs<Return, Children, Utils, Cache, Super>(this.originalArgs as any) as NewSuper;
-        result.super.derived = result;
-        result.super.bind(result);
-        return result;
+        type Overrides = {
+            Return: NewReturn,
+            Children: NewChildren,
+            Utils: NewUtils,
+            Cache: NewCache,
+        };
+
+        let definition = this.definition.extend<Overrides, NewThis>(base => argsFactory(base as this));
+        let result = definition.create();
+
+        for (let base = result.super; base; base = base.super) {
+            base.derived = result;
+            base.bind(result);
+        }
+
+        return result as any;
     }
 
-    bind(to?: TVisitorBase): void {
+    bind(to?: AnyVisitor): void {
         to = to ?? this;
 
         this.args.children = this.originalArgs.children ?? ({} as Children);
-        this.args.utils = this.originalArgs.utils ?? ({} as Utils);
+        this.args.utils = { ...(this.originalArgs.utils ?? ({} as Utils & ThisType<any>)) };
 
         this.args.accept = this.originalArgs.accept?.bind(this);
         this.args.run = this.originalArgs.run?.bind(this);
@@ -404,11 +468,11 @@ export class Visitor<
         this.args.hover = this.originalArgs.hover?.bind(this);
         this.args.decorations = this.originalArgs.decorations?.bind(this);
 
-        if (this.args.utils) {
-            for (let key in this.args.utils) {
-                if (this.args.utils[key] != null) {
+        if (this.originalArgs.utils) {
+            for (let key in this.originalArgs.utils) {
+                if (this.originalArgs.utils[key] != null) {
                     try {
-                        this.args.utils[key] = this.args.utils[key].bind(this);
+                        this.args.utils[key] = (this.args.utils[key] as any as Function).bind(this);
                     } catch { }
                 }
             }
@@ -417,8 +481,11 @@ export class Visitor<
 
     onAfterCreate(): void {
         this.originalArgs = Object.assign({}, this.args);
+        this.args = Object.assign({}, this.args);
 
-        this.bind();
+        if (!this.deferBind) {
+            this.bind();
+        }
 
         // TODO: fix
         this.args.options = this.args.options ?? {};
@@ -429,9 +496,10 @@ export class Visitor<
 
         this.hasDecorations = this.args.decorations != null;
         for (let key in this.children) {
+            let x = this.children[key];
             if (this.children[key].hasDecorations) {
                 this.hasDecorations = true;
-                this.childrenWithDecorations.push(key);
+                this.childrenWithDecorations.push(key as keyof Children);
             }
         }
 
@@ -439,7 +507,7 @@ export class Visitor<
         for (let key in this.children) {
             if (this.children[key].hasHover) {
                 this.hasHover = true;
-                this.childrenWithHover.push(key);
+                this.childrenWithHover.push(key as keyof Children);
             }
         }
 
@@ -447,7 +515,7 @@ export class Visitor<
         for (let key in this.children) {
             if (this.children[key].hasLint) {
                 this.hasLint = true;
-                this.childrenWithLint.push(key);
+                this.childrenWithLint.push(key as keyof Children);
             }
         }
     }
@@ -544,7 +612,7 @@ export class Visitor<
     }
 
     lintChildren(traversalOptions?: TraversalOptions<keyof Children>) {
-        let result: ReturnType<TVisitorBase["lint"]> = { diagnostics: [], hasErrors: false };
+        let result: ReturnType<AnyVisitor["lint"]> = { diagnostics: [], hasErrors: false };
 
         if (!this.childrenWithLint.length) return result;
 
@@ -717,7 +785,7 @@ export class Visitor<
         }
 
         this.traverse((node, child, key) => {
-            let res = child.run(node);
+            let res = child.run(node) as ReturnType<Children_<Children>[typeof key]["run"]>;
             if (res !== null && res !== undefined) {
                 result[key] = res;
                 if (options?.eager) fulfilledKeys.add(key);
@@ -726,7 +794,7 @@ export class Visitor<
         return result;
     }
 
-    runChild<Key extends keyof Children>(key: Key): ReturnType<Children[Key]["run"]> | undefined {
+    runChild<Key extends keyof Children>(key: Key): ReturnType<Children_<Children>[Key]["run"]> | undefined {
         return this.runChildren({ keys: [key] })[key];
     }
 
@@ -759,7 +827,7 @@ export class Visitor<
 
     visit<Key extends keyof Children = keyof Children>(
         node: SyntaxNode,
-        callback: (node: SyntaxNode, child: Children[Key], key: Key) => void,
+        callback: (node: SyntaxNode, child: Children_<Children>[Key], key: Key) => void,
         keys: Key[]
     ): boolean {
         for (let key of keys) {
@@ -778,7 +846,7 @@ export class Visitor<
     }
 
     traverse<Key extends keyof Children = keyof Children>(
-        callback: (node: SyntaxNode, child: Children[Key], key: Key) => void,
+        callback: (node: SyntaxNode, child: Children_<Children>[Key], key: Key) => void,
         options?: TraversalOptions<Key>
     ): void {
         options = options ? mergeDeep(this.options.traversal, options) : this.options.traversal;
@@ -969,7 +1037,7 @@ export class Visitor<
         node = node ?? ref.node;
         let visitorCache = cache.get(node);
         if (visitorCache == null) {
-            visitorCache = new WeakMap<TVisitorBase, CacheEntry>();
+            visitorCache = new WeakMap<AnyVisitor, CacheEntry>();
             cache.set(node, visitorCache);
         }
         let container = visitorCache.get(ref);
@@ -991,7 +1059,7 @@ export class Visitor<
         return container;
     }
 
-    get ref(): TVisitorBase {
+    get ref(): AnyVisitor {
         return this.derived ?? this;
     }
 
@@ -1004,7 +1072,7 @@ export class Visitor<
 
     // } CACHE
 
-    getParent<R extends Rules>({ tags, rules }: { tags?: string[]; rules?: R }): TVisitorBase | null {
+    getParent<R extends Rules>({ tags, rules }: { tags?: string[]; rules?: R }): AnyVisitor | null {
         for (let i = this.globalContext.callStack.length - 1; i >= 0; i--) {
             let visitor = this.globalContext.callStack[i].visitor;
             if (tags && visitor.tags) {
@@ -1026,31 +1094,31 @@ export class Visitor<
         return null;
     }
 
-    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn: ReturnType<NonNullable<Args[K]>>
     ): ReturnType<NonNullable<Args[K]>>;
 
-    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn: null
     ): ReturnType<NonNullable<Args[K]>> | null;
 
-    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn: undefined
     ): ReturnType<NonNullable<Args[K]>> | undefined;
 
-    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn?: ReturnType<NonNullable<Args[K]>>
     ): ReturnType<NonNullable<Args[K]>> | undefined;
 
-    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache, Super>>(
+    runFunc<K extends CallType, Args extends VisitorArgs_Infer<Return, Children, Utils, Cache>>(
         call: K,
         args: Parameters<NonNullable<Args[K]>>,
         defaultReturn?: ReturnType<NonNullable<Args[K]>>

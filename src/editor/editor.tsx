@@ -21,6 +21,8 @@ import { styleTags, tags as t } from "@lezer/highlight";
 import { basicSetup } from "codemirror";
 import { Scope, TextFileView, TFile, WorkspaceLeaf } from "obsidian";
 import { parser, Rules } from "src/language/grammar";
+import { EXPR_SCRIPT_MODES, FN_SCRIPT_MODES } from "src/language/visitors";
+import { TranspilationMode } from "src/scripting";
 import TypingPlugin from "src/main";
 import { visitorCompletion } from "./completion";
 import { decorationsPlugin } from "./decorations";
@@ -31,6 +33,9 @@ import { obsidianCodeTheme } from "./themes/obsidian";
 
 import styles from "src/styles/editor.scss";
 
+const jsLanguageSupport = javascript({ jsx: false, typescript: false });
+const tsLanguageSupport = javascript({ jsx: false, typescript: true });
+const jsxLanguageSupport = javascript({ jsx: true, typescript: false });
 const tsxLanguageSupport = javascript({ jsx: true, typescript: true });
 const cssLanguageSupport = css();
 const markdownLanguageSupport = markdown({ base: markdownLanguage });
@@ -51,11 +56,18 @@ function trimQuotes(input: Input, node: SyntaxNodeRef): { from: number; to: numb
     return { from, to };
 }
 
+const SCRIPT_MODE_TO_PARSER: Record<TranspilationMode, Parser> = {
+    js: jsLanguageSupport.language.parser,
+    jsx: jsxLanguageSupport.language.parser,
+    ts: tsLanguageSupport.language.parser,
+    tsx: tsxLanguageSupport.language.parser,
+}
+
+
 const TAGGED_STRING_ISLAND_GRAMMARS: Record<string, Parser> = {
-    fn: tsxLanguageSupport.language.parser,
-    function: tsxLanguageSupport.language.parser,
-    expr: tsxLanguageSupport.language.parser,
-    expression: tsxLanguageSupport.language.parser,
+    ...Object.fromEntries(Object.entries(FN_SCRIPT_MODES)
+        .concat(Object.entries(EXPR_SCRIPT_MODES))
+        .map(([tag, mode]) => [tag, SCRIPT_MODE_TO_PARSER[mode]])),
     md: markdownLanguageSupport.language.parser,
     markdown: markdownLanguageSupport.language.parser,
     css: cssLanguageSupport.language.parser,
@@ -237,15 +249,15 @@ export class BaseEditorView extends TextFileView {
 const VIEWS = {
     otl: [ObsidianTypingLanguageSupport(), lint, decorationsPlugin, hover],
     tsx: [tsxLanguageSupport],
-    ts: [tsxLanguageSupport],
+    ts: [tsLanguageSupport],
     jsx: [javascript({ jsx: true })],
     js: [javascript()],
 };
 
 function createEditorKeymap(parent: Scope) {
     let scope = new Scope(parent);
-    scope.register(["Meta"], "F", () => {});
-    scope.register(["Meta"], "/", () => {});
+    scope.register(["Meta"], "F", () => { });
+    scope.register(["Meta"], "/", () => { });
     return scope;
 }
 
