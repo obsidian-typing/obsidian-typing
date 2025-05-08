@@ -201,6 +201,8 @@ type Children_<Children> = Children & Record<string, Pick<UnknownVisitor,
 type VisitorReturn<Key extends keyof Children, Children> =
     Partial<{ [K in Key]: ReturnType<Children_<Children>[K]["run"]> }>;
 
+export type Visitor_<Return> = UnknownVisitor<{ Return: Return }>;
+
 export class Visitor<Return, Children, Utils, Cache, Super> extends DataClass {
     @field()
     args!: VisitorArgs<Return, Children, Utils, Cache, Super, any>;
@@ -234,10 +236,14 @@ export class Visitor<Return, Children, Utils, Cache, Super> extends DataClass {
         return this.args.options!;
     }
 
+    hideInnerTypes(): Visitor_<Return> {
+        return this as Visitor_<Return>;
+    }
+
     static fromArgs<
         Return,
-        Children extends TChildrenBase,
-        Utils extends TUtilsBase,
+        Children,
+        Utils,
         Cache,
         Super extends AnyVisitor,
         This extends Visitor<Return, Children, Utils, Cache, Super> = Visitor<
