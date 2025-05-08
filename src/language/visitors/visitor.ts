@@ -151,14 +151,7 @@ export type VisitorArgs_Infer<
 > = VisitorArgs<Return, Children, Utils, Cache, Super, This>;
 
 // TODO: add Symbol as template arg to support custom symbols (ext Symbol)
-export interface VisitorArgs<
-    Return,
-    Children,
-    Utils,
-    Cache,
-    Super,
-    This
-> {
+export interface VisitorArgs<Return, Children, Utils, Cache, Super, This> {
     // TODO: probably should rename to `node`(s) or `nodetype`(s) or `nodeType`(s), `Rules` -> `NodeType`
     rules?: Rules | Rules[];
     tags?: string[];
