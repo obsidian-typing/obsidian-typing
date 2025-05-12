@@ -1,6 +1,6 @@
 import { TFile, TFolder } from "obsidian";
 import { gctx } from "src/context";
-import { StringFieldAccessor } from "src/middleware/field_accessor";
+import { StringInlineFieldAccessor } from "src/middleware/field_accessor";
 import { Prompt, PromptState } from "src/ui";
 import { DataClass, field, mergeDeep } from "src/utilities";
 import { Action, Field, FieldTypes, Hook, HookContainer, HookContextType, HookNames, Method, Note, NoteState, Prefix, Style } from ".";
@@ -191,7 +191,7 @@ export class Type extends DataClass {
         }
         let content = state.text ?? "";
         if (state.fields) {
-            let fieldAccessor = new StringFieldAccessor(content, this);
+            let fieldAccessor = new StringInlineFieldAccessor(content, this);
             for (let key in state.fields) {
                 await fieldAccessor.setValue(key, state.fields[key]);
             }

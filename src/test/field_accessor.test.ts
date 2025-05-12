@@ -1,4 +1,4 @@
-import { StringFieldAccessor } from "src/middleware/field_accessor";
+import { StringInlineFieldAccessor } from "src/middleware/field_accessor";
 import { Field, FieldTypes, Type } from "src/typing";
 import { dedent } from "src/utilities";
 
@@ -8,7 +8,7 @@ async function testAccessor(
     { key, value }: { key: string; value: string },
     output: string
 ) {
-    let accessor = new StringFieldAccessor(content, type);
+    let accessor = new StringInlineFieldAccessor(content, type);
     await accessor.setValue(key, value);
     expect(accessor.content).toBe(output);
 }

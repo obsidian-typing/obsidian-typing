@@ -1,7 +1,7 @@
 import { Editor, MarkdownView, TFile } from "obsidian";
 import { gctx } from "src/context";
 import TypingPlugin from "src/main";
-import { Type } from "src/typing";
+import { FieldLocation, Type } from "src/typing";
 
 export let regexField = /^\s*(?<field>[0-9\w\p{Letter}][-0-9\w\p{Letter}]*)\s*::\s*(?<value>.*)\s*/u;
 
@@ -16,8 +16,44 @@ export type FieldSearchResult = {
 }
 
 export interface IFieldAccessor {
-    getValue(key: string): string | Promise<string | null>;
-    setValue(key: string, value: string): void;
+    getValue(key: string): string | null | Promise<string | null>;
+    setValue(key: string, value: string): void | Promise<void>;
+}
+
+export class FrontmatterFieldAccessor implements IFieldAccessor {
+    constructor(public file: TFile, public plugin: TypingPlugin, public type: Type) { }
+
+    getValue(key: string): string | null | Promise<string | null> {
+        return this.plugin.app.metadataCache.getCache(this.file.path)?.frontmatter?.[key] ?? null;
+    }
+
+    async setValue(key: string, value: string): Promise<void> {
+        await this.plugin.app.fileManager.processFrontMatter(this.file, frontmatter => {
+            frontmatter[key] = value
+        });
+    }
+}
+
+export class FieldDependentFieldAccessor implements IFieldAccessor {
+    constructor(public type: Type, public accessors: Record<FieldLocation, IFieldAccessor>) { }
+
+    getValue(key: string): string | null | Promise<string | null> {
+        if (this.type.fields[key].location ?? "frontmatter" === "frontmatter") {
+            return this.accessors.frontmatter.getValue(key);
+        } else {
+            return this.accessors.inline.getValue(key);
+        }
+    }
+
+    setValue(key: string, value: string): void | Promise<void> {
+        // TODO: Moving fields from frontmatter to inline or vice versa should probably not be done...
+        // TODO: Cleaning a field value independent of the location
+        if (this.type.fields[key].location ?? "frontmatter" === "frontmatter") {
+            return this.accessors.frontmatter.setValue(key, value);
+        } else {
+            return this.accessors.inline.setValue(key, value);
+        }
+    }
 }
 
 export abstract class BaseFieldAccessor implements IFieldAccessor {
@@ -190,7 +226,7 @@ class FileFieldAccessor extends BaseFieldAccessor {
     }
 }
 
-export class StringFieldAccessor extends BaseFieldAccessor {
+export class StringInlineFieldAccessor extends BaseFieldAccessor {
     constructor(public content: string, type: Type) {
         super(type);
     }
@@ -216,7 +252,7 @@ export class StringFieldAccessor extends BaseFieldAccessor {
     }
 }
 
-export function autoFieldAccessor(path: string, plugin: TypingPlugin): EditorFieldAccessor | FileFieldAccessor | null {
+export function autoInlineFieldAccessor(path: string, plugin: TypingPlugin): EditorFieldAccessor | FileFieldAccessor | null {
     let note = gctx.api.note(path);
     let activeView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
     if (activeView && activeView.getMode() == "source" && activeView.file && activeView.file.path === path && note.type) {
@@ -228,6 +264,24 @@ export function autoFieldAccessor(path: string, plugin: TypingPlugin): EditorFie
         }
         return new FileFieldAccessor(tfile, plugin, note.type);
     }
+}
+
+export function autoFieldAccessor(path: string, plugin: TypingPlugin): IFieldAccessor | null {
+    let note = gctx.api.note(path);
+    if (!note.type) {
+        return null;
+    }
+    let inlineAccessor = autoInlineFieldAccessor(path, plugin);
+    if (!inlineAccessor) {
+        return null;
+    }
+    if (!note.file) {
+        return inlineAccessor;
+    }
+    return new FieldDependentFieldAccessor(note.type, {
+        frontmatter: new FrontmatterFieldAccessor(note.file, plugin, note.type),
+        inline: inlineAccessor
+    });
 }
 
 function getFieldOrder(type: Type): { [name: string]: number } {
